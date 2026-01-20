@@ -1,0 +1,9 @@
+Options -MultiViews
+RewriteEngine On
+
+# Si ton dossier n'est pas 'exotikha', change la ligne ci-dessous
+RewriteBase /exotikha/public/
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.+)$ index.php [QSA,L]
