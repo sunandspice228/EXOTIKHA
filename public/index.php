@@ -1,75 +1,65 @@
 <?php
-if (!file_exists('../app/helpers/helpers.php')) {
-    die("ERREUR FATALE : Le fichier helpers.php est introuvable ! Vérifiez le dossier app/helpers/");
-}
-// 1. Affichage des erreurs
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// public/index.php
 
-// 2. CHARGEMENT DES FICHIERS CŒUR (L'ORDRE EST IMPORTANT !)
-require_once '../app/config/config.php';
-require_once '../app/core/Database.php';
-require_once '../app/core/Model.php';
-require_once '../app/core/Controller.php';
-require_once '../app/core/Router.php';
+require_once __DIR__ . '/../app/init.php';
 
-// C'EST CETTE LIGNE QUI VOUS MANQUE PROBABLEMENT :
-require_once '../app/helpers/helpers.php'; 
+use Core\Router;
 
-// 3. Autoloader
-spl_autoload_register(function ($class) {
-    $path = '../' . str_replace('\\', '/', $class) . '.php';
-    if (file_exists($path)) require_once $path;
-});
+$router = new Router();
 
-// 4. Router
-$router = new Core\Router();
-
-// --- ROUTES ---
+// --- ROUTES PUBLIQUES ---
 $router->get('/', 'HomeController@index');
 $router->get('/product/{id}', 'HomeController@product');
-$router->get('/lang/{lang}', 'HomeController@setLang');
 
+// Panier
 $router->get('/cart', 'CartController@index');
 $router->post('/cart/add', 'CartController@add');
+$router->post('/cart/update', 'CartController@update');
 $router->get('/cart/remove/{id}', 'CartController@remove');
-$router->get('/cart/update/{action}/{id}', 'CartController@update');
 
-$router->get('/checkout', 'CheckoutController@index');
-$router->post('/checkout/process', 'CheckoutController@process');
-$router->get('/checkout/callback', 'CheckoutController@callback');
-$router->get('/checkout/success', 'CheckoutController@success');
+// Paiement & Commande
+$router->get('/checkout', 'CheckoutController@index');    // Page récap
+$router->post('/checkout/process', 'CheckoutController@process'); // Envoi Paystack
+$router->get('/checkout/callback', 'CheckoutController@callback'); // Retour Paystack
 
+// Compte Client
 $router->get('/login', 'AuthController@login');
-$router->post('/login', 'AuthController@login');
+$router->post('/login', 'AuthController@loginPost');
 $router->get('/register', 'AuthController@register');
-$router->post('/register', 'AuthController@register');
+$router->post('/register', 'AuthController@registerPost');
 $router->get('/logout', 'AuthController@logout');
-
 $router->get('/account', 'AccountController@index');
-$router->post('/account/update', 'AccountController@update');
+$router->get('/account/order/{id}', 'AccountController@order'); // Détail commande
 
-// Admin
-$router->get('/admin/login', 'AdminController@login');
-$router->post('/admin/login', 'AdminController@login');
-$router->get('/admin/logout', 'AdminController@logout');
-$router->get('/admin/dashboard', 'AdminController@dashboard');
+// 👇👇👇 C'EST ICI QU'IL MANQUAIT LES ROUTES ! 👇👇👇
+// Langue & Devise
+$router->get('/lang/{code}', 'HomeController@setLang');
+$router->get('/currency/{code}', 'HomeController@setCurrency');
 
-$router->get('/admin/products', 'AdminProductController@index');
-$router->get('/admin/products/create', 'AdminProductController@create');
-$router->post('/admin/products/store', 'AdminProductController@store');
-$router->get('/admin/products/edit/{id}', 'AdminProductController@edit');
-$router->post('/admin/products/update/{id}', 'AdminProductController@update');
-$router->get('/admin/products/delete/{id}', 'AdminProductController@delete');
+// --- ROUTES ADMIN ---
+$router->get('/admin/login', 'AdminAuthController@login');
+$router->post('/admin/login', 'AdminAuthController@loginPost');
+$router->get('/admin/logout', 'AdminAuthController@logout');
+// Dans la section ADMIN
+$router->get('/admin/products/image/delete/{id}', 'AdminProductController@deleteImage');
 
-$router->get('/admin/attributes', 'AdminAttributeController@index');
-$router->post('/admin/attributes/store', 'AdminAttributeController@store');
-$router->get('/admin/attributes/edit/{type}/{id}', 'AdminAttributeController@edit');
-$router->post('/admin/attributes/update/{type}/{id}', 'AdminAttributeController@update');
-$router->get('/admin/attributes/delete/{type}/{id}', 'AdminAttributeController@delete');
+// Protection Admin (Middleware simplifié)
+if (isset($_SESSION['admin_id'])) {
+    $router->get('/admin/dashboard', 'AdminController@dashboard');
+    
+    // Produits
+    $router->get('/admin/products', 'AdminProductController@index');
+    $router->get('/admin/products/create', 'AdminProductController@create');
+    $router->post('/admin/products/store', 'AdminProductController@store');
+    $router->get('/admin/products/edit/{id}', 'AdminProductController@edit');
+    $router->post('/admin/products/update/{id}', 'AdminProductController@update');
+    $router->get('/admin/products/delete/{id}', 'AdminProductController@delete');
 
-$router->get('/admin/orders', 'AdminOrderController@index');
-$router->post('/admin/orders/update/{id}', 'AdminOrderController@updateStatus');
+    // Attributs
+    $router->get('/admin/attributes', 'AdminAttributeController@index');
+    $router->post('/admin/attributes/store', 'AdminAttributeController@store');
+    $router->get('/admin/attributes/delete/{type}/{id}', 'AdminAttributeController@delete');
+}
 
-// 5. Lancement
-$router->dispatch();
+// Lancement du routeur
+$router->dispatch($_SERVER['REQUEST_URI']);

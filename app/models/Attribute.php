@@ -3,47 +3,34 @@ namespace App\Models;
 
 use Core\Model;
 
-class Attribute extends Model
-{
-    private $allowedTables = ['categories', 'colors', 'sizes'];
+class Attribute extends Model {
 
-    public function getAll($table)
-    {
-        if (!in_array($table, $this->allowedTables)) return [];
-        
-        $orderBy = ($table === 'sizes') ? 'sort_order ASC' : 'name ASC';
-        return $this->db->query("SELECT * FROM $table ORDER BY $orderBy")->fetchAll();
+    // Récupérer tous les attributs d'une table (categories, types, etc.)
+    public function getAll($table) {
+        // On vérifie que la table est autorisée pour la sécurité
+        $allowed = ['categories', 'types', 'sizes', 'colors'];
+        if (!in_array($table, $allowed)) return [];
+
+        return $this->db->query("SELECT * FROM $table ORDER BY id DESC")->fetchAll();
     }
 
-    public function findById($table, $id)
-    {
-        if (!in_array($table, $this->allowedTables)) return null;
-        return $this->db->query("SELECT * FROM $table WHERE id = :id", ['id' => $id])->fetch();
+    // Ajouter un attribut
+    public function create($table, $name, $name_en) {
+        $allowed = ['categories', 'types', 'sizes', 'colors'];
+        if (!in_array($table, $allowed)) return;
+
+        $sql = "INSERT INTO $table (name, name_en) VALUES (:name, :name_en)";
+        $this->db->query($sql, [
+            'name' => $name,
+            'name_en' => $name_en
+        ]);
     }
 
-    public function add($table, $name, $name_en)
-    {
-        if (!in_array($table, $this->allowedTables)) return false;
+    // Supprimer un attribut
+    public function delete($table, $id) {
+        $allowed = ['categories', 'types', 'sizes', 'colors'];
+        if (!in_array($table, $allowed)) return;
 
-        // Vérifier doublon
-        $exists = $this->db->query("SELECT id FROM $table WHERE name = :name", ['name' => $name])->fetch();
-        
-        if (!$exists) {
-            $this->db->query("INSERT INTO $table (name, name_en) VALUES (:n, :ne)", ['n' => $name, 'ne' => $name_en]);
-            return true;
-        }
-        return false;
-    }
-
-    public function update($table, $id, $name, $name_en)
-    {
-        if (!in_array($table, $this->allowedTables)) return;
-        $this->db->query("UPDATE $table SET name=:n, name_en=:ne WHERE id=:id", ['n' => $name, 'ne' => $name_en, 'id' => $id]);
-    }
-
-    public function delete($table, $id)
-    {
-        if (!in_array($table, $this->allowedTables)) return;
         $this->db->query("DELETE FROM $table WHERE id = :id", ['id' => $id]);
     }
 }

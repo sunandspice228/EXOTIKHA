@@ -12,47 +12,46 @@ class AdminAttributeController extends Controller {
 
     public function index() {
         $model = new Attribute();
-        $this->view('admin/attributes/index', [
+        
+        // On charge les 4 listes pour les afficher dans la vue
+        $data = [
             'categories' => $model->getAll('categories'),
-            'sizes' => $model->getAll('sizes'),
-            'colors' => $model->getAll('colors')
-        ]);
+            'types'      => $model->getAll('types'),
+            'sizes'      => $model->getAll('sizes'),
+            'colors'     => $model->getAll('colors')
+        ];
+
+        $this->view('admin/attributes/index', $data);
     }
 
     public function store() {
         verify_csrf();
-        $model = new Attribute();
-        
-        $name = trim($_POST['name']);
-        $name_en = trim($_POST['name_en']);
-        if (empty($name_en)) $name_en = $name;
 
-        if ($model->add($_POST['type'], $name, $name_en)) {
-            flash('success', 'Attribut ajouté.');
+        $type = $_POST['type'] ?? '';
+        $name = trim($_POST['name'] ?? '');
+        $name_en = trim($_POST['name_en'] ?? '');
+
+        // Validation basique
+        if (!empty($type) && !empty($name)) {
+            $model = new Attribute();
+            
+            // Si l'anglais est vide, on met le français par défaut (ou on traduit auto côté client)
+            if (empty($name_en)) $name_en = $name;
+
+            $model->create($type, $name, $name_en);
+            flash('success', ucfirst($type) . ' ajouté avec succès !');
         } else {
-            flash('error', 'Existe déjà.');
+            flash('error', 'Le nom est obligatoire.');
         }
+
         $this->redirect('/admin/attributes');
     }
 
     public function delete($type, $id) {
         $model = new Attribute();
         $model->delete($type, $id);
-        flash('success', 'Supprimé.');
-        $this->redirect('/admin/attributes');
-    }
-    
-    // Tu pourras ajouter edit/update ici si besoin (même logique que Product)
-    public function edit($type, $id) {
-        $model = new Attribute();
-        $item = $model->findById($type, $id);
-        $this->view('admin/attributes/edit', ['item' => $item, 'type' => $type]);
-    }
-
-    public function update($type, $id) {
-        verify_csrf();
-        $model = new Attribute();
-        $model->update($type, $id, $_POST['name'], $_POST['name_en']);
+        
+        flash('success', 'Élément supprimé.');
         $this->redirect('/admin/attributes');
     }
 }
