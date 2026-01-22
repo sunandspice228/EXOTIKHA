@@ -3,74 +3,52 @@ namespace App\Models;
 
 use Core\Model;
 
-class Order extends Model
-{
-    // Liste complète (Admin) avec nom du client
-    public function getAll()
-    {
-        $sql = "SELECT o.*, u.name as user_name 
+class Order extends Model {
+
+    // 1. Récupérer toutes les commandes (avec le nom du client)
+    public function getAll() {
+        $sql = "SELECT o.*, u.name as user_name, u.email 
                 FROM orders o 
                 LEFT JOIN users u ON o.user_id = u.id 
                 ORDER BY o.created_at DESC";
         return $this->db->query($sql)->fetchAll();
     }
 
-    // Liste par Client (Compte)
-    public function getByUserId($userId)
-    {
-        return $this->db->query("SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC", ['uid' => $userId])->fetchAll();
+    // 2. Récupérer une seule commande par ID
+    public function getById($id) {
+        $sql = "SELECT o.*, u.name as user_name, u.email, u.address 
+                FROM orders o 
+                LEFT JOIN users u ON o.user_id = u.id 
+                WHERE o.id = :id";
+        return $this->db->query($sql, ['id' => $id])->fetch();
     }
-    
-    // Détails d'une commande (Items)
-    public function getOrderItems($orderId)
-    {
+
+    // 3. Récupérer les articles d'une commande
+    public function getItems($orderId) {
         $sql = "SELECT oi.*, p.name, p.image 
                 FROM order_items oi 
-                LEFT JOIN products p ON oi.product_id = p.id 
-                WHERE oi.order_id = :oid";
-        return $this->db->query($sql, ['oid' => $orderId])->fetchAll();
+                JOIN products p ON oi.product_id = p.id 
+                WHERE oi.order_id = :id";
+        return $this->db->query($sql, ['id' => $orderId])->fetchAll();
     }
 
-    // Créer commande (Header)
-    public function createOrderWithLocation($data)
-    {
-        // Générer une référence unique (ORD + Timestamp + Random)
-        $ref = 'ORD-' . date('ymd') . '-' . rand(1000, 9999);
-
-        $sql = "INSERT INTO orders (user_id, reference, name, email, phone, address, region, city, total, status, created_at) 
-                VALUES (:uid, :ref, :name, :email, :phone, :addr, :reg, :city, :total, 'En attente', NOW())";
-        
-        $this->db->query($sql, [
-            'uid' => $data['user_id'],
-            'ref' => $ref,
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'addr' => $data['address'],
-            'reg' => $data['region'],
-            'city' => $data['city'],
-            'total' => $data['total']
-        ]);
-        
-        return $this->db->lastInsertId();
+    // 4. Mettre à jour le statut
+    public function updateStatus($id, $status) {
+        $sql = "UPDATE orders SET status = :status WHERE id = :id";
+        $this->db->query($sql, ['status' => $status, 'id' => $id]);
     }
 
-    // Ajouter items
-    public function addItem($orderId, $prodId, $qty, $price)
-    {
-        $sql = "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
-        $this->db->query($sql, [$orderId, $prodId, $qty, $price]);
+    // 5. Compter les commandes (pour le dashboard)
+    public function countAll() {
+        return $this->db->query("SELECT COUNT(*) as c FROM orders")->fetch()['c'];
     }
-
-    // Mise à jour statut (Admin)
-    public function updateStatus($id, $status)
-    {
-        $this->db->query("UPDATE orders SET status = :status WHERE id = :id", ['status' => $status, 'id' => $id]);
-    }
-
-    // Mise à jour Ref Paystack
-    public function updateReference($id, $paystackRef)
-    {
-        $this->db->query("UPDATE orders SET paystack_reference = :ref WHERE id = :id", ['ref' => $paystackRef, 'id' => $id]);
+    
+    // 6. Récupérer les commandes récentes (pour le dashboard)
+    public function getRecent($limit = 5) {
+        $sql = "SELECT o.*, u.name as user_name 
+                FROM orders o 
+                LEFT JOIN users u ON o.user_id = u.id 
+                ORDER BY o.created_at DESC LIMIT $limit";
+        return $this->db->query($sql)->fetchAll();
     }
 }

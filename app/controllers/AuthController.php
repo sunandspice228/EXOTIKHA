@@ -6,76 +6,87 @@ use App\Models\User;
 
 class AuthController extends Controller {
 
-    // Afficher Login / Traiter Login
+    // --- LOGIN ---
     public function login() {
-        // Si déjà connecté, on redirige
-        if (isset($_SESSION['user_id'])) $this->redirect('/account');
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            verify_csrf();
-            
-            $userModel = new User();
-            $user = $userModel->findByEmail($_POST['email']);
-
-            if ($user && password_verify($_POST['password'], $user['password'])) {
-                // Session User
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_role'] = $user['role'];
-
-                // Redirection selon le rôle
-                if ($user['role'] === 'admin') {
-                    $this->redirect('/admin/dashboard');
-                } else {
-                    $this->redirect('/account');
-                }
-            } else {
-                flash('error', 'Email ou mot de passe incorrect.');
-            }
-        }
-
+        if (isset($_SESSION['user_id'])) $this->redirect('/profile'); // Déjà connecté ?
         $this->view('auth/login');
     }
 
-    // Inscription
-    public function register() {
-        if (isset($_SESSION['user_id'])) $this->redirect('/account');
+    public function loginPost() {
+        verify_csrf(); // Sécurité CSRF
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            verify_csrf();
+        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+        $password = $_POST['password'];
 
-            if ($_POST['password'] !== $_POST['confirm_password']) {
-                flash('error', 'Les mots de passe ne correspondent pas.');
-                $this->redirect('/register');
-            }
+        $userModel = new User();
+        $user = $userModel->login($email, $password);
 
-            $userModel = new User();
-            // Vérifier si email existe
-            if ($userModel->findByEmail($_POST['email'])) {
-                flash('error', 'Cet email est déjà utilisé.');
+        if ($user) {
+            // Création de la session
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['full_name'];
+            $_SESSION['user_role'] = $user['role'];
+
+            flash('success', 'Welcome back, ' . $user['full_name'] . '!');
+            
+            // Redirection intelligente (Admin ou User)
+            if($user['role'] === 'admin') {
+                $this->redirect('/admin/dashboard');
             } else {
-                $userId = $userModel->create($_POST);
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['user_name'] = $_POST['name'];
-                $_SESSION['user_role'] = 'user';
-                
-                flash('success', 'Bienvenue ! Compte créé avec succès.');
-                $this->redirect('/account');
+                $this->redirect('/profile');
             }
+        } else {
+            flash('error', 'Identifiants incorrects.');
+            $this->redirect('/login');
         }
+    }
 
+    // --- REGISTER ---
+    public function register() {
+        if (isset($_SESSION['user_id'])) $this->redirect('/profile');
         $this->view('auth/register');
     }
 
-    // Dans AuthController.php
+    public function registerPost() {
+        verify_csrf();
 
+        $name = htmlspecialchars(trim($_POST['full_name']));
+        $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+        $password = $_POST['password'];
+        $confirm = $_POST['confirm_password'];
+
+        if ($password !== $confirm) {
+            flash('error', 'Les mots de passe ne correspondent pas.');
+            $this->redirect('/register');
+        }
+
+        $userModel = new User();
+        if ($userModel->findByEmail($email)) {
+            flash('error', 'Cet email est déjà utilisé.');
+            $this->redirect('/register');
+        }
+
+        // Création
+        $userModel->register([
+            'name' => $name,
+            'email' => $email,
+            'password' => $password
+        ]);
+
+        // Connexion automatique après inscription
+        $user = $userModel->login($email, $password);
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['full_name'];
+        $_SESSION['user_role'] = 'user';
+
+        flash('success', 'Compte créé avec succès ! Bienvenue.');
+        $this->redirect('/profile');
+    }
+
+    // --- LOGOUT ---
     public function logout() {
-        // On vide toutes les variables de session
-        session_unset();
-        // On détruit la session côté serveur
         session_destroy();
-        
-        // On redirige
-        $this->redirect('/login');
+        header('Location: ' . url('/login'));
+        exit;
     }
 }

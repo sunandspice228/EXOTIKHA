@@ -177,4 +177,85 @@ class AdminProductController extends Controller {
             }
         }
     }
+
+    // ... suite du AdminController ...
+
+    // 6. FORMULAIRE D'ÉDITION
+    public function editProduct($id) {
+        $prodModel = new Product();
+        $product = $prodModel->findById($id);
+
+        if (!$product) {
+            flash('error', 'Produit introuvable.');
+            $this->redirect('/admin/products');
+        }
+
+        // On récupère aussi les attributs pour afficher les cases à cocher
+        if (class_exists('App\Models\Attribute')) {
+            $attrModel = new \App\Models\Attribute();
+            $attributes = $attrModel->getAll();
+        } else {
+            $attributes = [];
+        }
+
+        $this->view('admin/products/edit', [
+            'product' => $product,
+            'attributes' => $attributes
+        ]);
+    }
+
+    // 7. METTRE À JOUR LE PRODUIT (POST)
+    public function updateProduct() {
+        verify_csrf();
+        $id = $_POST['product_id'];
+
+        $model = new Product();
+        $currentProduct = $model->findById($id); // Pour garder l'ancienne image si pas changée
+
+        // Gestion Image (On garde l'ancienne si on n'en envoie pas une nouvelle)
+        $imageName = $currentProduct['image'];
+        if (!empty($_FILES['image']['name'])) {
+            $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $imageName = uniqid() . '.' . $ext;
+            move_uploaded_file($_FILES['image']['tmp_name'], ROOT_PATH . '/public/uploads/' . $imageName);
+        }
+
+        // Gestion Attributs (Tableau -> Texte)
+        $sizes = isset($_POST['sizes']) ? implode(',', $_POST['sizes']) : '';
+        $colors = isset($_POST['colors']) ? implode(',', $_POST['colors']) : '';
+
+        // Préparation des données
+        $data = [
+            'id' => $id,
+            'name' => $_POST['name'],
+            'description' => $_POST['description'],
+            'price' => $_POST['price'],
+            'old_price' => !empty($_POST['old_price']) ? $_POST['old_price'] : NULL,
+            'stock' => $_POST['stock'],
+            'category' => $_POST['category'],
+            'is_promo' => isset($_POST['is_promo']) ? 1 : 0,
+            'image' => $imageName,
+            'sizes' => $sizes,
+            'colors' => $colors
+        ];
+
+        // Requête UPDATE
+        $sql = "UPDATE products SET 
+                name = :name, 
+                description = :description, 
+                price = :price, 
+                old_price = :old_price, 
+                stock = :stock, 
+                category = :category, 
+                is_promo = :is_promo, 
+                image = :image,
+                sizes = :sizes,
+                colors = :colors
+                WHERE id = :id";
+        
+        $model->getDb()->query($sql, $data);
+
+        flash('success', 'Produit mis à jour avec succès.');
+        $this->redirect('/admin/products');
+    }
 }

@@ -1,64 +1,58 @@
 <?php
 namespace App\Models;
-
 use Core\Model;
 
-class User extends Model
-{
-    // Trouver par Email (Login)
-    public function findByEmail($email)
-    {
+class User extends Model {
+
+    // 1. Inscription (Register)
+    public function register($data) {
+        // Hachage sécurisé du mot de passe
+        $hashedPassword = password_hash($data['password'], PASSWORD_BCRYPT);
+
+        $sql = "INSERT INTO users (full_name, email, password, role, created_at) VALUES (:name, :email, :password, 'user', NOW())";
+        
+        return $this->db->query($sql, [
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $hashedPassword
+        ]);
+    }
+
+    // 2. Connexion (Login)
+    public function login($email, $password) {
+        $user = $this->findByEmail($email);
+        
+        // Si user existe ET que le mot de passe correspond au hash
+        if ($user && password_verify($password, $user['password'])) {
+            return $user;
+        }
+        return false;
+    }
+
+    // 3. Trouver par Email (Utile pour vérifier doublons)
+    public function findByEmail($email) {
         return $this->db->query("SELECT * FROM users WHERE email = :email", ['email' => $email])->fetch();
     }
 
-    // Trouver par ID (Session)
-    public function findById($id)
-    {
+    // 4. Trouver par ID (Pour le profil)
+    public function findById($id) {
         return $this->db->query("SELECT * FROM users WHERE id = :id", ['id' => $id])->fetch();
     }
 
-    // Inscription
-    public function create($data)
-    {
-        $sql = "INSERT INTO users (name, email, password, role, created_at) 
-                VALUES (:name, :email, :pass, 'user', NOW())";
-        
+    // 5. Mettre à jour le profil
+    public function updateProfile($id, $data) {
+        $sql = "UPDATE users SET full_name = :name, phone = :phone, address = :address, city = :city WHERE id = :id";
         $this->db->query($sql, [
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'pass' => password_hash($data['password'], PASSWORD_DEFAULT)
-        ]);
-        
-        return $this->db->lastInsertId();
-    }
-
-    // Mise à jour Profil (Dynamique)
-    public function updateProfile($id, $data)
-    {
-        $sql = "UPDATE users SET 
-                name = :name, 
-                phone = :phone, 
-                address = :address, 
-                city = :city, 
-                region = :region 
-                WHERE id = :id";
-        
-        $this->db->query($sql, [
-            'id' => $id,
             'name' => $data['name'],
             'phone' => $data['phone'],
             'address' => $data['address'],
             'city' => $data['city'],
-            'region' => $data['region']
+            'id' => $id
         ]);
     }
 
-    // Mise à jour Mot de passe
-    public function updatePassword($id, $newHash)
-    {
-        $this->db->query("UPDATE users SET password = :pass WHERE id = :id", [
-            'id' => $id, 
-            'pass' => $newHash
-        ]);
+    // 6. Récupérer l'historique des commandes d'un client
+    public function getOrdersByUserId($userId) {
+        return $this->db->query("SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC", ['uid' => $userId])->fetchAll();
     }
 }

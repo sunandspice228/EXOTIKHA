@@ -187,5 +187,77 @@ function changeMainImage(src, thumbElement) {
     }
 }
 </script>
+<div class="mt-5 pt-5 border-top" id="reviews">
+        <h3 class="fw-bold mb-4">Avis Clients</h3>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="bg-light p-4 rounded text-center">
+                    <h1 class="display-4 fw-bold mb-0"><?= number_format($stats['average'] ?? 0, 1) ?></h1>
+                    <div class="text-warning mb-2">
+                        <?php 
+                        $avg = round($stats['average'] ?? 0);
+                        for($i=1; $i<=5; $i++) {
+                            echo $i <= $avg ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>';
+                        }
+                        ?>
+                    </div>
+                    <p class="text-muted small"><?= $stats['count'] ?? 0 ?> avis vérifiés</p>
+                </div>
 
+                <?php if($canReview): ?>
+                    <div class="mt-4">
+                        <h6 class="fw-bold">Donnez votre avis</h6>
+                        <form action="<?= url('/reviews/store') ?>" method="POST" class="mt-2">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                            
+                            <div class="mb-2">
+                                <label class="small text-muted mb-1">Note</label>
+                                <select name="rating" class="form-select form-select-sm">
+                                    <option value="5">★★★★★ (Excellent)</option>
+                                    <option value="4">★★★★☆ (Très bon)</option>
+                                    <option value="3">★★★☆☆ (Correct)</option>
+                                    <option value="2">★★☆☆☆ (Moyen)</option>
+                                    <option value="1">★☆☆☆☆ (Mauvais)</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <textarea name="comment" rows="3" class="form-control form-control-sm" placeholder="Votre commentaire..." required></textarea>
+                            </div>
+                            <button class="btn btn-dark btn-sm w-100">Publier l'avis</button>
+                        </form>
+                    </div>
+                <?php elseif(!isset($_SESSION['user_id'])): ?>
+                    <div class="mt-3 text-center small">
+                        <a href="<?= url('/login') ?>" class="text-dark fw-bold">Connectez-vous</a> pour donner votre avis.
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="col-md-8">
+                <?php if(empty($reviews)): ?>
+                    <p class="text-muted fst-italic">Aucun avis pour le moment. Soyez le premier !</p>
+                <?php else: ?>
+                    <div class="d-flex flex-column gap-3">
+                        <?php foreach($reviews as $r): ?>
+                            <div class="border-bottom pb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="fw-bold"><?= e($r['user_name']) ?></span>
+                                        <span class="badge bg-success text-white" style="font-size: 0.6rem;">ACHAT VÉRIFIÉ</span>
+                                    </div>
+                                    <small class="text-muted"><?= date('d/m/Y', strtotime($r['created_at'])) ?></small>
+                                </div>
+                                <div class="text-warning my-1" style="font-size: 0.8rem;">
+                                    <?php for($i=1; $i<=5; $i++) echo $i <= $r['rating'] ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>'; ?>
+                                </div>
+                                <p class="mb-0 small text-secondary"><?= nl2br(e($r['comment'])) ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
 <?php $content = ob_get_clean(); require_once ROOT_PATH . '/app/views/layouts/public.php'; ?>

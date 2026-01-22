@@ -15,7 +15,9 @@ function e($str) {
 // Générer une URL absolue
 function url($path) {
     // On s'assure que ROOT_URL est défini dans config.php
-    return rtrim(ROOT_URL, '/') . '/' . ltrim($path, '/');
+    // S'il n'est pas défini, on met une chaine vide pour éviter le crash
+    $root = defined('ROOT_URL') ? ROOT_URL : '';
+    return rtrim($root, '/') . '/' . ltrim($path, '/');
 }
 
 // Debug facile (dd = dump and die)
@@ -27,12 +29,17 @@ function dd($data) {
 }
 
 /**
- * 2. TRADUCTION & LANGUES
+ * 2. TRADUCTION & LANGUES (C'est ici que j'ai ajouté les fonctions manquantes)
  */
 
-// Traduction simple (Clé -> Valeur) - À étendre si besoin
-function lang($key) {
-    return $key; 
+// Traduction Texte Statique (Menu, Boutons...) -> INDISPENSABLE POUR TES VUES
+function __($fr, $en) {
+    return (isset($_SESSION['lang']) && $_SESSION['lang'] === 'en') ? $en : $fr;
+}
+
+// Vérifier si on est en anglais (Pour le sélecteur de langue)
+function is_en() {
+    return isset($_SESSION['lang']) && $_SESSION['lang'] === 'en';
 }
 
 // Récupérer un champ traduit depuis la BDD (ex: name vs name_en)
@@ -54,19 +61,20 @@ function get_tr($data, $field = 'name') {
 
 // Récupère la devise choisie par le client (GHS par défaut)
 function get_current_currency() {
-    return $_SESSION['currency'] ?? DEFAULT_CURRENCY;
+    return $_SESSION['currency'] ?? 'GHS';
 }
 
 // Formater un prix (Base GHS -> Devise Client)
 function format_price($amountGHS) {
     $code = get_current_currency();
+    $rates = defined('CURRENCY_RATES') ? CURRENCY_RATES : [];
     
-    // On vérifie si la devise existe dans la config, sinon fallback sur GHS
-    if (!defined('CURRENCY_RATES') || !array_key_exists($code, CURRENCY_RATES)) {
+    // Si la devise n'est pas configurée, on reste en GHS
+    if (!isset($rates[$code])) {
         return number_format($amountGHS, 2) . ' GH₵';
     }
 
-    $currency = CURRENCY_RATES[$code];
+    $currency = $rates[$code];
 
     // Conversion : Montant (GHS) * Taux
     $convertedAmount = $amountGHS * $currency['rate'];
@@ -158,12 +166,12 @@ function display_flash_message() {
     if (isset($_SESSION['flash'])) {
         $f = $_SESSION['flash'];
         
-        // Définition de la classe couleur selon le framework CSS détecté ou générique
-        // 'error' -> rouge, 'success' -> vert
-        $alertClass = ($f['type'] === 'error') ? 'alert-danger bg-red-100 text-red-700 border-red-400' : 'alert-success bg-green-100 text-green-700 border-green-400';
+        // Classes Bootstrap standards
+        $alertClass = ($f['type'] === 'success') ? 'alert-success' : 'alert-danger';
         
-        echo '<div class="alert ' . $alertClass . ' border px-4 py-3 rounded relative mb-4" role="alert">';
+        echo '<div class="alert ' . $alertClass . ' alert-dismissible fade show my-3 shadow-sm" role="alert">';
         echo $f['msg'];
+        echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
         echo '</div>';
         
         unset($_SESSION['flash']);

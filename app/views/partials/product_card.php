@@ -1,33 +1,50 @@
-<div class="col-6 col-md-4">
-    <div class="card product-card h-100 position-relative">
+<div class="col">
+    <div class="card h-100 border-0 shadow-sm product-card position-relative">
         
-        <?php if(is_on_promotion($p)): ?>
-            <?php $percent = round((($p['price'] - $p['promo_price']) / $p['price']) * 100); ?>
-            <span class="position-absolute top-0 start-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold shadow" style="z-index:10;">
-                -<?= $percent ?>%
-            </span>
-        <?php elseif(strtotime($p['created_at']) > strtotime('-7 days')): ?>
-            <span class="position-absolute top-0 start-0 bg-success text-white px-2 py-1 m-2 rounded small fw-bold shadow" style="z-index:10;">
-                NEW
+        <?php if(!empty($product['is_promo'])): ?>
+            <span class="position-absolute top-0 start-0 bg-danger text-white px-2 py-1 small fw-bold z-1 m-2">
+                PROMO
             </span>
         <?php endif; ?>
 
-        <a href="<?= url('/product/'.$p['id']) ?>" class="product-img-wrap">
-            <img src="<?= $p['image'] ? url('/uploads/'.$p['image']) : 'https://dummyimage.com/600x600/f0f0f0/ccc' ?>" alt="<?= e($p['name']) ?>">
-        </a>
-        
-        <div class="card-body d-flex flex-column text-center">
-            <span class="text-muted text-uppercase text-xs fw-bold mb-1"><?= e($p['category']) ?></span>
-            <h6 class="fw-bold text-dark mb-2 text-truncate">
-                <a href="<?= url('/product/'.$p['id']) ?>" class="text-dark text-decoration-none">
-                    <?= get_tr($p, 'name') ?>
+        <div class="position-relative overflow-hidden bg-light" style="padding-top: 120%;"> <?php 
+                // Gestion du chemin image
+                $img = $product['image'];
+                if (!preg_match("~^(?:f|ht)tps?://~i", $img)) {
+                    $img = url('/uploads/' . $img);
+                }
+            ?>
+            <a href="<?= url('/product/' . $product['id']) ?>">
+                <img src="<?= htmlspecialchars($img) ?>" 
+                     class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" 
+                     alt="<?= htmlspecialchars($product['name']) ?>"
+                     onerror="this.src='https://via.placeholder.com/300x400?text=Exotikha'">
+            </a>
+            
+            <div class="position-absolute bottom-0 w-100 p-2 text-center bg-white bg-opacity-75">
+                <a href="<?= url('/product/' . $product['id']) ?>" class="btn btn-sm btn-dark w-100 rounded-0 text-uppercase" style="font-size: 0.7rem;">
+                    <?= __('Voir', 'View') ?>
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body text-center p-3">
+            <div class="text-muted x-small text-uppercase mb-1"><?= $product['category'] ?? 'Mode' ?></div>
+            <h6 class="card-title fw-bold mb-2 text-truncate">
+                <a href="<?= url('/product/' . $product['id']) ?>" class="text-dark text-decoration-none">
+                    <?= htmlspecialchars($product['name']) ?>
                 </a>
             </h6>
-            <div class="mt-auto">
-                <div class="mb-2 fs-5">
-                    <?= format_product_price_html($p) ?>
-                </div>
-                <a href="<?= url('/product/'.$p['id']) ?>" class="btn btn-outline-dark btn-sm rounded-pill px-4">Voir</a>
+            
+            <div class="price">
+                <?php if(!empty($product['is_promo'])): ?>
+                    <span class="text-muted text-decoration-line-through me-2 small">
+                        <?= format_price($product['old_price'] ?? $product['promo_price'] ?? 0) ?>
+                    </span>
+                    <span class="text-danger fw-bold"><?= format_price($product['price']) ?></span>
+                <?php else: ?>
+                    <span class="fw-bold"><?= format_price($product['price']) ?></span>
+                <?php endif; ?>
             </div>
         </div>
     </div>

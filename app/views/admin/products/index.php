@@ -1,93 +1,82 @@
 <?php ob_start(); ?>
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-slate-800">Gestion des Produits</h1>
-        <p class="text-sm text-slate-500">Gérez votre catalogue, vos stocks et vos promotions.</p>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <h3 class="fw-bold m-0">Catalogue</h3>
+    <div class="d-flex gap-2 flex-grow-1 justify-content-end">
+        <form action="" method="GET" class="d-flex">
+            <input type="text" name="q" class="form-control" placeholder="Rechercher..." value="<?= htmlspecialchars($search ?? '') ?>">
+            <button class="btn btn-dark ms-2"><i class="fa-solid fa-search"></i></button>
+            <?php if(!empty($search)): ?>
+                <a href="<?= url('/admin/products') ?>" class="btn btn-light border ms-1"><i class="fa-solid fa-times"></i></a>
+            <?php endif; ?>
+        </form>
+        <a href="<?= url('/admin/products/create') ?>" class="btn btn-dark fw-bold shadow-sm"><i class="fa-solid fa-plus me-2"></i> Ajouter</a>
     </div>
-    <a href="<?= url('/admin/products/create') ?>" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition flex items-center gap-2">
-        <i class="fa-solid fa-plus"></i> Nouveau Produit
-    </a>
 </div>
 
-<div class="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50">
+<form action="<?= url('/admin/products/bulk') ?>" method="POST" id="bulkForm">
+    <?= csrf_field() ?>
+
+    <div class="card-custom p-3 mb-3 bg-dark text-white d-flex align-items-center justify-content-between" id="bulkBar" style="display:none;">
+        <div><span class="fw-bold me-2"><span id="selectedCount">0</span> sélectionné(s)</span></div>
+        <div class="d-flex gap-2">
+            <button type="submit" name="bulk_action" value="delete" class="btn btn-danger btn-sm fw-bold" onclick="return confirm('Confirmer suppression ?')">
+                <i class="fa-solid fa-trash me-1"></i> Supprimer
+            </button>
+            <button type="button" class="btn btn-warning btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#bulkPromoModal">
+                <i class="fa-solid fa-tags me-1"></i> Promo de masse
+            </button>
+        </div>
+    </div>
+
+    <div class="card-custom p-0 overflow-hidden">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Produit</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Catégorie</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Prix</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Stock</th>
-                    <th class="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                    <th class="ps-4" style="width: 40px;"><input type="checkbox" class="form-check-input" id="selectAll" onclick="toggleAll(this)"></th>
+                    <th>Produit</th>
+                    <th>Info</th>
+                    <th>Prix & Promo</th>
+                    <th>Stock</th>
+                    <th class="text-end pe-4">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-slate-200">
+            <tbody>
                 <?php if(empty($products)): ?>
-                    <tr>
-                        <td colspan="5" class="px-6 py-10 text-center text-slate-500">
-                            <i class="fa-regular fa-folder-open fa-2x mb-2 block"></i>
-                            Aucun produit dans la base de données.
-                        </td>
-                    </tr>
+                    <tr><td colspan="6" class="text-center py-5 text-muted">Aucun produit.</td></tr>
                 <?php else: ?>
                     <?php foreach($products as $p): ?>
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-12 w-12 bg-slate-100 rounded overflow-hidden border border-slate-200">
-                                    <?php if(!empty($p['image'])): ?>
-                                        <img class="h-12 w-12 object-cover" src="<?= url('/uploads/'.$p['image']) ?>" alt="">
-                                    <?php else: ?>
-                                        <div class="h-full w-full flex items-center justify-center text-slate-300"><i class="fa-solid fa-image"></i></div>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-bold text-slate-900"><?= e($p['name']) ?></div>
-                                    <div class="text-xs text-slate-500"><?= e($p['name_en']) ?></div>
-                                </div>
+                    <tr>
+                        <td class="ps-4">
+                            <input type="checkbox" class="form-check-input product-select" name="selected_products[]" value="<?= $p['id'] ?>" onclick="updateBulkBar()">
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="<?= url('/uploads/' . $p['image']) ?>" class="rounded border me-3 object-fit-cover" width="50" height="50">
+                                <div><div class="fw-bold text-dark"><?= $p['name'] ?></div><small class="text-muted">#<?= $p['id'] ?></small></div>
                             </div>
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-100 text-slate-800">
-                                <?= e($p['category']) ?>
-                            </span>
-                            <?php if(!empty($p['type'])): ?>
-                                <span class="text-xs text-slate-400 ml-1"><?= e($p['type']) ?></span>
-                            <?php endif; ?>
+                        <td>
+                            <span class="badge bg-light text-dark border"><?= $p['category'] ?></span>
+                            <?php if($p['type']): ?><span class="badge bg-light text-muted border ms-1"><?= $p['type'] ?></span><?php endif; ?>
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <?php if($p['is_promo']): ?>
-                                <div class="text-sm font-bold text-red-600"><?= number_format($p['promo_price'], 2) ?> GHS</div>
-                                <div class="text-xs text-slate-400 line-through"><?= number_format($p['price'], 2) ?> GHS</div>
-                            <?php else: ?>
-                                <div class="text-sm font-bold text-slate-900"><?= number_format($p['price'], 2) ?> GHS</div>
-                            <?php endif; ?>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold"><?= format_price($p['price']) ?></span>
+                                <?php if($p['is_promo']): ?>
+                                    <div class="mt-1">
+                                        <span class="text-decoration-line-through text-muted small me-1"><?= format_price($p['price']) ?></span>
+                                        <span class="fw-bold text-danger"><?= format_price($p['promo_price']) ?></span>
+                                    </div>
+                                    <?php if(!empty($p['promo_end_date'])): ?>
+                                        <small class="text-muted x-small">Fin: <?= date('d/m', strtotime($p['promo_end_date'])) ?></small>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <?php if($p['stock'] <= 5): ?>
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                    Critique : <?= $p['stock'] ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    En stock : <?= $p['stock'] ?>
-                                </span>
-                            <?php endif; ?>
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a href="<?= url('/admin/products/edit/'.$p['id']) ?>" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded transition mr-2">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-                            <a href="<?= url('/admin/products/delete/'.$p['id']) ?>" 
-                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')" 
-                               class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded transition">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
+                        <td><span class="badge bg-<?= $p['stock'] < 5 ? 'warning' : 'success' ?> bg-opacity-10 text-<?= $p['stock'] < 5 ? 'warning' : 'success' ?>"><?= $p['stock'] ?></span></td>
+                        <td class="text-end pe-4">
+                            <a href="<?= url('/admin/products/edit/' . $p['id']) ?>" class="btn btn-sm btn-light border"><i class="fa-solid fa-pen"></i></a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -95,6 +84,34 @@
             </tbody>
         </table>
     </div>
-</div>
+
+    <div class="modal fade" id="bulkPromoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title fw-bold">Activer Promo</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="text-muted small">Active la promo sur la sélection. <strong class="text-danger">Les prix promo doivent être définis individuellement.</strong></p>
+                    <div class="mb-3"><label class="form-label fw-bold">Début</label><input type="datetime-local" name="bulk_start" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label fw-bold">Fin</label><input type="datetime-local" name="bulk_end" class="form-control" required></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="bulk_action" value="promo" class="btn btn-warning fw-bold">Appliquer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    function toggleAll(source) {
+        document.querySelectorAll('.product-select').forEach(cb => cb.checked = source.checked);
+        updateBulkBar();
+    }
+    function updateBulkBar() {
+        let count = document.querySelectorAll('.product-select:checked').length;
+        document.getElementById('selectedCount').innerText = count;
+        document.getElementById('bulkBar').style.display = count > 0 ? 'flex' : 'none';
+    }
+</script>
 
 <?php $content = ob_get_clean(); require_once ROOT_PATH . '/app/views/layouts/admin.php'; ?>

@@ -5,32 +5,46 @@ use Core\Model;
 
 class Attribute extends Model {
 
-    // Récupérer tous les attributs d'une table (categories, types, etc.)
-    public function getAll($table) {
-        // On vérifie que la table est autorisée pour la sécurité
-        $allowed = ['categories', 'types', 'sizes', 'colors'];
-        if (!in_array($table, $allowed)) return [];
-
-        return $this->db->query("SELECT * FROM $table ORDER BY id DESC")->fetchAll();
+    // Récupérer tous les attributs (Triés par type puis par nom)
+    public function getAll() {
+        return $this->db->query("SELECT * FROM attributes ORDER BY type DESC, name ASC")->fetchAll();
     }
 
-    // Ajouter un attribut
-    public function create($table, $name, $name_en) {
-        $allowed = ['categories', 'types', 'sizes', 'colors'];
-        if (!in_array($table, $allowed)) return;
+    /**
+     * Créer un attribut avec vérification de doublon
+     * Retourne TRUE si créé, FALSE si existe déjà
+     */
+    public function create($name, $type, $value = null) {
+        
+        // 1. NETTOYAGE
+        $name = trim($name); // Enlève les espaces avant/après (" XL " devient "XL")
 
-        $sql = "INSERT INTO $table (name, name_en) VALUES (:name, :name_en)";
-        $this->db->query($sql, [
+        // 2. VÉRIFICATION ANTI-DOUBLON
+        // On regarde si une ligne a déjà ce nom ET ce type
+        $sqlCheck = "SELECT id FROM attributes WHERE name = :name AND type = :type";
+        $exists = $this->db->query($sqlCheck, [
             'name' => $name,
-            'name_en' => $name_en
+            'type' => $type
+            ])->fetch();
+
+        // Si on trouve un résultat, c'est un doublon -> On refuse
+        if ($exists) {
+            return false;
+        }
+
+        // 3. INSERTION (Si pas de doublon)
+        $sqlInsert = "INSERT INTO attributes (name, type, value) VALUES (:name, :type, :value)";
+        $this->db->query($sqlInsert, [
+            'name' => $name, 
+            'type' => $type, 
+            'value' => $value
         ]);
+
+        return true;
     }
 
     // Supprimer un attribut
-    public function delete($table, $id) {
-        $allowed = ['categories', 'types', 'sizes', 'colors'];
-        if (!in_array($table, $allowed)) return;
-
-        $this->db->query("DELETE FROM $table WHERE id = :id", ['id' => $id]);
+    public function delete($id) {
+        $this->db->query("DELETE FROM attributes WHERE id = :id", ['id' => $id]);
     }
 }
