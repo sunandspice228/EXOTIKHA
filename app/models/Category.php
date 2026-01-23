@@ -1,23 +1,39 @@
 <?php
-namespace App\Models;
+class Category {
+    public $db;
 
-use Core\Model;
-
-class Category extends Model {
-    
-    public function getAll() {
-        return $this->db->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
+    public function __construct(){
+        $this->db = new Database;
     }
 
-    public function create($name) {
-        // On vérifie si ça existe déjà pour éviter les doublons
-        $exists = $this->db->query("SELECT id FROM categories WHERE name = ?", [$name])->fetch();
-        if(!$exists) {
-            $this->db->query("INSERT INTO categories (name) VALUES (?)", [$name]);
-        }
+    // Récupérer toutes les catégories
+    public function getCategories(){
+        $this->db->query('SELECT * FROM categories ORDER BY name ASC');
+        return $this->db->resultSet();
     }
 
-    public function delete($id) {
-        $this->db->query("DELETE FROM categories WHERE id = ?", [$id]);
+    // NOUVEAU : Récupérer les catégories AVEC une image de couverture (basée sur le dernier produit ajouté)
+    public function getCategoriesWithCover(){
+        $sql = "SELECT c.*, 
+                (SELECT image FROM products p WHERE p.category_id = c.id AND image != '' ORDER BY p.created_at DESC LIMIT 1) as cover_image,
+                (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) as product_count
+                FROM categories c
+                ORDER BY name ASC";
+        
+        $this->db->query($sql);
+        return $this->db->resultSet();
+    }
+
+    public function getCategoryById($id){
+        $this->db->query('SELECT * FROM categories WHERE id = :id');
+        $this->db->bind(':id', $id);
+        return $this->db->single();
+    }
+
+    // Pour l'admin (AJAX ou Select)
+    public function getTypesByCategory($categoryId){
+        $this->db->query('SELECT * FROM types WHERE category_id = :id');
+        $this->db->bind(':id', $categoryId);
+        return $this->db->resultSet();
     }
 }

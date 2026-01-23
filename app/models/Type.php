@@ -1,22 +1,24 @@
 <?php
-namespace App\Models;
+class Type {
+    private $db;
 
-use Core\Model;
+    public function __construct(){
+        $this->db = new Database;
+    }
 
-class Type extends Model {
+    // Récupérer tous les types organisés par catégorie
+    public function getTypes(){
+        $this->db->query('SELECT types.*, categories.name as category_name 
+                          FROM types 
+                          JOIN categories ON types.category_id = categories.id 
+                          ORDER BY categories.name, types.name');
+        return $this->db->resultSet();
+    }
     
-    public function getAll() {
-        return $this->db->query("SELECT * FROM types ORDER BY name ASC")->fetchAll();
-    }
-
-    public function create($name) {
-        $exists = $this->db->query("SELECT id FROM types WHERE name = ?", [$name])->fetch();
-        if(!$exists) {
-            $this->db->query("INSERT INTO types (name) VALUES (?)", [$name]);
-        }
-    }
-
-    public function delete($id) {
-        $this->db->query("DELETE FROM types WHERE id = ?", [$id]);
+    // Récupérer les types liés à une catégorie spécifique
+    public function getTypesByCategoryId($catId){
+        $this->db->query('SELECT * FROM types WHERE category_id = :catId ORDER BY name ASC');
+        $this->db->bind(':catId', $catId);
+        return $this->db->resultSet();
     }
 }

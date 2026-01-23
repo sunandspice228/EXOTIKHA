@@ -1,40 +1,80 @@
 <?php
-namespace Core;
-
-use PDO;
-use PDOException;
-
 class Database {
-    
-    // ⚠️ ICI C'EST LE CHANGEMENT IMPORTANT : 'public' au lieu de 'private'
-    public $pdo; 
+    private $host = DB_HOST;
+    private $user = DB_USER;
+    private $pass = DB_PASS;
+    private $dbname = DB_NAME;
+
+    private $dbh; // Database Handler
+    private $stmt; // Statement
+    private $error;
 
     public function __construct() {
-        // On récupère les infos depuis config.php
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Affiche les erreurs SQL
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Résultats en tableau associatif
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ];
+        // DSN
+        $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname;
+        $options = array(
+            PDO::ATTR_PERSISTENT => true,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+        );
 
         try {
-            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        } catch (PDOException $e) {
-            // En cas d'erreur de connexion, on arrête tout
-            die("Erreur de connexion Base de Données : " . $e->getMessage());
+            $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
+        } catch(PDOException $e) {
+            $this->error = $e->getMessage();
+            die("Erreur de connexion BDD : " . $this->error);
         }
     }
 
-    // Méthode raccourcie pour faire des requêtes
-    public function query($sql, $params = []) {
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
+    // Préparer la requête
+    public function query($sql) {
+        $this->stmt = $this->dbh->prepare($sql);
+    }
+
+    // Lier les valeurs
+    public function bind($param, $value, $type = null) {
+        if(is_null($type)) {
+            switch(true) {
+                case is_int($value):
+                    $type = PDO::PARAM_INT;
+                    break;
+                case is_bool($value):
+                    $type = PDO::PARAM_BOOL;
+                    break;
+                case is_null($value):
+                    $type = PDO::PARAM_NULL;
+                    break;
+                default:
+                    $type = PDO::PARAM_STR;
+            }
+        }
+        $this->stmt->bindValue($param, $value, $type);
+    }
+
+    // Exécuter la requête
+    public function execute() {
+        return $this->stmt->execute();
+    }
+
+    // Récupérer un ensemble de résultats
+    public function resultSet() {
+        $this->execute();
+        return $this->stmt->fetchAll();
+    }
+
+    // Récupérer une seule ligne
+    public function single() {
+        $this->execute();
+        return $this->stmt->fetch();
+    }
+
+    // Obtenir le nombre de lignes
+    public function rowCount() {
+        return $this->stmt->rowCount();
     }
     
-    // Méthode pour récupérer le dernier ID inséré (Utile pour CheckoutController)
-    public function lastInsertId() {
-        return $this->pdo->lastInsertId();
+    // Dernier ID inséré
+    public function lastInsertId(){
+        return $this->dbh->lastInsertId();
     }
 }

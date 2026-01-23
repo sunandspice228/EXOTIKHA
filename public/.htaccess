@@ -1,9 +1,12 @@
-Options -MultiViews
-RewriteEngine On
-
-# Si ton dossier n'est pas 'exotikha', change la ligne ci-dessous
-RewriteBase /exotikha/public/
-
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.+)$ index.php [QSA,L]
+<IfModule mod_rewrite.c>
+  Options -Multiviews
+  RewriteEngine On
+  
+  # IMPORTANT : Ajuste cette ligne si ton dossier s'appelle différemment (ex: /Exotikha, /exotikha, /projet...)
+  # Respecte la casse (majuscule/minuscule) de ton dossier Windows !
+  RewriteBase /exotikha/public/
+  
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+</IfModule>

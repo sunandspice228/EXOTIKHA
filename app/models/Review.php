@@ -1,59 +1,58 @@
 <?php
-namespace App\Models;
+class Review {
+    private $db;
 
-use Core\Model;
-
-class Review extends Model {
-
-    // Récupérer les avis d'un produit
-    public function getByProduct($productId) {
-        $sql = "SELECT r.*, u.name as user_name 
-                FROM reviews r 
-                JOIN users u ON r.user_id = u.id 
-                WHERE r.product_id = :pid 
-                ORDER BY r.created_at DESC";
-        return $this->db->query($sql, ['pid' => $productId])->fetchAll();
+    public function __construct(){
+        $this->db = new Database;
     }
 
-    // Récupérer la moyenne des notes
-    public function getStats($productId) {
-        $sql = "SELECT AVG(rating) as average, COUNT(*) as count 
-                FROM reviews WHERE product_id = :pid";
-        $result = $this->db->query($sql, ['pid' => $productId])->fetch();
-        return [
-            'average' => round($result['average'] ?? 0, 1),
-            'count' => $result['count'] ?? 0
-        ];
+    // Ajouter un avis (Statut 'pending' par défaut)
+    public function addReview($data){
+        $this->db->query("INSERT INTO reviews (user_id, rating, comment, status) VALUES (:uid, :rating, :comment, 'pending')");
+        $this->db->bind(':uid', $_SESSION['user_id']);
+        $this->db->bind(':rating', $data['rating']);
+        $this->db->bind(':comment', $data['comment']);
+        return $this->db->execute();
     }
 
-    // Vérifier si l'utilisateur a acheté le produit (Statut 'completed' ou 'shipped')
-    public function hasBoughtProduct($userId, $productId) {
-        $sql = "SELECT COUNT(*) as c FROM orders o 
-                JOIN order_items oi ON o.id = oi.order_id 
-                WHERE o.user_id = :uid 
-                AND oi.product_id = :pid 
-                AND (o.status = 'completed' OR o.status = 'shipped')";
-        $res = $this->db->query($sql, ['uid' => $userId, 'pid' => $productId])->fetch();
-        return $res['c'] > 0;
+    // Pour l'Admin : Voir TOUS les avis (avec le nom du client)
+    public function getAllReviews(){
+        $this->db->query("SELECT reviews.*, users.full_name, users.email 
+                          FROM reviews 
+                          JOIN users ON reviews.user_id = users.id 
+                          ORDER BY reviews.created_at DESC");
+        return $this->db->resultSet();
     }
 
-    // Vérifier s'il a déjà noté
-    public function hasAlreadyReviewed($userId, $productId) {
-        $sql = "SELECT COUNT(*) as c FROM reviews 
-                WHERE user_id = :uid AND product_id = :pid";
-        $res = $this->db->query($sql, ['uid' => $userId, 'pid' => $productId])->fetch();
-        return $res['c'] > 0;
+    // Pour le Dashboard Admin : Compter les avis en attente
+    public function getPendingReviews(){
+        $this->db->query("SELECT * FROM reviews WHERE status = 'pending'");
+        return $this->db->resultSet();
     }
 
-    // Ajouter un avis
-    public function add($userId, $productId, $rating, $comment) {
-        $sql = "INSERT INTO reviews (user_id, product_id, rating, comment, created_at) 
-                VALUES (:uid, :pid, :rating, :comment, NOW())";
-        $this->db->query($sql, [
-            'uid' => $userId, 
-            'pid' => $productId, 
-            'rating' => $rating, 
-            'comment' => $comment
-        ]);
+    // Pour la Page d'Accueil : Voir seulement les avis APPROUVÉS
+    public function getApprovedReviews(){
+        $this->db->query("SELECT reviews.*, users.full_name 
+                          FROM reviews 
+                          JOIN users ON reviews.user_id = users.id 
+                          WHERE reviews.status = 'approved' 
+                          ORDER BY reviews.created_at DESC 
+                          LIMIT 6");
+        return $this->db->resultSet();
+    }
+
+    // Admin : Approuver un avis
+    public function updateStatus($id, $status){
+        $this->db->query("UPDATE reviews SET status = :status WHERE id = :id");
+        $this->db->bind(':status', $status);
+        $this->db->bind(':id', $id);
+        return $this->db->execute();
+    }
+
+    // Admin : Supprimer un avis
+    public function deleteReview($id){
+        $this->db->query("DELETE FROM reviews WHERE id = :id");
+        $this->db->bind(':id', $id);
+        return $this->db->execute();
     }
 }
