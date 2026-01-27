@@ -1,84 +1,63 @@
 <?php require APPROOT . '/Views/admin/inc/header.php'; ?>
 
-<div class="p-6 max-w-5xl mx-auto">
+<div class="max-w-4xl mx-auto">
+    
     <div class="flex items-center gap-4 mb-8">
-        <a href="<?php echo URLROOT; ?>/admin/blog" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">
-            <i class="fas fa-arrow-left"></i>
+        <a href="<?php echo URLROOT; ?>/admin/blog" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition shadow-sm group">
+            <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-slate-900">Écrire un Article</h1>
-            <p class="text-sm text-slate-500">Partagez vos conseils lifestyle.</p>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Create New Post</h1>
+            <p class="text-sm text-slate-500">Share news, fashion tips, and updates with your audience.</p>
         </div>
     </div>
 
-    <form action="<?php echo URLROOT; ?>/admin/add_post" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div class="mb-6">
-                    <label class="block text-xs font-black uppercase text-slate-400 mb-2">Titre de l'article</label>
-                    <input type="text" name="title" placeholder="Ex: Comment choisir sa lingerie..." class="w-full rounded-xl border-slate-200 focus:ring-primary h-12" required>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-black uppercase text-slate-400 mb-2">Contenu</label>
-                    <textarea id="blog_editor" name="content" rows="15" class="w-full rounded-xl border-slate-200"></textarea>
-                </div>
-            </div>
+    <form action="<?php echo URLROOT; ?>/admin/blog_add" method="POST" enctype="multipart/form-data" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+        <?php echo csrfField(); ?>
+        <div class="mb-8">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Post Title <span class="text-red-500">*</span></label>
+            <input type="text" name="title" required placeholder="Enter a catchy headline..." 
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-lg font-serif font-bold text-slate-800 placeholder-slate-300">
         </div>
 
-        <div class="space-y-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="font-bold text-slate-900 mb-4">Image de couverture</h3>
-                <div class="relative group cursor-pointer border-2 border-dashed border-slate-200 rounded-2xl p-4 hover:border-primary transition text-center" onclick="document.getElementById('imageInput').click()">
-                    <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 mb-2"></i>
-                    <p class="text-xs text-slate-500">Cliquez pour ajouter<br>(Recommandé: 1200x800px)</p>
-                    <input type="file" id="imageInput" name="image" class="hidden" accept="image/*" onchange="previewImage(this)">
-                    <img id="preview" class="hidden mt-4 rounded-lg w-full h-40 object-cover">
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="font-bold text-slate-900 mb-4">Paramètres</h3>
-                <div class="mb-4">
-                    <label class="block text-xs font-black uppercase text-slate-400 mb-2">Catégorie</label>
-                    <select name="category" class="w-full rounded-xl border-slate-200 focus:ring-primary h-12">
-                        <option value="Accessories">Accessoires</option>
-                        <option value="Tips for Life">Conseils Lifestyle</option>
-                        <option value="Trends">Tendances</option>
-                        <option value="Wellness">Bien-être</option>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Category <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <i class="fas fa-folder absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <select name="category" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition appearance-none font-medium text-slate-700 cursor-pointer">
+                        <option value="Lifestyle">Lifestyle</option>
+                        <option value="Mode">Fashion & Trends</option>
+                        <option value="Conseils">Tips & Tricks</option>
+                        <option value="Événements">Events</option>
                     </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 </div>
-                <button type="submit" class="w-full bg-primary text-white py-4 rounded-xl font-bold shadow-lg hover:bg-slate-800 transition uppercase tracking-widest">
-                    Publier
-                </button>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cover Image</label>
+                <input type="file" name="image" class="w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:uppercase file:bg-slate-100 file:text-slate-600 hover:file:bg-primary hover:file:text-white transition cursor-pointer border border-slate-200 rounded-xl">
             </div>
         </div>
+
+        <div class="mb-8">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Content <span class="text-red-500">*</span></label>
+            <textarea name="content" rows="15" required 
+                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-700 leading-relaxed" 
+                      placeholder="Write your story here..."></textarea>
+            <p class="text-[10px] text-slate-400 mt-2 text-right">HTML tags are allowed for formatting.</p>
+        </div>
+
+        <div class="flex items-center justify-end gap-4 border-t border-slate-50 pt-6">
+            <a href="<?php echo URLROOT; ?>/admin/blog" class="text-slate-500 font-bold text-sm hover:text-slate-800 px-4 transition">Cancel</a>
+            <button type="submit" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-primary transition shadow-lg shadow-slate-900/20 flex items-center gap-2">
+                <i class="fas fa-paper-plane"></i> Publish Post
+            </button>
+        </div>
+
     </form>
 </div>
-
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
-    tinymce.init({
-        selector: '#blog_editor',
-        plugins: 'advlist autolink lists link image charmap preview anchor searchreplace vertical align visualblocks code fullscreen insertdatetime media table code help wordcount',
-        toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | removeformat | link image',
-        height: 500,
-        content_style: 'body { font-family:Inter,Helvetica,Arial,sans-serif; font-size:16px }',
-        branding: false
-    });
-
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById('preview');
-                preview.src = e.target.result;
-                preview.classList.remove('hidden');
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-</script>
 
 <?php require APPROOT . '/Views/admin/inc/footer.php'; ?>

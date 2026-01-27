@@ -7,8 +7,8 @@ class Pages extends Controller {
     private $categoryModel;
     private $orderModel;
     private $newsletterModel;
-    private $postModel;   // Nouveau : Pour le Blog
-    private $reviewModel; // Nouveau : Pour les Avis
+    private $postModel;
+    private $reviewModel;
 
     public function __construct(){
         // Chargement des modèles
@@ -16,42 +16,54 @@ class Pages extends Controller {
         $this->categoryModel = $this->model('Category');
         $this->newsletterModel = $this->model('Newsletter');
         $this->orderModel = $this->model('Order');
-        $this->postModel = $this->model('Post');     // Chargement du modèle Post
-        $this->reviewModel = $this->model('Review'); // Chargement du modèle Review
+        $this->postModel = $this->model('Post');
+        $this->reviewModel = $this->model('Review');
     }
 
     // =========================================================
     // 1. PAGE D'ACCUEIL (HOME)
     // =========================================================
     public function index(){
-        // A. Récupérer les produits (New Arrivals - Limite 8)
-        $products = $this->productModel->getProducts(); 
-        $recentProducts = array_slice($products, 0, 8);
+        // A. Nouveautés
+        $newArrivals = $this->productModel->getNewArrivals(4);
 
-        // B. Récupérer les Catégories
-        // Utilise getCategoriesWithCover si elle existe, sinon getCategories simple
+        // B. Promotions
+        $promoProducts = $this->productModel->getPromoProducts(4);
+
+        // C. Catégories
         if(method_exists($this->categoryModel, 'getCategoriesWithCover')){
             $categories = $this->categoryModel->getCategoriesWithCover();
         } else {
             $categories = $this->categoryModel->getCategories();
         }
 
-        // C. Récupérer les Articles de Blog (Limite 3)
-        $posts = $this->postModel->getPosts();
-        $recentPosts = array_slice($posts, 0, 3);
+        // D. Blog (3 derniers articles)
+        $posts = $this->postModel->getLatestPosts(3); // Utilise la méthode optimisée si elle existe
 
-        // D. Récupérer les Témoignages Approuvés (Limite 6)
-        $reviews = $this->reviewModel->getApprovedReviews();
+        // E. Témoignages (Validés uniquement)
+        // On récupère les avis globaux approuvés pour les témoignages
+if(method_exists($this->reviewModel, 'getApprovedReviews')){
+    $reviews = $this->reviewModel->getApprovedReviews();
+} else {
+    $reviews = [];
+} // Note: Il faudra adapter ReviewModel pour avoir une méthode getApprovedReviews() globale si ce n'est pas par produit.
+        // Sinon, utilise celle que tu as écrite :
+        if(method_exists($this->reviewModel, 'getApprovedReviews')){
+            $reviews = $this->reviewModel->getApprovedReviews();
+        } else {
+            $reviews = [];
+        }
 
         $data = [
-            'title' => 'Exotikha - Sensual, Elegant, Confident',
-            'products' => $recentProducts,
+            'title' => 'Exotikha - Mode Africaine Moderne',
+            'description' => 'Découvrez notre collection unique.',
+            'new_arrivals' => $newArrivals,
+            'promo_products' => $promoProducts,
             'categories' => $categories,
-            'posts' => $recentPosts, // Variable disponible dans la vue index.php
-            'reviews' => $reviews    // Variable disponible dans la vue index.php
+            'posts' => $posts,
+            'reviews' => $reviews
         ];
         
-        // Attention au chemin de la vue (front/pages/index ou front/index selon votre structure)
         $this->view('front/pages/index', $data);
     }
 
@@ -63,17 +75,25 @@ class Pages extends Controller {
     }
 
     // =========================================================
-    // 3. PAGE ARTICLE DE BLOG UNIQUE (Lecture)
+    // 3. PAGE ARTICLE DE BLOG UNIQUE
     // =========================================================
     public function post($id){
         $post = $this->postModel->getPostById($id);
-        
-        if($post){
-            $data = ['post' => $post];
-            $this->view('front/pages/single_post', $data);
-        } else {
-            redirect(''); // Redirection si l'article n'existe pas
+
+        if(!$post){
+            redirect('pages');
         }
+
+        // Sidebar : 3 articles récents
+        $recentPosts = $this->postModel->getLatestPosts(3);
+
+        $data = [
+            'title' => $post->title,
+            'post' => $post,
+            'recent' => $recentPosts
+        ];
+
+        $this->view('front/pages/post', $data);
     }
     
     // =========================================================
@@ -81,20 +101,22 @@ class Pages extends Controller {
     // =========================================================
     public function subscribe(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             $email = trim($_POST['email']);
 
             if(!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)){
                 if($this->newsletterModel->addEmail($email)){
-                    flash('product_message', 'You have successfully subscribed to our newsletter!');
+                    flash('product_message', 'Inscription réussie à la newsletter !');
                 } else {
-                    flash('product_message', 'You are already subscribed.', 'bg-orange-100 text-orange-700');
+                    flash('product_message', 'Vous êtes déjà inscrit.', 'bg-orange-100 text-orange-700');
                 }
             } else {
-                flash('product_message', 'Please enter a valid email address.', 'bg-red-100 text-red-700');
+                flash('product_message', 'Email invalide.', 'bg-red-100 text-red-700');
             }
         }
         
-        // Rediriger vers la page précédente
+        // Redirection vers la page précédente
         $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : URLROOT;
         header("Location: $referer");
     }
@@ -104,6 +126,8 @@ class Pages extends Controller {
     // =========================================================
     public function contact(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $data = [
@@ -115,22 +139,17 @@ class Pages extends Controller {
             ];
 
             if(empty($data['name']) || empty($data['email']) || empty($data['message'])){
-                $data['error'] = 'Please fill in all required fields.';
+                $data['error'] = 'Veuillez remplir tous les champs.';
             }
 
             if(empty($data['error'])){
                 $to = 'sales@exotikha.com'; 
-                $email_subject = "Contact Form: " . $data['subject'];
-                $email_body = "Name: " . $data['name'] . "\n" . "Email: " . $data['email'] . "\n\n" . $data['message'];
+                $email_subject = "Contact: " . $data['subject'];
+                $email_body = "Nom: " . $data['name'] . "\nEmail: " . $data['email'] . "\n\n" . $data['message'];
                 
-                // Utilisation du mail_helper si disponible, sinon mail() natif
-                if(function_exists('sendEmail')){
-                    sendEmail($to, $email_subject, nl2br($email_body)); // nl2br pour convertir les sauts de ligne
-                } else {
-                    mail($to, $email_subject, $email_body);
-                }
+                sendEmail($to, $email_subject, nl2br($email_body));
 
-                flash('product_message', 'Thank you! Your message has been sent.');
+                flash('product_message', 'Merci ! Votre message a été envoyé.');
                 redirect('pages/contact');
             } else {
                 $this->view('front/pages/contact', $data);
@@ -142,20 +161,36 @@ class Pages extends Controller {
     }
 
     // =========================================================
-    // 6. SUIVI DE COMMANDE (TRACK)
+    // 6. LISTE DE TOUS LES ARTICLES (BLOG)
+    // =========================================================
+    public function blog(){
+        $posts = $this->postModel->getPosts();
+
+        $data = [
+            'title' => 'Exotikha Journal',
+            'posts' => $posts
+        ];
+
+        $this->view('front/pages/blog', $data);
+    }
+
+    // =========================================================
+    // 7. SUIVI DE COMMANDE
     // =========================================================
     public function track(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             $orderNumber = trim($_POST['order_number']);
             $email = trim($_POST['email']);
 
             if(empty($orderNumber) || empty($email)){
-                flash('track_error', 'Please provide both Order ID and Email.', 'bg-red-100 text-red-700');
-                redirect('users/account?tab=track');
+                flash('track_error', 'Veuillez entrer le numéro et l\'email.', 'bg-red-100 text-red-700');
+                // CORRECTION ICI : Redirection vers profile
+                redirect('users/profile?tab=track');
                 return;
             }
 
-            // Vérification via le modèle Order
             $order = $this->orderModel->trackOrder($orderNumber, $email);
 
             if($order){
@@ -165,8 +200,9 @@ class Pages extends Controller {
                 ];
                 $this->view('front/pages/order_status', $data);
             } else {
-                flash('product_message', 'Order not found. Please check your details.', 'bg-red-100 text-red-700');
-                redirect('users/account?tab=track');
+                flash('product_message', 'Commande introuvable.', 'bg-red-100 text-red-700');
+                // CORRECTION ICI : Redirection vers profile
+                redirect('users/profile?tab=track');
             }
         } else {
             redirect('');

@@ -8,6 +8,8 @@ class UsersController extends Controller {
 
     public function register(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $data = [
@@ -15,15 +17,11 @@ class UsersController extends Controller {
                 'email' => trim($_POST['email']),
                 'password' => trim($_POST['password']),
                 'confirm_password' => trim($_POST['confirm_password']),
-                'name_err' => '',
-                'email_err' => '',
-                'password_err' => '',
-                'confirm_password_err' => ''
+                'name_err' => '', 'email_err' => '', 'password_err' => '', 'confirm_password_err' => ''
             ];
 
             if(empty($data['email'])){ $data['email_err'] = 'Email requis'; }
-            // Vérifier si l\'email existe déjà
-            if($this->userModel->findUserByEmail($data['email'])){
+            elseif($this->userModel->findUserByEmail($data['email'])){
                 $data['email_err'] = 'Cet email est déjà pris';
             }
             if(empty($data['name'])){ $data['name_err'] = 'Nom requis'; }
@@ -31,7 +29,6 @@ class UsersController extends Controller {
             if($data['password'] != $data['confirm_password']){ $data['confirm_password_err'] = 'Les mots de passe ne correspondent pas'; }
 
             if(empty($data['email_err']) && empty($data['name_err']) && empty($data['password_err']) && empty($data['confirm_password_err'])){
-                // Hash du mot de passe
                 $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
 
                 if($this->userModel->register($data)){
@@ -49,6 +46,8 @@ class UsersController extends Controller {
 
     public function login(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             
             $email = trim($_POST['email']);
@@ -68,11 +67,14 @@ class UsersController extends Controller {
         }
     }
 
+    // MODIFICATION IMPORTANTE ICI : On stocke l'image dans la session
     public function createUserSession($user){
         $_SESSION['user_id'] = $user->id;
         $_SESSION['user_email'] = $user->email;
         $_SESSION['user_name'] = $user->full_name;
         $_SESSION['user_role'] = $user->role;
+        // On vérifie si l'utilisateur a une image, sinon on met une par défaut
+        $_SESSION['user_image'] = !empty($user->image) ? $user->image : 'img/default-avatar.png';
         
         if($user->role === 'admin'){
             redirect('admin/index');
@@ -86,62 +88,63 @@ class UsersController extends Controller {
         unset($_SESSION['user_email']);
         unset($_SESSION['user_name']);
         unset($_SESSION['user_role']);
+        unset($_SESSION['user_image']); // Ne pas oublier de supprimer l'image
         session_destroy();
         redirect('users/login');
     }
 
     // Page Mon Profil (Affichage + Traitement Upload)
     public function profile(){
-        // 1. Sécurité : Il faut être connecté
-        if(!isLoggedIn()){
-            redirect('users/login');
-        }
+        if(!isLoggedIn()){ redirect('users/login'); }
 
         $userId = $_SESSION['user_id'];
         $user = $this->userModel->getUserById($userId);
 
-        // 2. Traitement du Formulaire (Upload Image)
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             
-            // Vérifier si une image a été envoyée
             if(isset($_FILES['avatar']) && $_FILES['avatar']['error'] === 0){
                 
-                // Dossier de destination (Crée le dossier s'il n'existe pas)
-                $targetDir = 'uploads/avatars/';
-                $absDir = APPROOT . '/../public/' . $targetDir;
-                
-                if (!file_exists($absDir)) {
-                    mkdir($absDir, 0777, true);
-                }
+                // Sécurité : Vérifier le type de fichier
+                $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+                $filename = $_FILES['avatar']['name'];
+                $fileext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-                $fileName = $_FILES['avatar']['name'];
-                $fileTmp = $_FILES['avatar']['tmp_name'];
-                
-                // Renommer l'image (ID_User + Timestamp) pour éviter les doublons
-                $newFileName = 'user_' . $userId . '_' . time() . '_' . $fileName;
-                $targetFile = $absDir . $newFileName;
-                $dbPath = $targetDir . $newFileName;
+                if(in_array($fileext, $allowed)){
+                    $targetDir = 'uploads/avatars/';
+                    $absDir = APPROOT . '/../public/' . $targetDir;
+                    
+                    if (!file_exists($absDir)) {
+                        mkdir($absDir, 0777, true);
+                    }
 
-                // Déplacement du fichier
-                if(move_uploaded_file($fileTmp, $targetFile)){
-                    // Mise à jour BDD
-                    if($this->userModel->updateAvatar($userId, $dbPath)){
-                        // Mise à jour Session (pour l'affichage immédiat dans le header)
-                        $_SESSION['user_image'] = $dbPath;
-                        
-                        flash('profile_msg', 'Photo de profil mise à jour !');
-                        redirect('users/profile');
+                    // Nom unique pour éviter l'écrasement et les problèmes de cache
+                    $newFileName = 'user_' . $userId . '_' . time() . '.' . $fileext;
+                    $targetFile = $absDir . $newFileName;
+                    $dbPath = $targetDir . $newFileName;
+
+                    if(move_uploaded_file($_FILES['avatar']['tmp_name'], $targetFile)){
+                        // Suppression de l'ancienne image si elle existe et n'est pas celle par défaut
+                        if(!empty($user->image) && file_exists(APPROOT . '/../public/' . $user->image)){
+                            unlink(APPROOT . '/../public/' . $user->image);
+                        }
+
+                        if($this->userModel->updateAvatar($userId, $dbPath)){
+                            $_SESSION['user_image'] = $dbPath; // Mise à jour immédiate de la session
+                            flash('profile_msg', 'Photo de profil mise à jour !');
+                            redirect('users/profile');
+                        }
+                    } else {
+                        flash('profile_msg', 'Erreur lors du déplacement du fichier.', 'alert alert-danger');
                     }
                 } else {
-                    flash('profile_msg', 'Erreur lors de l\'upload de l\'image.', 'alert alert-danger');
+                    flash('profile_msg', 'Format incorrect (JPG, PNG, GIF uniquement).', 'alert alert-danger');
                 }
             }
         }
 
-        // 3. Affichage de la Vue
-        $data = [
-            'user' => $user
-        ];
+        $data = ['user' => $user];
         $this->view('front/users/profile', $data);
     }
 }

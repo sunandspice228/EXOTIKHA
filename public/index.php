@@ -1,6 +1,9 @@
 <?php
 // 1. Charger la config
 require_once '../app/Config/config.php';
+require_once '../app/bootstrap.php';
+
+
 
 // 2. Charger les Helpers (INDISPENSABLE pour les fonctions flash() et redirect())
 // Ces fichiers contiennent des fonctions, pas des classes, donc l'autoloader ne les charge pas.
@@ -22,6 +25,4 @@ spl_autoload_register(function($className){
         require_once '../app/Controllers/' . $className . '.php';
     }
 });
-
-// 4. Instancier le Routeur
 $init = new Router;

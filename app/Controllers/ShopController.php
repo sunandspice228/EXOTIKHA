@@ -1,46 +1,66 @@
 <?php
-class ShopController extends Controller {
+class Shop extends Controller {
     private $productModel;
     private $categoryModel;
+    private $typeModel; // Nécessaire pour les filtres
 
     public function __construct(){
         $this->productModel = $this->model('Product');
         $this->categoryModel = $this->model('Category');
+        $this->typeModel = $this->model('ProductType'); // Chargement du modèle Type
     }
 
     public function index(){
-        // Récupération des filtres depuis l'URL ($_GET)
+        // 1. Récupération des filtres depuis l'URL ($_GET)
         $filters = [
             'category_id' => isset($_GET['category']) ? trim($_GET['category']) : '',
             'gender'      => isset($_GET['gender']) ? trim($_GET['gender']) : '',
-            'type_id'     => isset($_GET['type']) ? trim($_GET['type']) : '',
-            'price_max'   => isset($_GET['price']) ? trim($_GET['price']) : ''
+            'type_id'     => isset($_GET['type']) ? trim($_GET['type']) : '', // Correction nom variable
+            'price_max'   => isset($_GET['price']) ? trim($_GET['price']) : '',
+            'search'      => isset($_GET['q']) ? trim($_GET['q']) : '', // Recherche
+            'sort'        => isset($_GET['sort']) ? $_GET['sort'] : 'newest'
         ];
 
-        // Appel au modèle avec les filtres
-        $products = $this->productModel->getProducts($filters);
+        // 2. Appel au modèle Product pour les produits filtrés
+        // Utilise getShopProducts() qui gère tous ces filtres (voir Product.php)
+        $products = $this->productModel->getShopProducts($filters); 
         
-        // On a besoin des listes pour construire la sidebar
+        // 3. Données pour la Sidebar
         $categories = $this->categoryModel->getCategories();
-        $types = $this->categoryModel->getAllTypes(); // Assure-toi d'avoir cette méthode dans CategoryModel
+        $types = $this->typeModel->getTypes(); // Utilisation du bon modèle
 
         $data = [
             'products' => $products,
             'categories' => $categories,
             'types' => $types,
-            'filters' => $filters // On renvoie les filtres pour cocher les cases actives
+            'filters' => $filters
         ];
 
         $this->view('front/shop/index', $data);
     }
     
-    // ... Laisser la méthode product() comme avant ...
     public function product($id){
-        // (Code existant inchangé)
+        // 1. Récupérer le produit
         $product = $this->productModel->getProductById($id);
-        $images = $this->productModel->getProductImages($id);
+        
         if(!$product){ redirect('shop'); }
-        $data = ['product' => $product, 'images' => $images];
+
+        // 2. Récupérer la galerie (Correction du nom de la méthode)
+        $gallery = $this->productModel->getGalleryImages($id);
+
+        // 3. Récupérer les variantes (CRUCIAL pour le panier : Taille/Couleur)
+        $variants = $this->productModel->getVariantsByProductId($id);
+
+        // 4. Produits similaires (Optionnel mais recommandé)
+        $related = $this->productModel->getProductsByCategory($product->category_id, 4);
+
+        $data = [
+            'product' => $product, 
+            'gallery' => $gallery, // Variable renommée pour clarté
+            'variants' => $variants,
+            'related' => $related
+        ];
+
         $this->view('front/shop/details', $data);
     }
 }

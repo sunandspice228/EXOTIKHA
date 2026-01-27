@@ -1,40 +1,47 @@
 <?php
+/*
+ * PDO Database Class
+ * Connect to database
+ * Create prepared statements
+ * Bind values
+ * Return rows and results
+ */
 class Database {
     private $host = DB_HOST;
     private $user = DB_USER;
     private $pass = DB_PASS;
     private $dbname = DB_NAME;
 
-    private $dbh; // Database Handler
-    private $stmt; // Statement
+    private $dbh;
+    private $stmt;
     private $error;
 
-    public function __construct() {
-        // DSN
+    public function __construct(){
+        // Set DSN
         $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname;
         $options = array(
             PDO::ATTR_PERSISTENT => true,
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         );
 
-        try {
+        // Create PDO instance
+        try{
             $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
-        } catch(PDOException $e) {
+        } catch(PDOException $e){
             $this->error = $e->getMessage();
-            die("Erreur de connexion BDD : " . $this->error);
+            echo $this->error;
         }
     }
 
-    // Préparer la requête
-    public function query($sql) {
+    // Prepare statement with query
+    public function query($sql){
         $this->stmt = $this->dbh->prepare($sql);
     }
 
-    // Lier les valeurs
-    public function bind($param, $value, $type = null) {
-        if(is_null($type)) {
-            switch(true) {
+    // Bind values
+    public function bind($param, $value, $type = null){
+        if(is_null($type)){
+            switch(true){
                 case is_int($value):
                     $type = PDO::PARAM_INT;
                     break;
@@ -51,30 +58,47 @@ class Database {
         $this->stmt->bindValue($param, $value, $type);
     }
 
-    // Exécuter la requête
-    public function execute() {
+    // Execute the prepared statement
+    public function execute(){
         return $this->stmt->execute();
     }
 
-    // Récupérer un ensemble de résultats
-    public function resultSet() {
+    // Get result set as array of objects
+    public function resultSet(){
         $this->execute();
-        return $this->stmt->fetchAll();
+        return $this->stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    // Récupérer une seule ligne
-    public function single() {
+    // Get single record as object
+    public function single(){
         $this->execute();
-        return $this->stmt->fetch();
+        return $this->stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    // Obtenir le nombre de lignes
-    public function rowCount() {
+    // Get row count
+    public function rowCount(){
         return $this->stmt->rowCount();
     }
     
-    // Dernier ID inséré
+    // --- MÉTHODES AJOUTÉES POUR CORRIGER L'ERREUR ---
+
+    // Récupérer le dernier ID inséré
     public function lastInsertId(){
         return $this->dbh->lastInsertId();
+    }
+
+    // Démarrer une transaction
+    public function beginTransaction(){
+        return $this->dbh->beginTransaction();
+    }
+
+    // Valider la transaction
+    public function commit(){
+        return $this->dbh->commit();
+    }
+
+    // Annuler la transaction (en cas d'erreur)
+    public function rollBack(){
+        return $this->dbh->rollBack();
     }
 }

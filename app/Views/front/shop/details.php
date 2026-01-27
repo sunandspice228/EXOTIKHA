@@ -1,118 +1,171 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
+<div class="bg-white border-b border-slate-100 py-4">
+    <div class="max-w-7xl mx-auto px-6 text-xs font-bold uppercase tracking-widest text-slate-400">
+        <a href="<?php echo URLROOT; ?>" class="hover:text-primary">Home</a>
+        <span class="mx-2">/</span>
+        <a href="<?php echo URLROOT; ?>/shop" class="hover:text-primary">Shop</a>
+        <span class="mx-2">/</span>
+        <span class="text-slate-900"><?php echo $data['product']->name; ?></span>
+    </div>
+</div>
+
 <div class="max-w-7xl mx-auto px-6 py-12">
-    
-    <nav class="text-sm mb-8 text-slate-500">
-        <a href="<?php echo URLROOT; ?>" class="hover:text-primary">Home</a> <span class="mx-2">/</span>
-        <a href="<?php echo URLROOT; ?>/shop" class="hover:text-primary">Shop</a> <span class="mx-2">/</span>
-        <span class="font-bold text-slate-800"><?php echo $data['product']->name; ?></span>
-    </nav>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-20">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
         
-        <div x-data="{ activeImage: '<?php echo URLROOT . '/public/' . $data['product']->image; ?>' }">
-            
-            <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-4 border border-slate-100 shadow-sm">
-                <img :src="activeImage" class="w-full h-full object-cover transition duration-300">
+        <div class="space-y-4">
+            <div class="relative aspect-[3/4] bg-slate-50 rounded-2xl overflow-hidden shadow-sm group">
+                <?php if($data['product']->promo_price > 0): ?>
+                    <span class="absolute top-4 left-4 bg-red-600 text-white text-xs font-black uppercase px-3 py-1.5 rounded z-10 shadow-md">
+                        Sale
+                    </span>
+                <?php endif; ?>
+                
+                <?php if(!empty($data['product']->image)): ?>
+                    <img src="<?php echo URLROOT . '/public/img/' . $data['product']->image; ?>" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 cursor-zoom-in">
+                <?php else: ?>
+                    <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fas fa-image text-4xl"></i></div>
+                <?php endif; ?>
             </div>
-
-            <?php if(!empty($data['gallery'])): ?>
-                <div class="flex gap-4 overflow-x-auto pb-2">
-                    <button @click="activeImage = '<?php echo URLROOT . '/public/' . $data['product']->image; ?>'" 
-                            class="w-20 h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 border-transparent hover:border-accent transition">
-                        <img src="<?php echo URLROOT . '/public/' . $data['product']->image; ?>" class="w-full h-full object-cover">
-                    </button>
-
-                    <?php foreach($data['gallery'] as $img): ?>
-                        <button @click="activeImage = '<?php echo URLROOT . '/public/' . $img->image_path; ?>'" 
-                                class="w-20 h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 border-transparent hover:border-accent transition">
-                            <img src="<?php echo URLROOT . '/public/' . $img->image_path; ?>" class="w-full h-full object-cover">
-                        </button>
-                    <?php endforeach; ?>
+            
+            <div class="grid grid-cols-4 gap-4">
+                <div class="aspect-square rounded-xl bg-slate-100 overflow-hidden border-2 border-slate-900 cursor-pointer">
+                    <?php if(!empty($data['product']->image)): ?>
+                        <img src="<?php echo URLROOT . '/public/img/' . $data['product']->image; ?>" class="w-full h-full object-cover">
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+                <div class="aspect-square rounded-xl bg-slate-50 border border-transparent hover:border-slate-300 transition"></div>
+                <div class="aspect-square rounded-xl bg-slate-50 border border-transparent hover:border-slate-300 transition"></div>
+                <div class="aspect-square rounded-xl bg-slate-50 border border-transparent hover:border-slate-300 transition"></div>
+            </div>
         </div>
 
-        <div>
-            <div class="mb-6">
-                <span class="text-accent font-bold text-xs uppercase tracking-widest bg-accent/10 px-2 py-1 rounded">
-                    <?php echo $data['product']->category_name ?? 'Collection'; ?>
-                </span>
-            </div>
-
-            <h1 class="text-4xl font-serif font-bold text-slate-900 mb-4"><?php echo $data['product']->name; ?></h1>
-
-            <div class="flex items-end gap-4 mb-8">
-                <?php if(!empty($data['product']->promo_price)): ?>
-                    <span class="text-3xl font-bold text-red-600"><?php echo CURRENCY_SYMBOL . ' ' . number_format($data['product']->promo_price, 2); ?></span>
-                    <span class="text-xl text-slate-400 line-through mb-1"><?php echo CURRENCY_SYMBOL . ' ' . number_format($data['product']->price, 2); ?></span>
-                    <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded mb-2">PROMO</span>
+        <div class="lg:sticky lg:top-32 h-fit">
+            
+            <h1 class="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-4"><?php echo $data['product']->name; ?></h1>
+            
+            <div class="flex items-center gap-4 mb-6">
+                <?php if($data['product']->promo_price > 0): ?>
+                    <span class="text-3xl font-bold text-red-600"><?php echo CURRENCY_SYMBOL . number_format($data['product']->promo_price, 2); ?></span>
+                    <span class="text-xl text-slate-400 line-through"><?php echo number_format($data['product']->price, 2); ?></span>
+                    <span class="bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded">
+                        Save <?php echo round((($data['product']->price - $data['product']->promo_price)/$data['product']->price)*100); ?>%
+                    </span>
                 <?php else: ?>
-                    <span class="text-3xl font-bold text-slate-900"><?php echo CURRENCY_SYMBOL . ' ' . number_format($data['product']->price, 2); ?></span>
+                    <span class="text-3xl font-bold text-slate-900"><?php echo CURRENCY_SYMBOL . number_format($data['product']->price, 2); ?></span>
                 <?php endif; ?>
             </div>
 
-            <p class="text-slate-600 leading-relaxed mb-8 border-b border-slate-100 pb-8">
-                <?php echo nl2br($data['product']->description); ?>
-            </p>
+            <div class="flex items-center gap-2 mb-8">
+                <div class="flex text-yellow-400 text-sm">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                </div>
+                <span class="text-sm font-bold text-slate-500 underline cursor-pointer">4.8 (12 Reviews)</span>
+            </div>
 
-            <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="space-y-6">
-                <input type="hidden" name="product_id" value="<?php echo $data['product']->id; ?>">
+            <div class="prose prose-slate text-slate-600 leading-relaxed mb-8 text-lg">
+                <?php echo nl2br($data['product']->description); ?>
+            </div>
+
+            <?php if($data['product']->stock > 0): ?>
+            <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="space-y-8">
+            <?php echo csrfField(); ?>    
+            <input type="hidden" name="product_id" value="<?php echo $data['product']->id; ?>">
                 
-                <div class="flex items-center gap-4">
-                    <label class="font-bold text-slate-700">Quantity:</label>
-                    <div class="flex items-center border border-slate-300 rounded-lg" x-data="{ qty: 1 }">
-                        <button type="button" @click="qty > 1 ? qty-- : qty = 1" class="px-3 py-2 text-slate-500 hover:text-primary"><i class="fas fa-minus"></i></button>
-                        <input type="number" name="quantity" x-model="qty" class="w-12 text-center border-none focus:ring-0 p-0 text-slate-900 font-bold" min="1" max="<?php echo $data['product']->stock; ?>">
-                        <button type="button" @click="qty < <?php echo $data['product']->stock; ?> ? qty++ : qty" class="px-3 py-2 text-slate-500 hover:text-primary"><i class="fas fa-plus"></i></button>
+                <div class="flex items-center gap-6">
+                    <span class="text-sm font-bold uppercase tracking-wide text-slate-900">Quantity</span>
+                    <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden h-12 w-36">
+                        <button type="button" onclick="if(this.nextElementSibling.value>1) this.nextElementSibling.value--" class="w-12 h-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center border-r border-slate-300 transition text-slate-500">
+                            <i class="fas fa-minus text-xs"></i>
+                        </button>
+                        <input type="number" name="quantity" value="1" min="1" max="<?php echo $data['product']->stock; ?>" class="w-full h-full text-center border-none focus:ring-0 font-bold text-slate-900 appearance-none bg-white text-lg">
+                        <button type="button" onclick="if(this.previousElementSibling.value < <?php echo $data['product']->stock; ?>) this.previousElementSibling.value++" class="w-12 h-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center border-l border-slate-300 transition text-slate-500">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
                     </div>
-                    <div class="text-xs text-slate-500">
-                        <?php echo $data['product']->stock > 0 ? $data['product']->stock . ' items in stock' : '<span class="text-red-500 font-bold">Out of Stock</span>'; ?>
-                    </div>
+                    <span class="text-xs text-green-600 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-100 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span> In Stock
+                    </span>
                 </div>
 
-                <?php if($data['product']->stock > 0): ?>
-                    <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-primary text-white py-4 rounded-full font-bold uppercase tracking-wide hover:bg-slate-800 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                            Add to Cart
-                        </button>
-                        <button type="button" class="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-red-400 hover:text-red-500 transition">
-                            <i class="far fa-heart text-xl"></i>
-                        </button>
-                    </div>
-                <?php else: ?>
-                    <button type="button" disabled class="w-full bg-slate-200 text-slate-400 py-4 rounded-full font-bold uppercase tracking-wide cursor-not-allowed">
-                        Sold Out
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-accent transition shadow-xl shadow-slate-900/20 flex items-center justify-center gap-3 group">
+                        <i class="fas fa-shopping-bag group-hover:-translate-y-1 transition"></i> Add to Cart
                     </button>
-                <?php endif; ?>
+                    <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $data['product']->id; ?>" class="w-16 h-16 border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm">
+                        <i class="far fa-heart text-2xl"></i>
+                    </a>
+                </div>
             </form>
+            <?php else: ?>
+                <div class="bg-red-50 border border-red-100 p-6 rounded-xl text-center">
+                    <p class="text-red-600 font-bold uppercase tracking-widest text-sm">Sold Out</p>
+                    <p class="text-sm text-red-400 mt-2">This item is currently unavailable. Please check back later.</p>
+                </div>
+            <?php endif; ?>
 
-            <div class="mt-8 grid grid-cols-2 gap-4 text-sm text-slate-500">
-                <div class="flex items-center gap-2"><i class="fas fa-truck text-accent"></i> Fast Delivery (Ghana)</div>
-                <div class="flex items-center gap-2"><i class="fas fa-check-circle text-accent"></i> Authentic Quality</div>
+            <div class="mt-12 border-t border-slate-100" x-data="{ active: 1 }">
+                <div class="border-b border-slate-100">
+                    <button @click="active = (active === 1 ? null : 1)" class="w-full py-5 flex justify-between items-center text-left font-bold text-slate-900 hover:text-accent transition">
+                        <span>Details & Materials</span>
+                        <i class="fas fa-chevron-down transition-transform" :class="active === 1 ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="active === 1" x-collapse class="pb-6 text-sm text-slate-600 leading-relaxed">
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Premium quality fabric tailored for comfort.</li>
+                            <li>Authentic African prints mixed with modern cuts.</li>
+                            <li>Designed in Ghana, shipped worldwide.</li>
+                            <li>Care: Machine wash cold, do not bleach.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="border-b border-slate-100">
+                    <button @click="active = (active === 2 ? null : 2)" class="w-full py-5 flex justify-between items-center text-left font-bold text-slate-900 hover:text-accent transition">
+                        <span>Shipping & Returns</span>
+                        <i class="fas fa-chevron-down transition-transform" :class="active === 2 ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="active === 2" x-collapse class="pb-6 text-sm text-slate-600 leading-relaxed">
+                        <p class="mb-2"><strong>Shipping:</strong> Free shipping on orders over 500 GHS in Accra. Standard delivery takes 2-5 business days.</p>
+                        <p><strong>Returns:</strong> We accept returns within 14 days of delivery for unworn items with tags attached.</p>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
     <?php if(!empty($data['related'])): ?>
-        <div class="border-t border-slate-100 pt-16">
-            <h2 class="text-2xl font-serif font-bold text-slate-900 mb-8">You may also like</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                <?php foreach($data['related'] as $related): ?>
-                    <div class="group">
-                        <div class="relative h-[250px] bg-slate-100 rounded-xl overflow-hidden mb-3">
-                            <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $related->id; ?>">
-                                <img src="<?php echo URLROOT . '/public/' . $related->image; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                            </a>
-                        </div>
-                        <h3 class="font-bold text-slate-900 truncate"><a href="<?php echo URLROOT; ?>/shop/product/<?php echo $related->id; ?>"><?php echo $related->name; ?></a></h3>
-                        <span class="text-slate-600"><?php echo CURRENCY_SYMBOL . ' ' . $related->price; ?></span>
+    <div class="mt-24 border-t border-slate-100 pt-16">
+        <h2 class="text-2xl font-serif font-bold text-slate-900 mb-8">You May Also Like</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <?php foreach($data['related'] as $item): ?>
+                <?php if($item->id != $data['product']->id): ?>
+                <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $item->id; ?>" class="group block">
+                    <div class="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden mb-4 relative">
+                         <?php if(!empty($item->image)): ?>
+                            <img src="<?php echo URLROOT . '/public/img/' . $item->image; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <?php endif; ?>
+                        
+                        <?php if($item->promo_price > 0): ?>
+                            <span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded">Sale</span>
+                        <?php endif; ?>
                     </div>
-                <?php endforeach; ?>
-            </div>
+                    <h3 class="font-bold text-slate-900 text-sm truncate group-hover:text-accent transition"><?php echo $item->name; ?></h3>
+                    
+                    <div class="flex gap-2 items-center mt-1">
+                         <?php if($item->promo_price > 0): ?>
+                            <span class="text-red-500 font-bold text-sm"><?php echo CURRENCY_SYMBOL . number_format($item->promo_price, 2); ?></span>
+                            <span class="text-slate-400 text-xs line-through"><?php echo number_format($item->price, 2); ?></span>
+                         <?php else: ?>
+                            <span class="text-slate-500 text-sm font-bold"><?php echo CURRENCY_SYMBOL . number_format($item->price, 2); ?></span>
+                         <?php endif; ?>
+                    </div>
+                </a>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </div>
+    </div>
     <?php endif; ?>
-
 </div>
 
 <?php require APPROOT . '/Views/front/layout/footer.php'; ?>

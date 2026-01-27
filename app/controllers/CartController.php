@@ -62,6 +62,8 @@ class CartController extends Controller {
     // 2. TRAITER LA VALIDATION FINALE
     public function process_order(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             if(!isLoggedIn()) redirect('users/login');
 
             // Récupérer les données du formulaire

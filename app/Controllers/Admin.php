@@ -1,29 +1,40 @@
 <?php
 class Admin extends Controller {
- private $productModel;
+    private $productModel;
     private $categoryModel;
     private $attributeModel;
-    private $typeModel; // Nouveau
+    private $typeModel;
     private $userModel;
     private $orderModel;
-    private $postModel; 
+    private $postModel;
     private $reviewModel;
+    private $db; // Utile pour les requêtes directes si besoin
 
     public function __construct(){
-        // Security Check
-        if(!isLoggedIn() || !isAdmin()){
+        // 1. Security Check : Seuls les admins peuvent accéder ici
+        if(!isLoggedIn()){
             redirect('users/login');
         }
+        
+        // On vérifie le rôle (suppose que ta session stocke user_role ou qu'on vérifie via DB)
+        // Si tu n'as pas de fonction isAdmin(), assure-toi que $_SESSION['user_role'] == 'admin'
+        if(isset($_SESSION['user_role']) && $_SESSION['user_role'] != 'admin'){
+            redirect('pages/index');
+        }
 
-        // Load Models
+        // 2. Load Models
         $this->productModel = $this->model('Product');
         $this->categoryModel = $this->model('Category');
-        $this->attributeModel = $this->model('ProductAttribute'); // Modèle Attributs
-        $this->typeModel = $this->model('ProductType');           // Modèle Types
+        $this->attributeModel = $this->model('ProductAttribute');
+        $this->typeModel = $this->model('ProductType');
         $this->userModel = $this->model('User');
         $this->orderModel = $this->model('Order');
         $this->postModel = $this->model('Post');
         $this->reviewModel = $this->model('Review');
+        $this->orderModel = $this->model('Order');
+        
+        // Instance DB pour requêtes rapides si nécessaire
+        $this->db = new Database;
     }
 
     // =========================================================
@@ -31,350 +42,59 @@ class Admin extends Controller {
     // =========================================================
     public function index(){
         $nbProducts = $this->productModel->countProducts();
-        $stockValue = $this->productModel->getStockValue();
+        $stockValue = $this->productModel->getStockValue(); // Assure-toi que cette méthode existe
         $outOfStock = $this->productModel->countOutOfStock();
-        $nbCustomers = $this->userModel->countCustomers(); 
+        $nbCustomers = $this->userModel->countCustomers();
         
         $currentYear = date('Y');
-        $yearlySales = $this->orderModel->getYearlySales($currentYear);
+        // Vérifie si getYearlySales existe dans OrderModel, sinon commente
+        $yearlySales = (method_exists($this->orderModel, 'getYearlySales')) ? $this->orderModel->getYearlySales($currentYear) : [];
 
         $data = [
-            'nb_products' => $nbProducts,
+            'revenue' => $this->orderModel->getTotalRevenue(),
+            'total_orders' => $this->orderModel->countOrders(),
+            'total_products' => $nbProducts,
+            'total_customers' => $nbCustomers,
+            
+            // Pour les graphiques et widgets
             'stock_value' => $stockValue,
             'out_of_stock' => $outOfStock,
-            'nb_customers' => $nbCustomers,
             'chart_data' => $yearlySales,
             'current_year' => $currentYear,
             'posts_count' => count($this->postModel->getPosts()),
-            'pending_reviews' => count($this->reviewModel->getPendingReviews())
+            'pending_reviews' => count($this->reviewModel->getPendingReviews()), // Assure-toi que cette méthode existe
+            
+            // Listes pour le Dashboard
+            'latest_orders' => $this->orderModel->getLatestOrders(5),
+            'low_stock' => $this->productModel->getLowStockProducts(5)
         ];
 
         $this->view('admin/index', $data);
     }
 
     // =========================================================
-    // 2. PRODUCT MANAGEMENT
+    // 2. GESTION DU STAFF (ADMINISTRATEURS)
     // =========================================================
-
-  public function products(){
-        $products = $this->productModel->getProducts();
-        $this->view('admin/products/index', ['products' => $products]);
-    }
-
-    public function products_add(){
-        if($_SERVER['REQUEST_METHOD'] == 'POST'){
-            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-            $data = [
-                'name' => trim($_POST['name']),
-                'category_id' => trim($_POST['category_id']),
-                'type_id' => !empty($_POST['type_id']) ? trim($_POST['type_id']) : null, // TYPE
-                'gender' => trim($_POST['gender']),
-                'description' => trim($_POST['description']),
-                'price' => trim($_POST['price']),
-                'promo_price' => trim($_POST['promo_price']),
-                'promo_start' => trim($_POST['promo_start']),
-                'promo_end' => trim($_POST['promo_end']),
-                'stock' => trim($_POST['stock']),
-                'image' => '', 
-                'error' => ''
-            ];
-
-            if(empty($data['name']) || empty($data['price'])) { $data['error'] = 'Champs requis manquants'; }
-
-            // Upload Image Principale
-            if(!empty($_FILES['image']['name'])){
-                $data['image'] = $this->uploadFile($_FILES['image'], "products/");
-            }
-
-            if(empty($data['error'])){
-                // 1. Sauvegarde Produit
-                $productId = $this->productModel->addProduct($data);
-                
-                if($productId){
-                    // 2. Sauvegarde Galerie
-                    if(isset($_FILES['gallery']) && !empty($_FILES['gallery']['name'][0])){
-                        $this->handleGalleryUpload($productId, $_FILES['gallery']);
-                    }
-
-                    // 3. Sauvegarde Attributs (Nouveau)
-                    // On s'attend à $_POST['attributes'] = [ 'id_attribut' => 'Valeur', ... ]
-                    if(isset($_POST['attributes'])){
-                        foreach($_POST['attributes'] as $attrId => $attrValue){
-                            if(!empty($attrValue)){
-                                $this->productModel->addProductAttributeValue($productId, $attrId, trim($attrValue));
-                            }
-                        }
-                    }
-
-                    flash('product_message', 'Produit ajouté avec succès !');
-                    redirect('admin/products');
-                }
-            } else {
-                // Recharger les listes en cas d'erreur
-                $data['categories'] = $this->categoryModel->getCategories();
-                $data['types'] = $this->typeModel->getTypes();
-                $data['attributes'] = $this->attributeModel->getAttributes();
-                $this->view('admin/products/add', $data);
-            }
-        } else {
-            // Affichage Formulaire
-            $data = [
-                'categories' => $this->categoryModel->getCategories(),
-                'types' => $this->typeModel->getTypes(),           // Liste des Types
-                'attributes' => $this->attributeModel->getAttributes() // Liste des Attributs
-            ];
-            $this->view('admin/products/add', $data);
-        }
-    }
-
-   public function products_edit($id){
-        if($_SERVER['REQUEST_METHOD'] == 'POST'){
-            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $data = [
-                'id' => $id,
-                'name' => trim($_POST['name']),
-                'category_id' => trim($_POST['category_id']),
-                'type_id' => !empty($_POST['type_id']) ? trim($_POST['type_id']) : null,
-                'gender' => trim($_POST['gender']),
-                'description' => trim($_POST['description']),
-                'price' => trim($_POST['price']),
-                'promo_price' => trim($_POST['promo_price']),
-                'promo_start' => trim($_POST['promo_start']),
-                'promo_end' => trim($_POST['promo_end']),
-                'stock' => trim($_POST['stock'])
-            ];
-            
-            if($this->productModel->updateProduct($data)){
-                // Update Galerie
-                if(isset($_FILES['gallery']) && !empty($_FILES['gallery']['name'][0])){
-                    $this->handleGalleryUpload($id, $_FILES['gallery']);
-                }
-
-                // Update Attributs (Supprime les anciens et remet les nouveaux)
-                $this->productModel->deleteProductAttributes($id);
-                if(isset($_POST['attributes'])){
-                    foreach($_POST['attributes'] as $attrId => $attrValue){
-                        if(!empty($attrValue)){
-                            $this->productModel->addProductAttributeValue($id, $attrId, trim($attrValue));
-                        }
-                    }
-                }
-
-                flash('product_message', 'Produit mis à jour');
-                redirect('admin/products');
-            }
-        } else {
-            $data = [
-                'product' => $this->productModel->getProductById($id),
-                'categories' => $this->categoryModel->getCategories(),
-                'types' => $this->typeModel->getTypes(),
-                'attributes' => $this->attributeModel->getAttributes(),
-                'gallery' => $this->productModel->getGalleryImages($id),
-                'current_attributes' => $this->productModel->getProductAttributes($id) // Valeurs actuelles
-            ];
-            $this->view('admin/products/edit', $data);
-        }
-    }
-
-    // ... (Helpers uploadFile et handleGalleryUpload restent identiques) ...
-    // ... (Méthodes attributes() et categories() restent identiques) ...
     
-    // Ajoutez ceci pour éviter les erreurs si les helpers sont appelés
-    private function uploadFile($file, $folder = ""){
-        $targetDir = 'uploads/' . $folder;
-        $absDir = APPROOT . '/../public/' . $targetDir;
-        if (!file_exists($absDir)) { mkdir($absDir, 0777, true); }
-        $fileName = time() . '_' . basename($file['name']);
-        if(move_uploaded_file($file["tmp_name"], $absDir . $fileName)){ return $targetDir . $fileName; }
-        return 'default.jpg';
-    }
-    private function handleGalleryUpload($productId, $files){
-        $count = count($files['name']);
-        for($i=0; $i<$count; $i++){
-            if(!empty($files['name'][$i])){
-                $file = ['name' => $files['name'][$i], 'tmp_name' => $files['tmp_name'][$i]];
-                $path = $this->uploadFile($file, "products/");
-                $this->productModel->addGalleryImage($productId, $path);
-            }
-        }
-    }
+    // LISTE DES ADMINS (C'est cette méthode qui manquait !)
+    public function users(){
+        // On récupère tous les utilisateurs qui ont le rôle 'admin'
+        // Si getAdmins() n'existe pas dans UserModel, on fait une requête directe ici
+        $this->db->query("SELECT * FROM users WHERE role = 'admin' ORDER BY created_at DESC");
+        $admins = $this->db->resultSet();
+
+        $data = [
+            'admins' => $admins
+        ];
         
-
-    // =========================================================
-    // 3. BLOG MANAGEMENT (NEW)
-    // =========================================================
-    public function blog(){
-        $posts = $this->postModel->getPosts();
-        $this->view('admin/blog/index', ['posts' => $posts]);
+        $this->view('admin/users/index', $data);
     }
 
-    public function add_post(){
-        if($_SERVER['REQUEST_METHOD'] == 'POST'){
-            $data = [
-                'title' => trim($_POST['title']),
-                'category' => trim($_POST['category']),
-                'content' => $_POST['content'], // HTML from Editor
-                'image' => 'blog-default.jpg'
-            ];
-
-            if(!empty($_FILES['image']['name'])){
-                $data['image'] = $this->uploadFile($_FILES['image'], "blog/");
-            }
-
-            if($this->postModel->addPost($data)){
-                flash('admin_msg', 'Article publié !');
-                redirect('admincontroller/blog');
-            }
-        } else {
-            $this->view('admin/blog/add');
-        }
-    }
-
-    public function delete_post($id){
-        if($this->postModel->deletePost($id)){
-            flash('admin_msg', 'Article supprimé');
-            redirect('admincontroller/blog');
-        }
-    }
-
-    // =========================================================
-    // 4. REVIEWS MANAGEMENT (NEW)
-    // =========================================================
-    public function reviews(){
-        $reviews = $this->reviewModel->getAllReviews();
-        $this->view('admin/reviews/index', ['reviews' => $reviews]);
-    }
-
-    public function approve_review($id){
-        if($this->reviewModel->updateStatus($id, 'approved')){
-            flash('admin_msg', 'Avis approuvé et publié sur l\'accueil.');
-            redirect('admincontroller/reviews');
-        }
-    }
-
-    public function delete_review($id){
-        if($this->reviewModel->deleteReview($id)){
-            flash('admin_msg', 'Avis supprimé.');
-            redirect('admincontroller/reviews');
-        }
-    }
-
-    // =========================================================
-    // 5. ORDERS & CUSTOMERS
-    // =========================================================
-    public function orders(){
-        $orders = $this->orderModel->getOrders();
-        $this->view('admin/orders/index', ['orders' => $orders]);
-    }
-
-    public function orders_details($id){
-        if($_SERVER['REQUEST_METHOD'] == 'POST'){
-            $this->orderModel->updateStatus($id, $_POST['status']);
-            flash('product_message', 'Statut mis à jour');
-            redirect('admincontroller/orders_details/' . $id);
-        }
-        $data = [
-            'order' => $this->orderModel->getOrderById($id),
-            'items' => $this->orderModel->getOrderItems($id)
-        ];
-        $this->view('admin/orders/details', $data);
-    }
-
-    public function customers(){
-        $customers = $this->userModel->getCustomers();
-        $this->view('admin/customers/index', ['customers' => $customers]);
-    }
-
-    // =========================================================
-    // HELPERS (UPLOAD)
-    // =========================================================
-    
-        // --- GESTION DES ATTRIBUTS & TYPES ---
-
-    public function attributes(){
-        // Ajout d'un Attribut (Ex: Taille)
-        if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_attribute'])){
-            $data = ['name' => trim($_POST['name']), 'value' => trim($_POST['value'])];
-            if(!empty($data['name'])){
-                $this->attributeModel->addAttribute($data);
-                flash('admin_msg', 'Attribut ajouté');
-            }
-            redirect('admin/attributes');
-        }
-
-        // Ajout d'un Type (Ex: Robe)
-        if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_type'])){
-            $data = ['name' => trim($_POST['type_name'])];
-            if(!empty($data['name'])){
-                $this->typeModel->addType($data);
-                flash('admin_msg', 'Type de produit ajouté');
-            }
-            redirect('admin/attributes');
-        }
-
-        $data = [
-            'attributes' => $this->attributeModel->getAttributes(),
-            'types' => $this->typeModel->getTypes()
-        ];
-        $this->view('admin/attributes/index', $data);
-    }
-
-    public function attributes_delete($id){
-        $this->attributeModel->deleteAttribute($id);
-        redirect('admin/attributes');
-    }
-
-    public function types_delete($id){
-        $this->typeModel->deleteType($id);
-        redirect('admin/attributes');
-    }
-    // =========================================================
-    // GESTION DES CATÉGORIES
-    // =========================================================
-    public function categories(){
-        if($_SERVER['REQUEST_METHOD'] == 'POST'){
-            // Nettoyage
-            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            
-            $data = [
-                'name' => trim($_POST['name']),
-                'description' => trim($_POST['description'])
-            ];
-
-            if(!empty($data['name'])){
-                // On utilise une requête directe pour simplifier si la méthode n'est pas dans le Modèle
-                // Ou mieux : $this->categoryModel->addCategory($data);
-                
-                // Ici, méthode compatible universelle :
-                $this->categoryModel->db->query("INSERT INTO categories (name, description) VALUES (:name, :desc)");
-                $this->categoryModel->db->bind(':name', $data['name']);
-                $this->categoryModel->db->bind(':desc', $data['description']);
-                
-                if($this->categoryModel->db->execute()){
-                    flash('admin_msg', 'Catégorie ajoutée avec succès');
-                    redirect('admin/categories');
-                }
-            }
-        }
-
-        $categories = $this->categoryModel->getCategories();
-        $this->view('admin/categories/index', ['categories' => $categories]);
-    }
-
-    public function categories_delete($id){
-        $this->categoryModel->db->query("DELETE FROM categories WHERE id = :id");
-        $this->categoryModel->db->bind(':id', $id);
-        $this->categoryModel->db->execute();
-        flash('admin_msg', 'Catégorie supprimée', 'bg-red-100 text-red-700');
-        redirect('admin/categories');
-    }
-
-    // =========================================================
-    // GESTION DU STAFF (AJOUT ADMIN)
-    // =========================================================
+    // AJOUTER UN ADMIN
     public function users_add(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
             $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $data = [
@@ -382,51 +102,439 @@ class Admin extends Controller {
                 'email' => trim($_POST['email']),
                 'password' => trim($_POST['password']),
                 'confirm_password' => trim($_POST['confirm_password']),
-                'role' => 'admin', // Force le rôle Admin
+                'role' => 'admin', // Force le rôle
                 'error' => ''
             ];
 
-            // Validation
             if(empty($data['email']) || empty($data['password'])) { 
                 $data['error'] = "Veuillez remplir tous les champs."; 
-            }
-            if($data['password'] != $data['confirm_password']) { 
+            } elseif($data['password'] != $data['confirm_password']) { 
                 $data['error'] = "Les mots de passe ne correspondent pas."; 
-            }
-            // Vérifier si l'email existe déjà
-            if($this->userModel->findUserByEmail($data['email'])){ 
+            } elseif($this->userModel->findUserByEmail($data['email'])){ 
                 $data['error'] = "Cet email est déjà utilisé."; 
             }
 
             if(empty($data['error'])){
-                // Hash du mot de passe
                 $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
 
-                // Inscription via le User Model
-                // Note : On utilise register() ou on fait l'insertion ici
-                if($this->userModel->register($data)){
-                    // IMPORTANT : On force le rôle 'admin' juste après l'insertion si register() met 'customer' par défaut
-                    // Mais le mieux est d'avoir une méthode registerAdmin ou de passer le rôle.
-                    
-                    // Update rapide pour être sûr :
-                    $this->userModel->db->query("UPDATE users SET role = 'admin' WHERE email = :email");
-                    $this->userModel->db->bind(':email', $data['email']);
-                    $this->userModel->db->execute();
-
+                // Insertion manuelle pour forcer le rôle admin si register() ne le permet pas
+                $this->db->query("INSERT INTO users (full_name, email, password, role) VALUES (:name, :email, :pass, 'admin')");
+                $this->db->bind(':name', $data['name']);
+                $this->db->bind(':email', $data['email']);
+                $this->db->bind(':pass', $data['password']);
+                
+                if($this->db->execute()){
                     flash('admin_msg', 'Nouvel administrateur ajouté !');
-                    redirect('admin/users_add');
+                    redirect('admin/users'); // Redirection vers la liste
                 } else {
-                    die('Erreur système.');
+                    die('Erreur base de données');
                 }
             } else {
                 $this->view('admin/users/add', $data);
             }
         } else {
-            // Affichage du formulaire
-            $data = [
-                'name' => '', 'email' => '', 'password' => '', 'confirm_password' => '', 'error' => ''
-            ];
+            $data = ['name' => '', 'email' => '', 'password' => '', 'confirm_password' => '', 'error' => ''];
             $this->view('admin/users/add', $data);
+        }
+    }
+
+    // SUPPRIMER UN ADMIN
+    public function users_delete($id){
+        // Empêcher de se supprimer soi-même
+        if($id == $_SESSION['user_id']){
+            flash('admin_msg', 'Impossible de supprimer votre propre compte.', 'bg-red-50 text-red-600');
+            redirect('admin/users');
+        }
+
+        $this->db->query("DELETE FROM users WHERE id = :id AND role = 'admin'");
+        $this->db->bind(':id', $id);
+        
+        if($this->db->execute()){
+            flash('admin_msg', 'Administrateur supprimé.');
+        }
+        redirect('admin/users');
+    }
+
+    // LISTE DES CLIENTS
+    public function customers(){
+        // Récupère uniquement les utilisateurs avec role = 'customer'
+        $this->db->query("SELECT * FROM users WHERE role = 'customer' ORDER BY created_at DESC");
+        $customers = $this->db->resultSet();
+        
+        $this->view('admin/customers/index', ['customers' => $customers]);
+    }
+
+    // =========================================================
+    // 3. GESTION DES PRODUITS
+    // =========================================================
+
+    public function products(){
+        $products = $this->productModel->getProducts();
+        $this->view('admin/products/index', ['products' => $products]);
+    }
+
+    public function products_add(){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            // Upload Image
+            $imageName = null;
+            if(!empty($_FILES['image']['name'])){
+                $imageName = time() . '_' . $_FILES['image']['name'];
+                move_uploaded_file($_FILES['image']['tmp_name'], '../public/img/' . $imageName);
+            }
+
+            $data = [
+                'name' => trim($_POST['name']),
+                'category_id' => $_POST['category_id'],
+                'type_id' => $_POST['type_id'],
+                'gender' => $_POST['gender'],
+                'description' => trim($_POST['description']),
+                'price' => $_POST['price'],
+                'promo_price' => $_POST['promo_price'],
+                'stock' => $_POST['simple_stock'], // Stock global
+                'image' => $imageName
+            ];
+
+            $productId = $this->productModel->addProduct($data);
+
+            if($productId){
+                // Ajout des Variantes si cochées
+                if(isset($_POST['has_variants']) && isset($_POST['variants'])){
+                    // $_POST['variants'] est un tableau envoyé par le JS
+                    $this->productModel->addProductVariants($productId, $_POST['variants']);
+                    
+                    // Si variantes, on met le stock global à la somme des variantes (optionnel mais recommandé)
+                    // $this->productModel->updateStockFromVariants($productId);
+                }
+
+                flash('admin_msg', 'Produit ajouté avec succès');
+                redirect('admin/products');
+            }
+        }
+
+        $data = [
+            'categories' => $this->categoryModel->getCategories(),
+            'types' => $this->typeModel->getTypes(),
+            'attributes' => $this->attributeModel->getAttributes()
+        ];
+
+        $this->view('admin/products/add', $data);
+    }
+
+    public function products_edit($id){
+        $product = $this->productModel->getProductById($id);
+        if(!$product){ redirect('admin/products'); }
+
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            $imageName = $product->image;
+            if(!empty($_FILES['image']['name'])){
+                $imageName = time() . '_' . $_FILES['image']['name'];
+                move_uploaded_file($_FILES['image']['tmp_name'], '../public/img/' . $imageName);
+            }
+
+            $data = [
+                'id' => $id,
+                'name' => trim($_POST['name']),
+                'category_id' => $_POST['category_id'],
+                'type_id' => $_POST['type_id'],
+                'gender' => $_POST['gender'],
+                'description' => trim($_POST['description']),
+                'price' => $_POST['price'],
+                'promo_price' => $_POST['promo_price'],
+                'stock' => $_POST['simple_stock'],
+                'image' => $imageName
+            ];
+
+            if($this->productModel->updateProduct($data)){
+                // Ajout des NOUVELLES variantes
+                if(isset($_POST['has_variants']) && isset($_POST['variants'])){
+                    $this->productModel->addProductVariants($id, $_POST['variants']);
+                }
+                
+                flash('admin_msg', 'Produit mis à jour');
+                redirect('admin/products');
+            }
+        }
+
+        $data = [
+            'product' => $product,
+            'variants' => $this->productModel->getVariantsByProductId($id),
+            'categories' => $this->categoryModel->getCategories(),
+            'types' => $this->typeModel->getTypes(),
+            'attributes' => $this->attributeModel->getAttributes()
+        ];
+
+        $this->view('admin/products/edit', $data);
+    }
+
+    public function products_show($id){
+        $product = $this->productModel->getProductById($id);
+        if(!$product){ redirect('admin/products'); }
+
+        $data = [
+            'product' => $product,
+            'variants' => $this->productModel->getVariantsByProductId($id)
+        ];
+        $this->view('admin/products/details', $data);
+    }
+
+    public function products_delete($id){
+        // Supprime le produit (la DB doit être en ON DELETE CASCADE pour supprimer les variantes auto)
+        // Sinon il faut supprimer les variantes manuellement avant.
+        if($this->productModel->deleteProduct($id)){
+            flash('admin_msg', 'Produit supprimé');
+        }
+        redirect('admin/products');
+    }
+
+    public function products_delete_variant($variantId, $productId){
+        $this->db->query("DELETE FROM product_variants WHERE id = :id");
+        $this->db->bind(':id', $variantId);
+        $this->db->execute();
+        
+        flash('admin_msg', 'Variante supprimée');
+        redirect('admin/products_edit/' . $productId);
+    }
+
+    // =========================================================
+    // 4. GESTION DES CATÉGORIES
+    // =========================================================
+    public function categories(){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $name = trim($_POST['name']);
+            $desc = trim($_POST['description']);
+            
+            if(!empty($name)){
+                $this->db->query("INSERT INTO categories (name, description) VALUES (:name, :desc)");
+                $this->db->bind(':name', $name);
+                $this->db->bind(':desc', $desc);
+                $this->db->execute();
+                flash('admin_msg', 'Catégorie ajoutée');
+                redirect('admin/categories');
+            }
+        }
+        $data = ['categories' => $this->categoryModel->getCategories()];
+        $this->view('admin/categories/index', $data);
+    }
+
+    public function categories_delete($id){
+        $this->db->query("DELETE FROM categories WHERE id = :id");
+        $this->db->bind(':id', $id);
+        $this->db->execute();
+        redirect('admin/categories');
+    }
+
+    // =========================================================
+    // 5. GESTION DES ATTRIBUTS
+    // =========================================================
+    public function attributes(){
+        $data = ['attributes' => $this->attributeModel->getAttributes()];
+        $this->view('admin/attributes/index', $data);
+    }
+
+    public function attributes_add(){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $name = trim($_POST['name']);
+            $values = explode(',', $_POST['values']); // Transforme "S, M, L" en tableau
+            if($this->attributeModel->addAttribute($name, $values)){
+                redirect('admin/attributes');
+            }
+        }
+        $this->view('admin/attributes/add');
+    }
+
+    public function attributes_edit($id){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $name = trim($_POST['name']);
+            $values = explode(',', $_POST['values']);
+            if($this->attributeModel->updateAttribute($id, $name, $values)){
+                redirect('admin/attributes');
+            }
+        }
+        
+        $attr = $this->attributeModel->getAttributeById($id);
+        // On prépare les valeurs sous forme de string pour l'input
+        $valArray = [];
+        if($attr && isset($attr->values)){
+            foreach($attr->values as $v) $valArray[] = $v->value;
+        }
+        
+        $data = [
+            'id' => $id,
+            'name' => $attr->name,
+            'values_str' => implode(', ', $valArray)
+        ];
+        $this->view('admin/attributes/edit', $data);
+    }
+
+    public function attributes_delete($id){
+        $this->attributeModel->deleteAttribute($id);
+        redirect('admin/attributes');
+    }
+
+    // =========================================================
+    // 6. GESTION DES COMMANDES
+    // =========================================================
+    public function orders(){
+        $orders = $this->orderModel->getAllOrders();
+        $this->view('admin/orders/index', ['orders' => $orders]);
+    }
+
+    public function orders_details($id){
+        $order = $this->orderModel->getOrderById($id);
+        if(!$order) redirect('admin/orders');
+        
+        $items = $this->orderModel->getOrderItems($id);
+        $this->view('admin/orders/details', ['order' => $order, 'items' => $items]);
+    }
+
+    
+public function update_status(){
+        // DEBUG : Si tu vois ça, le lien marche !
+        // Une fois que tu as vu "TEST RECU", supprime cette ligne die(...)
+        // die('TEST RECU : Le formulaire atteint bien le contrôleur');
+
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+            
+            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            
+            $orderId = $_POST['order_id'];
+            $newStatus = $_POST['status'];
+
+            // On tente la mise à jour
+            if($this->orderModel->updateStatus($orderId, $newStatus)){
+                
+                // Si livré => On marque payé
+                if($newStatus == 'delivered'){
+                    $this->orderModel->updatePaymentStatus($orderId, 'paid');
+                }
+
+                // Retour à la page détails
+                redirect('admin/orders_details/' . $orderId);
+            } else {
+                die('Erreur SQL : Impossible de mettre à jour le statut.');
+            }
+        } else {
+            redirect('admin/orders');
+        }
+    }
+    // =========================================================
+    // 7. BLOG & AVIS
+    // =========================================================
+    public function blog(){
+        $this->view('admin/blog/index', ['posts' => $this->postModel->getPosts()]);
+    }
+
+    public function blog_add(){
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $imageName = null;
+            if(!empty($_FILES['image']['name'])){
+                $imageName = time() . '_' . $_FILES['image']['name'];
+                move_uploaded_file($_FILES['image']['tmp_name'], '../public/img/' . $imageName);
+            }
+            
+            $data = [
+                'title' => trim($_POST['title']),
+                'category' => $_POST['category'],
+                'content' => trim($_POST['content']),
+                'image' => $imageName
+            ];
+            
+            $this->postModel->addPost($data);
+            redirect('admin/blog');
+        }
+        $this->view('admin/blog/add');
+    }
+
+    public function blog_edit($id){
+        $post = $this->postModel->getPostById($id);
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+        // Ajoute cette ligne pour protéger le formulaire
+        verifyCsrfToken();
+            $imageName = $post->image;
+            if(!empty($_FILES['image']['name'])){
+                $imageName = time() . '_' . $_FILES['image']['name'];
+                move_uploaded_file($_FILES['image']['tmp_name'], '../public/img/' . $imageName);
+            }
+            
+            $data = [
+                'id' => $id,
+                'title' => trim($_POST['title']),
+                'category' => $_POST['category'],
+                'content' => trim($_POST['content']),
+                'image' => $imageName
+            ];
+            
+            $this->postModel->updatePost($data);
+            redirect('admin/blog');
+        }
+        $this->view('admin/blog/edit', ['post' => $post]);
+    }
+
+    public function blog_delete($id){
+        $this->postModel->deletePost($id);
+        redirect('admin/blog');
+    }
+
+    public function reviews(){
+        $this->view('admin/reviews/index', ['reviews' => $this->reviewModel->getAllReviews()]);
+    }
+
+    public function approve_review($id){
+        $this->reviewModel->updateStatus($id, 'approved');
+        redirect('admin/reviews');
+    }
+
+    public function delete_review($id){
+        $this->reviewModel->deleteReview($id);
+        redirect('admin/reviews');
+    }
+
+    // À ajouter dans app/Controllers/Admin.php
+
+    public function update_order_status(){
+        // On vérifie que c'est bien une requête POST
+        if($_SERVER['REQUEST_METHOD'] == 'POST'){
+            
+            // Nettoyage des données
+            $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            
+            $orderId = $_POST['order_id'];
+            $newStatus = $_POST['status'];
+
+            // Appel au modèle pour mettre à jour
+            if($this->orderModel->updateStatus($orderId, $newStatus)){
+                
+                // Si le statut est "delivered" (Livré), on peut aussi mettre le paiement en "Paid" automatiquement
+                if($newStatus == 'delivered'){
+                    $this->orderModel->updatePaymentStatus($orderId, 'paid');
+                }
+
+                // Message de succès (si tu as le helper flash)
+                // flash('admin_msg', 'Statut de commande mis à jour avec succès');
+                
+                // Redirection vers la page de détails
+                redirect('admin/orders_details/' . $orderId);
+            } else {
+                die('Erreur lors de la mise à jour.');
+            }
+        } else {
+            redirect('admin/orders');
         }
     }
 }

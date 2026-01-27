@@ -1,126 +1,158 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
-<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-  <div class="carousel-inner">
-    <div class="carousel-item active" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1920&auto=format&fit=crop');">
-      <div class="carousel-caption d-none d-md-block text-start container">
-        <h5 class="display-3 fw-bold text-white">Nouvelle Collection <span style="color:var(--primary-color)">2026</span></h5>
-        <p class="lead text-white mb-4">L'élégance africaine revisitée pour le quotidien.</p>
-        <a href="<?php echo URLROOT; ?>/shop" class="btn btn-primary btn-lg shadow-lg">Découvrir la boutique</a>
-      </div>
+<div class="relative h-[85vh] w-full bg-slate-900 overflow-hidden">
+    <div class="absolute inset-0">
+        <img src="https://images.unsplash.com/photo-1534126511673-b6899657816a?q=80&w=1920&auto=format&fit=crop" class="w-full h-full object-cover opacity-60">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
     </div>
-    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1920&auto=format&fit=crop');">
-      <div class="carousel-caption d-none d-md-block text-center">
-        <h5 class="display-3 fw-bold text-white">Accessoires Uniques</h5>
-        <p class="lead text-white mb-4">La touche finale pour parfaire votre style.</p>
-        <a href="<?php echo URLROOT; ?>/shop" class="btn btn-light btn-lg shadow-lg">Voir les accessoires</a>
-      </div>
-    </div>
-  </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon"></span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-    <span class="carousel-control-next-icon"></span>
-  </button>
-</div>
 
-<div class="container my-5">
-    <div class="text-center mb-5">
-        <h2 class="fw-bold">Nos Univers</h2>
-        <div style="width: 50px; height: 3px; background: var(--primary-color); margin: 10px auto;"></div>
-    </div>
-    <div class="row g-4 justify-content-center">
-        <div class="col-md-4">
-            <div class="card bg-dark text-white border-0 overflow-hidden" style="height: 250px;">
-                <img src="https://images.unsplash.com/photo-1605763240004-7e93b172d754?q=80&w=600&auto=format&fit=crop" class="card-img opacity-50 h-100 w-100" style="object-fit:cover">
-                <div class="card-img-overlay d-flex flex-column justify-content-center align-items-center">
-                    <h3 class="card-title fw-bold">HOMME</h3>
-                    <a href="<?php echo URLROOT; ?>/shop" class="btn btn-outline-light btn-sm mt-2">Explorer</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card bg-dark text-white border-0 overflow-hidden" style="height: 250px;">
-                <img src="https://images.unsplash.com/photo-1550614000-4b9519e099a9?q=80&w=600&auto=format&fit=crop" class="card-img opacity-50 h-100 w-100" style="object-fit:cover">
-                <div class="card-img-overlay d-flex flex-column justify-content-center align-items-center">
-                    <h3 class="card-title fw-bold">FEMME</h3>
-                    <a href="<?php echo URLROOT; ?>/shop" class="btn btn-outline-light btn-sm mt-2">Explorer</a>
-                </div>
-            </div>
+    <div class="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+        <span class="text-accent font-black uppercase tracking-[0.3em] text-xs md:text-sm mb-4 animate-fade-in-down">Est. 2026</span>
+        <h1 class="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-white mb-6 leading-tight animate-fade-in-up">
+            Modern African <br> <span class="italic text-accent">Elegance</span>
+        </h1>
+        <p class="text-slate-300 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed animate-fade-in-up delay-100">
+            Discover a curated collection where tradition meets contemporary fashion. Designed in Ghana, worn worldwide.
+        </p>
+        <div class="flex gap-4 animate-fade-in-up delay-200">
+            <a href="<?php echo URLROOT; ?>/shop" class="bg-white text-slate-900 px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition shadow-xl shadow-white/10">
+                Shop Collection
+            </a>
+            <a href="<?php echo URLROOT; ?>/shop/promotions" class="border border-white text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-white hover:text-slate-900 transition">
+                Flash Sales
+            </a>
         </div>
     </div>
 </div>
 
-<div class="bg-light py-5">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-5">
+<div class="max-w-7xl mx-auto px-6 py-20">
+    <div class="text-center mb-16">
+        <h2 class="text-3xl font-serif font-bold text-slate-900 mb-3">Shop by Category</h2>
+        <div class="w-20 h-1 bg-accent mx-auto rounded-full"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <a href="<?php echo URLROOT; ?>/shop?gender=women" class="group relative h-[500px] rounded-3xl overflow-hidden shadow-xl">
+            <img src="https://images.unsplash.com/photo-1605763240004-7e93b172d754?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-slate-900/30 group-hover:bg-slate-900/20 transition"></div>
+            <div class="absolute bottom-8 left-8 text-white">
+                <span class="block text-accent text-xs font-black uppercase tracking-widest mb-1">Collection</span>
+                <h3 class="text-4xl font-serif font-bold mb-4">For Her</h3>
+                <span class="inline-block border-b border-white pb-1 text-sm font-bold uppercase tracking-wider group-hover:text-accent group-hover:border-accent transition">Explore</span>
+            </div>
+        </a>
+
+        <a href="<?php echo URLROOT; ?>/shop?gender=men" class="group relative h-[500px] rounded-3xl overflow-hidden shadow-xl">
+            <img src="https://images.unsplash.com/photo-1550614000-4b9519e099a9?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-slate-900/30 group-hover:bg-slate-900/20 transition"></div>
+            <div class="absolute bottom-8 left-8 text-white">
+                <span class="block text-accent text-xs font-black uppercase tracking-widest mb-1">Collection</span>
+                <h3 class="text-4xl font-serif font-bold mb-4">For Him</h3>
+                <span class="inline-block border-b border-white pb-1 text-sm font-bold uppercase tracking-wider group-hover:text-accent group-hover:border-accent transition">Explore</span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="bg-slate-50 py-20 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="flex justify-between items-end mb-12">
             <div>
-                <h2 class="fw-bold mb-0">Derniers Arrivages</h2>
-                <div style="width: 50px; height: 3px; background: var(--primary-color); margin-top: 10px;"></div>
+                <span class="text-accent font-bold text-xs uppercase tracking-widest mb-2 block">Fresh In</span>
+                <h2 class="text-3xl md:text-4xl font-serif font-bold text-slate-900">New Arrivals</h2>
             </div>
-            <a href="<?php echo URLROOT; ?>/shop" class="btn btn-outline-dark rounded-pill">Tout voir <i class="fas fa-arrow-right ms-2"></i></a>
+            <a href="<?php echo URLROOT; ?>/shop" class="hidden md:flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-accent transition uppercase tracking-wide">
+                View All <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
 
-        <div class="row g-4">
-            <?php if(empty($data['products'])): ?>
-                <div class="col-12 text-center py-5">
-                    <p class="text-muted">Aucun produit pour le moment. Connectez-vous à l'admin pour remplir la boutique !</p>
-                </div>
-            <?php else: ?>
-                
+        <?php if(empty($data['products'])): ?>
+            <div class="text-center py-20">
+                <p class="text-slate-400 italic text-lg">New collections are arriving soon.</p>
+            </div>
+        <?php else: ?>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
                 <?php foreach($data['products'] as $product): ?>
-                <div class="col-md-3 col-sm-6">
-                    <div class="card product-card h-100">
-                        <div class="position-relative overflow-hidden">
-                            <?php if($product->main_image): ?>
-                                <img src="<?php echo URLROOT . '/' . $product->main_image; ?>" class="card-img-top" alt="<?php echo $product->name; ?>">
-                            <?php else: ?>
-                                <img src="https://dummyimage.com/400x400/dee2e6/6c757d.jpg" class="card-img-top">
-                            <?php endif; ?>
+                    <div class="group relative">
+                        <div class="relative overflow-hidden rounded-2xl bg-white aspect-[3/4] mb-4 shadow-sm border border-slate-100 group-hover:shadow-xl transition-all duration-500">
                             
                             <?php if($product->stock < 5 && $product->stock > 0): ?>
-                                <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">Bientôt épuisé</span>
-                            <?php elseif($product->stock == 0): ?>
-                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">Rupture</span>
+                                <span class="absolute top-3 left-3 bg-white/90 backdrop-blur text-orange-600 text-[10px] font-bold px-2 py-1 rounded z-20 border border-orange-100">
+                                    Low Stock
+                                </span>
                             <?php endif; ?>
-                        </div>
 
-                        <div class="card-body d-flex flex-column">
-                            <small class="text-muted mb-1"><?php echo $product->category_name; ?></small>
-                            <h5 class="card-title mb-2 text-truncate"><?php echo $product->name; ?></h5>
-                            <div class="mt-auto d-flex justify-content-between align-items-center">
-                                <span class="price-tag"><?php echo number_format($product->price, 2); ?> €</span>
-                                <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>" class="btn btn-sm btn-outline-primary rounded-circle" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-                                    <i class="fas fa-eye"></i>
+                            <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>" class="block w-full h-full">
+                                <?php if(!empty($product->main_image)): ?>
+                                    <img src="<?php echo URLROOT . '/public/img/' . $product->main_image; ?>" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                                <?php else: ?>
+                                    <div class="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50"><i class="fas fa-camera text-2xl"></i></div>
+                                <?php endif; ?>
+                            </a>
+
+                            <div class="absolute bottom-4 left-4 right-4 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
+                                <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>" class="block w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-center hover:bg-accent shadow-lg">
+                                    View Details
                                 </a>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
 
-            <?php endif; ?>
-        </div>
+                        <div class="relative z-0">
+                            <p class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1">
+                                <?php echo $product->category_name ?? 'Collection'; ?>
+                            </p>
+                            <h3 class="font-bold text-slate-900 text-sm leading-tight truncate mb-1 group-hover:text-accent transition">
+                                <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>"><?php echo $product->name; ?></a>
+                            </h3>
+                            <p class="text-slate-900 font-bold"><?php echo CURRENCY_SYMBOL . number_format($product->price, 2); ?></p>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            
+            <div class="mt-12 text-center md:hidden">
+                <a href="<?php echo URLROOT; ?>/shop" class="inline-block border border-slate-200 bg-white px-8 py-3 rounded-xl font-bold text-sm uppercase tracking-wide text-slate-900 shadow-sm">
+                    View All Products
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
-<div class="container py-5">
-    <div class="row text-center g-4">
-        <div class="col-md-4">
-            <i class="fas fa-shipping-fast fa-3x text-muted mb-3"></i>
-            <h5>Livraison Rapide</h5>
-            <p class="text-muted small">Partout au Togo et Ghana en 48h.</p>
-        </div>
-        <div class="col-md-4">
-            <i class="fas fa-lock fa-3x text-muted mb-3"></i>
-            <h5>Paiement Sécurisé</h5>
-            <p class="text-muted small">Flooz, T-Money et Cartes Bancaires.</p>
-        </div>
-        <div class="col-md-4">
-            <i class="fas fa-headset fa-3x text-muted mb-3"></i>
-            <h5>Service Client 24/7</h5>
-            <p class="text-muted small">Une question ? Nous sommes là.</p>
+<div class="bg-white py-20">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+            
+            <div class="group">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-900 text-3xl group-hover:bg-accent group-hover:text-white transition duration-500">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2 uppercase tracking-wide">Fast Delivery</h3>
+                <p class="text-slate-500 text-sm leading-relaxed max-w-xs mx-auto">
+                    We ship quickly across Ghana and Togo within 48 hours.
+                </p>
+            </div>
+
+            <div class="group">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-900 text-3xl group-hover:bg-accent group-hover:text-white transition duration-500">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2 uppercase tracking-wide">Secure Payment</h3>
+                <p class="text-slate-500 text-sm leading-relaxed max-w-xs mx-auto">
+                    Pay securely with Mobile Money (Flooz, T-Money) or Credit Cards.
+                </p>
+            </div>
+
+            <div class="group">
+                <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-900 text-3xl group-hover:bg-accent group-hover:text-white transition duration-500">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2 uppercase tracking-wide">24/7 Support</h3>
+                <p class="text-slate-500 text-sm leading-relaxed max-w-xs mx-auto">
+                    Have a question? Our support team is here to assist you anytime.
+                </p>
+            </div>
+
         </div>
     </div>
 </div>
