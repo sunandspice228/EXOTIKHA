@@ -184,10 +184,10 @@ function posix_getgroups(): array
  * @throws PosixException
  *
  */
-function posix_getlogin(): string
+function posix_getloginCustomer(): string
 {
     error_clear_last();
-    $safeResult = \posix_getlogin();
+    $safeResult = \posix_getloginCustomer();
     if ($safeResult === false) {
         throw PosixException::createFromPhpError();
     }

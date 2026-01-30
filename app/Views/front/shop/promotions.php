@@ -37,7 +37,7 @@
         <div class="w-full md:w-1/2 relative z-10">
             <div class="aspect-square bg-slate-50 rounded-2xl overflow-hidden relative">
                 <?php if(!empty($data['star_product']->image)): ?>
-                    <img src="<?php echo URLROOT . '/public/img/' . $data['star_product']->image; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                    <img src="<?php echo URLROOT . '/img/' . $data['star_product']->image; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                 <?php endif; ?>
             </div>
         </div>
@@ -61,8 +61,8 @@
             </div>
 
             <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="flex gap-4 max-w-md mx-auto md:mx-0">
-            <?php echo csrfField(); ?>    
-            <input type="hidden" name="product_id" value="<?php echo $data['star_product']->id; ?>">
+                <?php echo csrfField(); ?>    
+                <input type="hidden" name="product_id" value="<?php echo $data['star_product']->id; ?>">
                 <input type="hidden" name="quantity" value="1">
                 <button type="submit" class="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition shadow-lg shadow-red-500/30 flex items-center justify-center gap-2 animate-bounce-subtle">
                     <i class="fas fa-shopping-bag"></i> Grab Deal
@@ -89,9 +89,9 @@
                             -<?php echo round((($product->price - $product->promo_price)/$product->price)*100); ?>%
                         </span>
                         
-                        <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>">
+                        <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>">
                             <?php if(!empty($product->image)): ?>
-                                <img src="<?php echo URLROOT . '/public/img/' . $product->image; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                <img src="<?php echo URLROOT . '/img/' . $product->image; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             <?php else: ?>
                                 <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fas fa-image text-2xl"></i></div>
                             <?php endif; ?>

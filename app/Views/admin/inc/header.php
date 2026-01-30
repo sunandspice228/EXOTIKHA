@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Exotikha</title>
+    <title>Admin Dashboard | <?php echo SITENAME; ?></title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -23,7 +23,7 @@
                         sidebar: '#0f172a', // Slate 900
                         primary: '#6366f1', // Indigo 500
                         accent: '#818cf8',  // Indigo 400
-                        background: '#f1f5f9', // Slate 100
+                        background: '#f8fafc', // Slate 50
                     }
                 }
             }
@@ -31,7 +31,7 @@
     </script>
     <style>
         [x-cloak] { display: none !important; }
-        body { background-color: #f1f5f9; }
+        body { background-color: #f8fafc; }
         
         /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -47,6 +47,13 @@
             color: white; 
             box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
         }
+        
+        /* Animations */
+        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 
@@ -54,10 +61,10 @@
 
     <div x-show="sidebarOpen" @click="sidebarOpen = false" x-transition.opacity class="fixed inset-0 z-40 bg-black/50 lg:hidden backdrop-blur-sm"></div>
 
-    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-72 bg-sidebar text-slate-400 transition-transform duration-300 lg:static lg:translate-x-0 shadow-2xl flex flex-col h-full">
+    <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-72 bg-sidebar text-slate-400 transition-transform duration-300 lg:static lg:translate-x-0 shadow-2xl flex flex-col h-full border-r border-slate-800">
         
-        <div class="h-20 flex items-center px-8 border-b border-slate-800 bg-slate-900">
-            <a href="<?php echo URLROOT; ?>/admin" class="flex items-center gap-2 group">
+        <div class="h-20 flex items-center px-8 border-b border-slate-800 bg-slate-900/50">
+            <a href="<?php echo URLROOT; ?>/admin" class="flex items-center gap-3 group">
                 <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/30 group-hover:scale-110 transition">E</div>
                 <span class="text-xl font-bold text-white tracking-wide">EXOTIKHA<span class="text-primary">.</span></span>
             </a>
@@ -67,46 +74,52 @@
             
             <p class="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 mt-1">Analytics</p>
             
-            <a href="<?php echo URLROOT; ?>/admin" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (!isset($_GET['url']) || $_GET['url'] == 'admin') ? 'active' : ''; ?>">
+            <?php $url = $_GET['url'] ?? 'admin'; // Récupération de l'URL courante ?>
+
+            <a href="<?php echo URLROOT; ?>/admin" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo ($url == 'admin') ? 'active' : ''; ?>">
                 <i class="fas fa-chart-pie w-5 text-center"></i> Dashboard
             </a>
             
-            <a href="<?php echo URLROOT; ?>/admin/orders" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'orders') !== false) ? 'active' : ''; ?>">
+            <a href="<?php echo URLROOT; ?>/admin/orders" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'orders') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-shopping-bag w-5 text-center"></i> Orders
             </a>
 
             <p class="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 mt-8">Store Management</p>
 
-            <a href="<?php echo URLROOT; ?>/admin/products" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'products') !== false) ? 'active' : ''; ?>">
+            <a href="<?php echo URLROOT; ?>/admin/products" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'products') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-tshirt w-5 text-center"></i> Products
             </a>
-            <a href="<?php echo URLROOT; ?>/admin/categories" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'categories') !== false) ? 'active' : ''; ?>">
+            
+            <a href="<?php echo URLROOT; ?>/admin/categories" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'categories') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-layer-group w-5 text-center"></i> Categories
             </a>
-            <a href="<?php echo URLROOT; ?>/admin/attributes" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'attributes') !== false) ? 'active' : ''; ?>">
+            
+            <a href="<?php echo URLROOT; ?>/admin/attributes" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'attributes') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-ruler-combined w-5 text-center"></i> Attributes
             </a>
 
             <p class="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 mt-8">Content & Marketing</p>
 
-            <a href="<?php echo URLROOT; ?>/admin/blog" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'blog') !== false) ? 'active' : ''; ?>">
+            <a href="<?php echo URLROOT; ?>/admin/blog" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'blog') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-pen-nib w-5 text-center"></i> Blog Posts
             </a>
-            <a href="<?php echo URLROOT; ?>/admin/reviews" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'reviews') !== false) ? 'active' : ''; ?>">
+            
+            <a href="<?php echo URLROOT; ?>/admin/reviews" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'reviews') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-star w-5 text-center"></i> Reviews
             </a>
 
             <p class="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 mt-8">User Management</p>
 
-            <a href="<?php echo URLROOT; ?>/admin/customers" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'customers') !== false) ? 'active' : ''; ?>">
+            <a href="<?php echo URLROOT; ?>/admin/customers" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'customers') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-users w-5 text-center"></i> Customers
             </a>
-            <a href="<?php echo URLROOT; ?>/admin/users" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($_GET['url'] ?? '', 'admin/users') !== false) ? 'active' : ''; ?>">
+            
+            <a href="<?php echo URLROOT; ?>/admin/users" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm <?php echo (strpos($url, 'admin/users') !== false) ? 'active' : ''; ?>">
                 <i class="fas fa-user-shield w-5 text-center"></i> Admin Staff
             </a>
         </div>
 
-        <div class="p-4 border-t border-slate-800 bg-slate-900">
+        <div class="p-4 border-t border-slate-800 bg-slate-900/50">
             <a href="<?php echo URLROOT; ?>" target="_blank" class="flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-bold text-slate-400 hover:bg-slate-800 hover:text-white transition mb-2">
                 <i class="fas fa-external-link-alt"></i> Live Store
             </a>
@@ -159,7 +172,7 @@
                                 <p class="text-xs text-slate-400 font-bold uppercase">Signed in as</p>
                                 <p class="text-sm font-bold text-slate-900 truncate"><?php echo $_SESSION['user_email'] ?? 'admin@exotikha.com'; ?></p>
                             </div>
-                            <a href="<?php echo URLROOT; ?>/users/account" class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-primary font-medium transition">
+                            <a href="<?php echo URLROOT; ?>/users/profile" class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-primary font-medium transition">
                                 <i class="fas fa-user-circle w-5"></i> My Profile
                             </a>
                             <div class="border-t border-slate-100 my-1"></div>
@@ -173,7 +186,9 @@
         </header>
 
         <main class="flex-1 p-6 md:p-8 bg-slate-50/50">
-            <div class="mb-6 space-y-4">
-                <?php flash('product_message'); ?>
+            <div id="msg-flash" class="mb-6 space-y-4 empty:hidden">
+                <?php flash('product_msg'); ?>
+                <?php flash('category_msg'); ?>
+                <?php flash('blog_msg'); ?>
                 <?php flash('admin_msg'); ?>
             </div>

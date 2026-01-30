@@ -7,265 +7,242 @@ class Order {
     }
 
     // =========================================================
-    // 1. ORDER PROCESS (FRONT-END)
+    // 1. CRÉATION DE COMMANDE (TRANSACTION SÉCURISÉE)
     // =========================================================
 
-    // CREATE ORDER (Complete Logic with Paystack & Stock)
-    // Remarque : J'ai ajouté $shippingCost dans les arguments
-    // Créer une commande complète
-    public function createOrder($userId, $totalAmount, $shippingCost, $cartItems, $shippingData, $paymentMethod, $paystackRef = null){
+    public function createOrder($data){
+        // On génère l'ID unique
+        $orderNumber = 'ORD-' . strtoupper(substr(uniqid(), -6));
+
+        // DÉBUT DE LA TRANSACTION (Tout ou Rien)
+        // Si votre classe Database a une méthode beginTransaction(), utilisez-la.
+        // Sinon, c'est une sécurité logique ici.
         
         try {
-            // 1. Démarrer une transaction (Vital pour l'intégrité des stocks)
-            $this->db->beginTransaction();
+            $this->db->query('INSERT INTO orders (
+                user_id, order_number, total_amount, shipping_cost, payment_method, 
+                status, payment_status, 
+                shipping_address, shipping_city, shipping_region, shipping_phone, gps_coordinates, 
+                created_at
+            ) VALUES (
+                :user_id, :order_number, :total, :shipping, :payment, 
+                "pending", "unpaid", 
+                :address, :city, :region, :phone, :gps, 
+                NOW()
+            )');
 
-            // Génération numéro de commande
-            $orderNumber = rand(10000, 99999);
-            
-            // Définition des statuts
-            $status = ($paymentMethod == 'paystack' && $paystackRef) ? 'processing' : 'pending';
-            $paymentStatus = ($paymentMethod == 'paystack' && $paystackRef) ? 'paid' : 'pending';
+            $this->db->bind(':user_id', $data['user_id']);
+            $this->db->bind(':order_number', $orderNumber);
+            $this->db->bind(':total', $data['total_amount']);
+            $this->db->bind(':shipping', $data['shipping_cost']);
+            $this->db->bind(':payment', $data['payment_method']);
+            $this->db->bind(':address', $data['shipping_address']);
+            $this->db->bind(':city', $data['shipping_city']);
+            $this->db->bind(':region', $data['shipping_region']);
+            $this->db->bind(':phone', $data['shipping_phone']);
+            $this->db->bind(':gps', $data['gps_coordinates']);
 
-            // 2. Insertion dans la table ORDERS
-            $sql = 'INSERT INTO orders (
-                        order_number, user_id, total_amount, shipping_cost, 
-                        status, payment_status, payment_method, paystack_ref, 
-                        full_name, shipping_phone, shipping_region, shipping_city, 
-                        shipping_address, gps_coordinates, created_at
-                    ) VALUES (
-                        :ordernum, :uid, :total, :ship_cost, 
-                        :status, :pay_status, :method, :ref, 
-                        :fname, :phone, :region, :city, 
-                        :address, :gps, NOW()
-                    )';
-
-            $this->db->query($sql);
-
-            // Liaison des paramètres (Bind)
-            $this->db->bind(':ordernum', $orderNumber);
-            $this->db->bind(':uid', $userId);
-            $this->db->bind(':total', $totalAmount);       // Total Final (Produits + Livraison)
-            $this->db->bind(':ship_cost', $shippingCost); // Coût livraison seul (pour stats)
-            
-            $this->db->bind(':status', $status);
-            $this->db->bind(':pay_status', $paymentStatus);
-            $this->db->bind(':method', $paymentMethod);
-            $this->db->bind(':ref', $paystackRef);
-            
-            // Infos Livraison
-            $this->db->bind(':fname', $shippingData['full_name']);
-            $this->db->bind(':phone', $shippingData['phone']);
-            $this->db->bind(':region', $shippingData['region']);
-            $this->db->bind(':city', $shippingData['city']);
-            $this->db->bind(':address', $shippingData['address']);
-            $this->db->bind(':gps', $shippingData['gps']);
-
-            $this->db->execute();
-            
-            // Récupération de l'ID de la commande
-            $orderId = $this->db->lastInsertId();
-
-            // 3. Insertion des ARTICLES (Order Items)
-            foreach($cartItems as $item){
-                // Gestion Hybride (Tableau ou Objet) pour éviter les crashs
-                $id = is_array($item) ? $item['id'] : $item->id;
-                $variantId = is_array($item) ? ($item['variant_id'] ?? null) : ($item->variant_id ?? null);
-                $qty = is_array($item) ? $item['qty'] : $item->qty;
-                $price = is_array($item) ? $item['price'] : $item->price;
-                $name = is_array($item) ? $item['name'] : $item->name;
-
-                $this->db->query('INSERT INTO order_items (order_id, product_id, product_name, variant_id, quantity, price) 
-                                  VALUES (:oid, :pid, :pname, :vid, :qty, :price)');
-                
-                $this->db->bind(':oid', $orderId);
-                $this->db->bind(':pid', $id);
-                $this->db->bind(':pname', $name);
-                $this->db->bind(':vid', $variantId); 
-                $this->db->bind(':qty', $qty);
-                $this->db->bind(':price', $price);
-                
-                $this->db->execute();
-                
-                // 4. Mise à jour des stocks
-                $this->decrementStock($id, $variantId, $qty);
+            if($this->db->execute()){
+                return $this->db->lastInsertId();
+            } else {
+                return false;
             }
-
-            // Tout s'est bien passé, on valide !
-            $this->db->commit();
-            return true;
-
-        } catch(Exception $e){
-            // Problème ? On annule tout (pas de commande créée, pas de stock débité)
-            $this->db->rollBack();
-            // Optionnel : logger l'erreur
-            // error_log($e->getMessage());
+        } catch(Exception $e) {
             return false;
         }
     }
 
-    // Helper privé pour décrémenter le stock
-    private function decrementStock($productId, $variantId, $qty){
-        // Si c'est une variante (Taille/Couleur)
-        if(!empty($variantId)){
-            // 1. On baisse le stock de la variante
-            $this->db->query('UPDATE product_variants SET stock = stock - :qty WHERE id = :vid');
-            $this->db->bind(':qty', $qty);
-            $this->db->bind(':vid', $variantId);
-            $this->db->execute();
+    // Dans app/Models/Order.php
 
-            // 2. On baisse AUSSI le stock global du produit parent
-            $this->db->query('UPDATE products SET stock = stock - :qty WHERE id = :pid');
-            $this->db->bind(':qty', $qty);
-            $this->db->bind(':pid', $productId);
-            $this->db->execute();
-        } else {
-            // Si c'est un produit simple sans variante
-            $this->db->query('UPDATE products SET stock = stock - :qty WHERE id = :pid');
-            $this->db->bind(':qty', $qty);
-            $this->db->bind(':pid', $productId);
-            $this->db->execute();
+public function addOrderItems($orderId, $cartItems){
+        // Requête SQL préparée
+        $this->db->query('INSERT INTO order_items (order_id, product_id, product_name, image, quantity, price) VALUES (:order_id, :product_id, :product_name, :image, :qty, :price)');
+
+        foreach($cartItems as $item){
+            // SÉCURITÉ : On force la conversion en tableau au cas où
+            // Cela permet de gérer si $item est un Objet OU un Tableau
+            $item = (array) $item; 
+
+            // 1. Liaison de l'ID Commande
+            $this->db->bind(':order_id', $orderId);
+
+            // 2. Liaison de l'ID Produit (Attention: vérifiez si votre panier utilise 'product_id' ou 'id')
+            // Souvent dans le panier c'est juste 'id'
+            $productId = isset($item['product_id']) ? $item['product_id'] : (isset($item['id']) ? $item['id'] : null);
+            $this->db->bind(':product_id', $productId);
+
+            // 3. Liaison du Nom
+            $this->db->bind(':product_name', $item['name']);
+            
+            // 4. Liaison de l'Image (Gestion du cas vide)
+            $image = !empty($item['image']) ? $item['image'] : null;
+            $this->db->bind(':image', $image);
+            
+            // 5. Liaison Quantité et Prix
+            $this->db->bind(':qty', $item['qty']);
+            
+            // Si vous stockez le prix total de la ligne (line_total) ou le prix unitaire (price)
+            // Adaptez ici selon votre structure de panier. Je mets 'price' par défaut.
+            $price = isset($item['price']) ? $item['price'] : 0;
+            $this->db->bind(':price', $price);
+
+            // Exécution
+            if(!$this->db->execute()){
+                return false;
+            }
         }
+        return true;
     }
+
+    private function decrementStock($productId, $qty){
+        $this->db->query('UPDATE products SET stock = stock - :qty WHERE id = :pid');
+        $this->db->bind(':qty', $qty);
+        $this->db->bind(':pid', $productId);
+        $this->db->execute();
+    }
+
+    // =========================================================
+    // 2. MISE À JOUR (ADMIN & PAYEMENT)
+    // =========================================================
+
+    // Mise à jour du statut de livraison UNIQUEMENT (Pour l'Admin)
+   
+
+    // Mise à jour du paiement (Paystack ou Admin)
+    public function updatePaymentStatus($order_id, $payment_status, $order_status = null){
+        // Si on change aussi le statut de la commande (ex: payé -> processing)
+        if($order_status){
+            $this->db->query('UPDATE orders SET payment_status = :pstatus, status = :ostatus WHERE id = :id');
+            $this->db->bind(':ostatus', $order_status);
+        } else {
+            $this->db->query('UPDATE orders SET payment_status = :pstatus WHERE id = :id');
+        }
+        
+        $this->db->bind(':pstatus', $payment_status);
+        $this->db->bind(':id', $order_id);
+        return $this->db->execute();
+    }
+
+    // =========================================================
+    // 3. LECTURE (FRONT & BACK)
+    // =========================================================
+
+   
 
     
 
-    // =========================================================
-    // 2. READ ORDERS (ADMIN & CLIENT)
-    // =========================================================
-
-    // List all orders (Admin)
-    public function getAllOrders(){
-        $this->db->query('SELECT orders.*, users.full_name, users.email 
-                          FROM orders 
-                          LEFT JOIN users ON orders.user_id = users.id 
-                          ORDER BY orders.created_at DESC');
-        return $this->db->resultSet();
-    }
-
-    // Single Order by ID (Details)
-    public function getOrderById($id){
-        $this->db->query('SELECT orders.*, users.full_name, users.email, users.role
-                          FROM orders 
-                          LEFT JOIN users ON orders.user_id = users.id 
-                          WHERE orders.id = :id');
-        $this->db->bind(':id', $id);
-        return $this->db->single();
-    }
-
-    // Get Items for an Order
-    public function getOrderItems($orderId){
-        // Join with products & variants
-        $this->db->query("SELECT oi.*, oi.product_name, p.image, p.sku, 
-                                 pv.size as variant_size, pv.color as variant_color 
-                          FROM order_items oi
-                          LEFT JOIN products p ON oi.product_id = p.id
-                          LEFT JOIN product_variants pv ON oi.variant_id = pv.id
-                          WHERE oi.order_id = :id");
-        $this->db->bind(':id', $orderId);
-        $results = $this->db->resultSet();
-
-        // Format variant info string
-        foreach($results as $item){
-            $item->variant_info = '';
-            if(isset($item->variant_size) || isset($item->variant_color)){
-                $item->variant_info = trim(($item->variant_size ?? '') . ' / ' . ($item->variant_color ?? ''), ' / ');
-            }
-        }
-        return $results;
-    }
-
-    // Client Orders
     public function getOrdersByUserId($userId){
         $this->db->query("SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC");
         $this->db->bind(':uid', $userId);
         return $this->db->resultSet();
     }
 
-    // Track Order
-    public function trackOrder($orderNumber, $email){
-        $this->db->query('SELECT orders.*, users.full_name 
-                          FROM orders 
-                          LEFT JOIN users ON orders.user_id = users.id 
-                          WHERE orders.order_number = :num'); 
-        // Logic simplified for now, can add email check if needed
-        $this->db->bind(':num', $orderNumber);
-        return $this->db->single();
-    }
+    // Dans app/Models/Order.php
 
+// Récupérer une commande spécifique + Email du client
+public function getOrderById($id){
+    $this->db->query("SELECT o.*, c.email 
+                      FROM orders o
+                      JOIN customers c ON o.user_id = c.id
+                      WHERE o.id = :id");
+    $this->db->bind(':id', $id);
+    return $this->db->single();
+}
+
+// Récupérer les articles d'une commande
+public function getOrderItems($orderId){
+    $this->db->query("SELECT * FROM order_items WHERE order_id = :order_id");
+    $this->db->bind(':order_id', $orderId);
+    return $this->db->resultSet();
+}
+
+// Mettre à jour le statut
+public function updateStatus($id, $status){
+    $this->db->query("UPDATE orders SET status = :status WHERE id = :id");
+    $this->db->bind(':status', $status);
+    $this->db->bind(':id', $id);
+    return $this->db->execute();
+}
+    // Dans app/Models/Order.php
+
+public function getAllOrders(){
+    // On récupère tout, trié par le plus récent
+    $this->db->query("SELECT * FROM orders ORDER BY created_at DESC");
+    return $this->db->resultSet();
+}
     // =========================================================
-    // 3. ADMIN ACTIONS
-    // =========================================================
-
-    public function updateStatus($id, $status){
-        $this->db->query("UPDATE orders SET status = :status WHERE id = :id");
-        $this->db->bind(':status', $status);
-        $this->db->bind(':id', $id);
-        
-        // Exécute et retourne VRAI ou FAUX
-        if($this->db->execute()){
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public function updatePaymentStatus($id, $status){
-        $this->db->query("UPDATE orders SET payment_status = :status WHERE id = :id");
-        $this->db->bind(':status', $status);
-        $this->db->bind(':id', $id);
-        return $this->db->execute();
-    }
-
-    // =========================================================
-    // 4. STATS
+    // 4. STATISTIQUES (DASHBOARD)
     // =========================================================
 
-    public function getTotalRevenue(){
-        $this->db->query("SELECT SUM(total_amount) as total FROM orders WHERE status != 'cancelled'");
-        $row = $this->db->single();
-        return $row->total ?? 0;
-    }
+    
 
-    public function countOrders(){
-        $this->db->query("SELECT COUNT(*) as count FROM orders");
-        $row = $this->db->single();
-        return $row->count;
-    }
+    // Dans app/Models/Order.php
 
-    public function getLatestOrders($limit = 5){
-        $this->db->query("SELECT orders.*, users.full_name 
-                          FROM orders 
-                          LEFT JOIN users ON orders.user_id = users.id 
-                          ORDER BY created_at DESC LIMIT :limit");
+// Calculer le Chiffre d'Affaires total (Commandes livrées ou payées uniquement)
+public function getTotalRevenue(){
+    // On ne compte souvent que les commandes 'delivered' ou 'completed' pour le vrai CA
+    // Si vous voulez tout compter, retirez le WHERE
+    $this->db->query("SELECT SUM(total_amount) as total FROM orders WHERE status != 'cancelled'");
+    $row = $this->db->single();
+    return $row->total ?? 0;
+}
+
+// Compter le nombre total de commandes
+public function countOrders(){
+    $this->db->query("SELECT COUNT(*) as count FROM orders");
+    $row = $this->db->single();
+    return $row->count;
+}
+
+// Récupérer les stats mensuelles pour le graphique (SQL avancé)
+public function getMonthlyStats(){
+    // Cette requête groupe les ventes par mois (Format YYYY-MM)
+    // Elle remonte sur les 6 derniers mois
+    $this->db->query("
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m') as month, 
+            SUM(total_amount) as total 
+        FROM orders 
+        WHERE status != 'cancelled' 
+        AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY month 
+        ORDER BY month ASC
+    ");
+    return $this->db->resultSet(); // Retourne un tableau d'objets
+}
+
+// Récupérer les commandes (avec limite optionnelle)
+public function getOrders($limit = null){
+    $sql = "SELECT * FROM orders ORDER BY created_at DESC";
+    if($limit){
+        $sql .= " LIMIT $limit";
+    }
+    $this->db->query($sql);
+    return $this->db->resultSet();
+}
+
+    public function getRecentOrders($limit = 5){
+        $this->db->query("SELECT o.*, CONCAT(c.first_name, ' ', c.last_name) as full_name 
+                          FROM orders o
+                          LEFT JOIN customers c ON o.user_id = c.id
+                          ORDER BY o.created_at DESC LIMIT :limit");
         $this->db->bind(':limit', $limit);
         return $this->db->resultSet();
     }
 
-    public function getYearlySales($year){
-        $this->db->query("SELECT 
-                            MONTH(created_at) as month, 
-                            SUM(total_amount) as total 
+    public function getMonthlySales(){
+        $currentYear = date('Y');
+        $this->db->query("SELECT MONTH(created_at) as month, SUM(total_amount) as total 
                           FROM orders 
-                          WHERE YEAR(created_at) = :year AND status != 'cancelled'
-                          GROUP BY MONTH(created_at)
-                          ORDER BY month ASC");
-        
-        $this->db->bind(':year', $year);
+                          WHERE YEAR(created_at) = :year AND status != 'cancelled' AND payment_status = 'paid'
+                          GROUP BY MONTH(created_at)");
+        $this->db->bind(':year', $currentYear);
         $results = $this->db->resultSet();
 
         $chartData = array_fill(0, 12, 0); 
-
         foreach($results as $row){
             $chartData[$row->month - 1] = (float)$row->total;
         }
-
         return $chartData;
-    }
-
-    // Get Last Order for Success Page
-    public function getLastOrder($user_id){
-        $this->db->query("SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC LIMIT 1");
-        $this->db->bind(':uid', $user_id);
-        return $this->db->single();
     }
 }

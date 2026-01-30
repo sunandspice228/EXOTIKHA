@@ -53,7 +53,7 @@
             <i class="fas fa-shopping-bag group-hover:-translate-y-0.5 transition-transform"></i> Add to Cart
         </button>
 
-        <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $data['product']->id; ?>" class="w-12 h-12 sm:h-auto mt-auto border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm" title="Add to WishlistModel">
+        <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $data['product']->id; ?>" class="w-12 h-12 sm:h-auto mt-auto border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm" title="Add to Wishlist">
             <i class="far fa-heart text-xl"></i>
         </a>
     </div>

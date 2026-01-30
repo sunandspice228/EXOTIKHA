@@ -35,4 +35,14 @@ function verifyCsrfToken(){
             die('Erreur de sécurité (CSRF) : Session expirée. Veuillez rafraîchir la page.');
         }
     }
+
+    function createSlug($string) {
+    // 1. Mettre en minuscule
+    $slug = strtolower($string);
+    // 2. Remplacer tout ce qui n'est pas lettre/chiffre par un tiret
+    $slug = preg_replace('/[^a-z0-9]+/i', '-', $slug);
+    // 3. Retirer les tirets en début et fin
+    $slug = trim($slug, '-');
+    return $slug;
+}
 }

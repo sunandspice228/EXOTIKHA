@@ -5,39 +5,50 @@
     <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
     <div class="max-w-7xl mx-auto px-6 relative z-10 text-center">
-        <p class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 animate-fade-in-down">Boutique Exotikha</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 animate-fade-in-down">Exotikha Store</p>
         <h1 class="text-4xl md:text-5xl font-serif font-bold text-slate-900 mb-4 animate-fade-in-up">
             <?php 
-                if(!empty($data['filters']['promo_only'])) echo "Ventes Privées & Promos";
-                elseif(!empty($data['filters']['gender']) && $data['filters']['gender'] == 'femme') echo "Collection Femme";
-                elseif(!empty($data['filters']['gender']) && $data['filters']['gender'] == 'homme') echo "Collection Homme";
-                elseif(!empty($data['filters']['search'])) echo "Résultats pour : " . htmlspecialchars($data['filters']['search']);
-                else echo "Toutes les Collections";
+                if(!empty($data['filters']['promo_only'])) echo "Private Sales & Promos";
+                elseif(!empty($data['filters']['search'])) echo "Results for: " . htmlspecialchars($data['filters']['search']);
+                // Dynamic title based on filters
+                elseif(!empty($data['filters']['gender'])) echo ucfirst($data['filters']['gender']) . "'s Collection";
+                else echo "All Collections";
             ?>
         </h1>
         
-        <?php if(!empty($data['filters']['gender']) || !empty($data['filters']['category_id']) || !empty($data['filters']['search'])): ?>
+        <?php if(!empty($data['filters']['gender']) || !empty($data['filters']['category_id']) || !empty($data['filters']['type_id']) || !empty($data['filters']['search'])): ?>
         <div class="flex flex-wrap justify-center gap-2 mt-6 animate-fade-in-up delay-100">
             
             <?php if(!empty($data['filters']['gender'])): ?>
                 <a href="<?php echo URLROOT; ?>/shop" class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:border-red-300 hover:text-red-500 transition group">
-                    Genre: <?php echo ucfirst($data['filters']['gender']); ?> <i class="fas fa-times group-hover:rotate-90 transition"></i>
+                    Gender: <?php echo ucfirst($data['filters']['gender']); ?> <i class="fas fa-times group-hover:rotate-90 transition"></i>
                 </a>
             <?php endif; ?>
 
             <?php if(!empty($data['filters']['category_id'])): ?>
                 <?php 
-                    // Petite astuce pour retrouver le nom de la catégorie active
-                    $catName = 'Catégorie';
+                    $catName = 'Category';
                     foreach($data['categories'] as $c) { if($c->id == $data['filters']['category_id']) $catName = $c->name; }
                 ?>
                 <a href="<?php echo URLROOT; ?>/shop" class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:border-red-300 hover:text-red-500 transition group">
-                    Catégorie: <?php echo $catName; ?> <i class="fas fa-times group-hover:rotate-90 transition"></i>
+                    Cat: <?php echo $catName; ?> <i class="fas fa-times group-hover:rotate-90 transition"></i>
+                </a>
+            <?php endif; ?>
+
+            <?php if(!empty($data['filters']['type_id'])): ?>
+                <?php 
+                    $typeName = 'Type';
+                    if(isset($data['types'])) {
+                        foreach($data['types'] as $t) { if($t->id == $data['filters']['type_id']) $typeName = $t->name; }
+                    }
+                ?>
+                <a href="<?php echo URLROOT; ?>/shop" class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:border-red-300 hover:text-red-500 transition group">
+                    Type: <?php echo $typeName; ?> <i class="fas fa-times group-hover:rotate-90 transition"></i>
                 </a>
             <?php endif; ?>
 
             <a href="<?php echo URLROOT; ?>/shop" class="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-slate-700 transition">
-                Tout effacer
+                Clear All
             </a>
         </div>
         <?php endif; ?>
@@ -48,9 +59,9 @@
     
     <div class="lg:hidden mb-6 flex justify-between items-center">
         <button id="mobileFilterBtn" class="flex items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-xl font-bold text-sm shadow-lg">
-            <i class="fas fa-filter"></i> Filtres & Tri
+            <i class="fas fa-filter"></i> Filters & Sort
         </button>
-        <span class="text-xs font-bold text-slate-500"><?php echo count($data['products']); ?> articles</span>
+        <span class="text-xs font-bold text-slate-500"><?php echo count($data['products']); ?> items</span>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-12">
@@ -60,7 +71,7 @@
         <aside id="shopSidebar" class="fixed inset-y-0 left-0 w-[280px] bg-white z-50 transform -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:static lg:w-64 lg:block lg:z-auto lg:bg-transparent shadow-2xl lg:shadow-none overflow-y-auto lg:overflow-visible p-6 lg:p-0">
             
             <div class="flex justify-between items-center lg:hidden mb-6">
-                <h3 class="font-bold text-lg">Filtres</h3>
+                <h3 class="font-bold text-lg">Filters</h3>
                 <button id="closeFilterBtn" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><i class="fas fa-times"></i></button>
             </div>
 
@@ -68,45 +79,71 @@
                 
                 <div class="bg-white lg:bg-transparent rounded-2xl">
                     <form action="<?php echo URLROOT; ?>/shop" method="GET" class="relative group">
-                        <?php if(!empty($data['filters']['category_id'])): ?>
-                            <input type="hidden" name="category_id" value="<?php echo $data['filters']['category_id']; ?>">
-                        <?php endif; ?>
-                        <?php if(!empty($data['filters']['gender'])): ?>
-                            <input type="hidden" name="gender" value="<?php echo $data['filters']['gender']; ?>">
-                        <?php endif; ?>
+                        <?php foreach(['category_id', 'gender', 'type_id'] as $f): ?>
+                            <?php if(!empty($data['filters'][$f])): ?>
+                                <input type="hidden" name="<?php echo $f; ?>" value="<?php echo $data['filters'][$f]; ?>">
+                            <?php endif; ?>
+                        <?php endforeach; ?>
 
-                        <input type="text" name="search" value="<?php echo htmlspecialchars($data['filters']['search'] ?? ''); ?>" placeholder="Rechercher..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm group-hover:shadow-md">
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($data['filters']['search'] ?? ''); ?>" placeholder="Search..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm group-hover:shadow-md">
                         <i class="fas fa-search absolute left-4 top-3.5 text-slate-400 group-focus-within:text-primary transition"></i>
                     </form>
                 </div>
 
+                <?php if(isset($data['genres']) && !empty($data['genres'])): ?>
                 <div class="border-t border-slate-200 pt-6 lg:border-none lg:pt-0">
                     <h3 class="font-bold text-slate-900 mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
                         Collections
                     </h3>
                     <div class="space-y-2">
                         <a href="<?php echo URLROOT; ?>/shop" class="flex items-center justify-between p-3 rounded-lg transition <?php echo empty($data['filters']['gender']) ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'hover:bg-slate-100 text-slate-600'; ?>">
-                            <span class="font-bold text-sm">Tout voir</span>
+                            <span class="font-bold text-sm">View All</span>
                         </a>
-                        <a href="<?php echo URLROOT; ?>/shop?gender=femme" class="flex items-center justify-between p-3 rounded-lg transition <?php echo (isset($data['filters']['gender']) && $data['filters']['gender'] == 'femme') ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'hover:bg-slate-100 text-slate-600'; ?>">
-                            <span class="font-bold text-sm">Femme</span>
-                            <?php if(isset($data['filters']['gender']) && $data['filters']['gender'] == 'femme'): ?><i class="fas fa-check text-xs"></i><?php endif; ?>
-                        </a>
-                        <a href="<?php echo URLROOT; ?>/shop?gender=homme" class="flex items-center justify-between p-3 rounded-lg transition <?php echo (isset($data['filters']['gender']) && $data['filters']['gender'] == 'homme') ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'hover:bg-slate-100 text-slate-600'; ?>">
-                            <span class="font-bold text-sm">Homme</span>
-                            <?php if(isset($data['filters']['gender']) && $data['filters']['gender'] == 'homme'): ?><i class="fas fa-check text-xs"></i><?php endif; ?>
-                        </a>
+                        
+                        <?php foreach($data['genres'] as $genre): ?>
+                            <?php 
+                                // Build URL keeping other params
+                                $url = URLROOT . '/shop?gender=' . urlencode($genre->name); 
+                                if(!empty($data['filters']['category_id'])) $url .= '&category_id=' . $data['filters']['category_id'];
+                                
+                                $isActive = (isset($data['filters']['gender']) && strtolower($data['filters']['gender']) == strtolower($genre->name));
+                            ?>
+                            <a href="<?php echo $url; ?>" class="flex items-center justify-between p-3 rounded-lg transition <?php echo $isActive ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'hover:bg-slate-100 text-slate-600'; ?>">
+                                <span class="font-bold text-sm"><?php echo ucfirst($genre->name); ?></span>
+                                <?php if($isActive): ?><i class="fas fa-check text-xs"></i><?php endif; ?>
+                            </a>
+                        <?php endforeach; ?>
                     </div>
                 </div>
+                <?php endif; ?>
+
+                <?php if(isset($data['types']) && !empty($data['types'])): ?>
+                <div class="border-t border-slate-200 pt-6">
+                    <h3 class="font-bold text-slate-900 mb-4 text-sm uppercase tracking-widest">Product Type</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <?php foreach($data['types'] as $type): ?>
+                            <?php 
+                                $isActive = (isset($data['filters']['type_id']) && $data['filters']['type_id'] == $type->id);
+                                $url = URLROOT . '/shop?type_id=' . $type->id;
+                                if(!empty($data['filters']['gender'])) $url .= '&gender=' . $data['filters']['gender'];
+                            ?>
+                            <a href="<?php echo $url; ?>" class="px-3 py-1.5 rounded-lg text-xs font-bold border transition <?php echo $isActive ? 'bg-slate-800 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-800 hover:text-slate-800'; ?>">
+                                <?php echo $type->name; ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <div class="border-t border-slate-200 pt-6">
-                    <h3 class="font-bold text-slate-900 mb-4 text-sm uppercase tracking-widest">Catégories</h3>
+                    <h3 class="font-bold text-slate-900 mb-4 text-sm uppercase tracking-widest">Categories</h3>
                     <div class="flex flex-wrap gap-2">
                         <?php foreach($data['categories'] as $cat): ?>
                             <?php 
                                 $isActive = (isset($data['filters']['category_id']) && $data['filters']['category_id'] == $cat->id);
                                 $url = URLROOT . '/shop?category_id=' . $cat->id;
                                 if(!empty($data['filters']['gender'])) $url .= '&gender=' . $data['filters']['gender'];
+                                if(!empty($data['filters']['type_id'])) $url .= '&type_id=' . $data['filters']['type_id'];
                             ?>
                             <a href="<?php echo $url; ?>" class="px-3 py-1.5 rounded-lg text-xs font-bold border transition <?php echo $isActive ? 'bg-primary border-primary text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-primary hover:text-primary'; ?>">
                                 <?php echo $cat->name; ?>
@@ -119,7 +156,7 @@
                     <a href="<?php echo URLROOT; ?>/shop?promo_only=1" class="relative block overflow-hidden rounded-xl bg-gradient-to-r from-red-500 to-pink-600 p-5 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition duration-300">
                         <div class="relative z-10 flex items-center justify-between">
                             <div>
-                                <p class="text-[10px] font-black uppercase opacity-80">Offre Spéciale</p>
+                                <p class="text-[10px] font-black uppercase opacity-80">Special Offer</p>
                                 <p class="font-bold text-lg">Promotions</p>
                             </div>
                             <i class="fas fa-percent text-2xl opacity-50"></i>
@@ -134,7 +171,7 @@
         <div class="flex-1">
             
             <div class="hidden lg:flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
-                <span class="text-sm font-bold text-slate-500"><strong><?php echo count($data['products']); ?></strong> résultats</span>
+                <span class="text-sm font-bold text-slate-500"><strong><?php echo count($data['products']); ?></strong> results</span>
                 <div class="flex items-center gap-2 text-sm text-slate-500">
                     <form action="<?php echo URLROOT; ?>/shop" method="get" class="flex items-center gap-2">
                         <?php foreach($_GET as $key => $val): ?>
@@ -143,11 +180,12 @@
                             <?php endif; ?>
                         <?php endforeach; ?>
                         
-                        <span>Trier par:</span>
+                        <span>Sort by:</span>
                         <select name="sort" onchange="this.form.submit()" class="border-none bg-slate-50 rounded-lg text-sm font-bold text-slate-800 focus:ring-0 cursor-pointer py-1 pl-3 pr-8">
-                            <option value="newest" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'newest') ? 'selected' : ''; ?>>Nouveautés</option>
-                            <option value="price_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_asc') ? 'selected' : ''; ?>>Prix croissant</option>
-                            <option value="price_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_desc') ? 'selected' : ''; ?>>Prix décroissant</option>
+                            <option value="newest" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'newest') ? 'selected' : ''; ?>>Newest Arrivals</option>
+                            <option value="price_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_asc') ? 'selected' : ''; ?>>Price: Low to High</option>
+                            <option value="price_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'price_desc') ? 'selected' : ''; ?>>Price: High to Low</option>
+                            <option value="popularity" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'popularity') ? 'selected' : ''; ?>>Popularity</option>
                         </select>
                     </form>
                 </div>
@@ -158,10 +196,10 @@
                     <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-6 text-slate-300">
                         <i class="fas fa-search text-3xl"></i>
                     </div>
-                    <h3 class="text-2xl font-serif font-bold text-slate-800 mb-2">Aucun résultat</h3>
-                    <p class="text-slate-500 max-w-sm mb-8">Nous n'avons trouvé aucun produit correspondant à vos filtres.</p>
+                    <h3 class="text-2xl font-serif font-bold text-slate-800 mb-2">No results found</h3>
+                    <p class="text-slate-500 max-w-sm mb-8">We couldn't find any items matching your filters.</p>
                     <a href="<?php echo URLROOT; ?>/shop" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-primary transition shadow-lg shadow-slate-900/20">
-                        Effacer les filtres
+                        Clear Filters
                     </a>
                 </div>
             <?php else: ?>
@@ -179,11 +217,11 @@
 
                                 <?php if($product->stock > 0 && $product->stock < 5): ?>
                                     <span class="absolute top-3 right-3 bg-white/90 backdrop-blur text-orange-600 text-[10px] font-bold px-2 py-1 rounded z-20 border border-orange-100">
-                                        Plus que <?php echo $product->stock; ?>
+                                        Only <?php echo $product->stock; ?> left
                                     </span>
                                 <?php endif; ?>
 
-                                <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>" class="block w-full h-full">
+                                <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>" class="block w-full h-full">
                                     <?php if(!empty($product->image)): ?>
                                         <img src="<?php echo URLROOT . '/img/' . $product->image; ?>" 
                                              class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
@@ -199,21 +237,22 @@
                                     <div class="absolute bottom-4 left-4 right-4 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
                                         <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="flex gap-2">
                                             <?php echo csrfField(); ?>
+                                            
                                             <input type="hidden" name="product_id" value="<?php echo $product->id; ?>">
                                             <input type="hidden" name="quantity" value="1">
                                             
                                             <button type="submit" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-black shadow-lg flex items-center justify-center gap-2">
-                                                <i class="fas fa-shopping-bag"></i> Ajouter
+                                                <i class="fas fa-shopping-bag"></i> Add
                                             </button>
                                             
-                                            <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $product->id; ?>" class="w-10 bg-white text-slate-900 rounded-xl flex items-center justify-center hover:text-red-500 hover:bg-red-50 transition shadow-lg">
+                                            <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $product->id; ?>" class="w-10 bg-white text-slate-900 rounded-xl flex items-center justify-center hover:text-red-500 hover:bg-red-50 transition shadow-lg" title="Add to Wishlist">
                                                 <i class="far fa-heart"></i>
                                             </a>
                                         </form>
                                     </div>
                                 <?php else: ?>
                                     <div class="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
-                                        <span class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg">Rupture</span>
+                                        <span class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg">Sold Out</span>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -222,16 +261,17 @@
                                 <p class="text-[10px] uppercase text-slate-400 font-bold tracking-wider mb-1">
                                     <?php echo $product->category_name ?? 'Collection'; ?>
                                 </p>
+                                
                                 <h3 class="font-bold text-slate-900 text-sm md:text-base leading-tight truncate mb-1 group-hover:text-primary transition">
-                                    <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>"><?php echo $product->name; ?></a>
+                                    <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>"><?php echo $product->name; ?></a>
                                 </h3>
                                 
                                 <div class="flex items-center gap-3">
                                     <?php if($product->promo_price > 0): ?>
-                                        <span class="text-red-600 font-black text-base"><?php echo number_format($product->promo_price, 0, ',', ' ') . ' ' . CURRENCY_SYMBOL; ?></span>
-                                        <span class="text-xs text-slate-400 line-through font-medium"><?php echo number_format($product->price, 0, ',', ' '); ?></span>
+                                        <span class="text-red-600 font-black text-base"><?php echo CURRENCY_SYMBOL . number_format($product->promo_price, 2); ?></span>
+                                        <span class="text-xs text-slate-400 line-through font-medium"><?php echo number_format($product->price, 2); ?></span>
                                     <?php else: ?>
-                                        <span class="text-slate-900 font-bold text-base"><?php echo number_format($product->price, 0, ',', ' ') . ' ' . CURRENCY_SYMBOL; ?></span>
+                                        <span class="text-slate-900 font-bold text-base"><?php echo CURRENCY_SYMBOL . number_format($product->price, 2); ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -252,7 +292,7 @@
     const overlay = document.getElementById('filterOverlay');
 
     function toggleFilters() {
-        if(!sidebar) return; // Sécurité si élément manquant
+        if(!sidebar) return; 
         const isClosed = sidebar.classList.contains('-translate-x-full');
         if(isClosed) {
             sidebar.classList.remove('-translate-x-full');

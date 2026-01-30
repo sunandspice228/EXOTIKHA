@@ -22,7 +22,7 @@ namespace Composer\Autoload;
  *     $loader->add('Symfony',           __DIR__.'/framework');
  *
  *     // activate the autoloader
- *     $loader->register();
+ *     $loader->registerCustomer();
  *
  *     // to enable searching the include path (eg. for PEAR packages)
  *     $loader->setUseIncludePath(true);
@@ -405,7 +405,7 @@ class ClassLoader
      *
      * @return void
      */
-    public function unregister()
+    public function unregisterCustomer()
     {
         spl_autoload_unregister(array($this, 'loadClass'));
 

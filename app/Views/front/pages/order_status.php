@@ -95,7 +95,7 @@
                                     <?php endif; ?>
                                 </div>
                                 <div class="flex-1">
-                                    <h4 class="font-bold text-slate-900 text-sm mb-1"><?php echo $item->name; ?></h4>
+                                    <h4 class="font-bold text-slate-900 text-sm mb-1"><?php echo $item->product_name; ?></h4>
                                     <p class="text-xs text-slate-500 mb-1">Qty: <?php echo $item->quantity; ?></p>
                                     <?php if(!empty($item->sku)): ?>
                                         <p class="text-[10px] text-slate-400 uppercase">SKU: <?php echo $item->sku; ?></p>

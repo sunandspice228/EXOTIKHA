@@ -24,39 +24,26 @@ class Pages extends Controller {
     // 1. PAGE D'ACCUEIL (HOME)
     // =========================================================
     public function index(){
-        // A. Nouveautés
+        // A. Nouveautés (4 derniers produits)
         $newArrivals = $this->productModel->getNewArrivals(4);
 
-        // B. Promotions
+        // B. Promotions (4 produits en promo)
         $promoProducts = $this->productModel->getPromoProducts(4);
 
         // C. Catégories
-        if(method_exists($this->categoryModel, 'getCategoriesWithCover')){
-            $categories = $this->categoryModel->getCategoriesWithCover();
-        } else {
-            $categories = $this->categoryModel->getCategories();
-        }
+        // Si vous avez ajouté une gestion d'image de couverture dans Category, utilisez getAllCategoriesWithCover
+        // Sinon, la méthode standard suffit.
+        $categories = $this->categoryModel->getAllCategories();
 
         // D. Blog (3 derniers articles)
-        $posts = $this->postModel->getLatestPosts(3); // Utilise la méthode optimisée si elle existe
+        $posts = $this->postModel->getLatestPosts(3);
 
         // E. Témoignages (Validés uniquement)
-        // On récupère les avis globaux approuvés pour les témoignages
-if(method_exists($this->reviewModel, 'getApprovedReviews')){
-    $reviews = $this->reviewModel->getApprovedReviews();
-} else {
-    $reviews = [];
-} // Note: Il faudra adapter ReviewModel pour avoir une méthode getApprovedReviews() globale si ce n'est pas par produit.
-        // Sinon, utilise celle que tu as écrite :
-        if(method_exists($this->reviewModel, 'getApprovedReviews')){
-            $reviews = $this->reviewModel->getApprovedReviews();
-        } else {
-            $reviews = [];
-        }
+        $reviews = $this->reviewModel->getApprovedReviews();
 
         $data = [
             'title' => 'Exotikha - Mode Africaine Moderne',
-            'description' => 'Découvrez notre collection unique.',
+            'description' => 'Découvrez notre collection unique de vêtements et accessoires.',
             'new_arrivals' => $newArrivals,
             'promo_products' => $promoProducts,
             'categories' => $categories,
@@ -71,20 +58,44 @@ if(method_exists($this->reviewModel, 'getApprovedReviews')){
     // 2. PAGE A PROPOS
     // =========================================================
     public function about(){
-        $this->view('front/pages/about');
+        $data = [
+            'title' => 'À Propos de Nous',
+            'description' => 'L\'histoire d\'Exotikha et notre mission.'
+        ];
+        $this->view('front/pages/about', $data);
     }
 
     // =========================================================
-    // 3. PAGE ARTICLE DE BLOG UNIQUE
+    // 3. BLOG (LISTE & DÉTAIL)
     // =========================================================
-    public function post($id){
-        $post = $this->postModel->getPostById($id);
+    
+    // Liste de tous les articles
+    public function blog(){
+        $posts = $this->postModel->getPosts();
+        $data = [
+            'title' => 'Exotikha Journal',
+            'description' => 'Actualités, mode et tendances.',
+            'posts' => $posts
+        ];
+        $this->view('front/pages/blog', $data);
+    }
 
-        if(!$post){
-            redirect('pages');
+    // Article unique
+    public function post($slug_or_id){
+        // On essaie de récupérer par ID ou par Slug (si vous avez implémenté getPostBySlug)
+        // Ici on suppose ID pour rester simple, ou Slug si le modèle le gère
+        if(is_numeric($slug_or_id)){
+            $post = $this->postModel->getPostById($slug_or_id);
+        } else {
+            // Si vous avez ajouté getPostBySlug dans Post.php
+            $post = method_exists($this->postModel, 'getPostBySlug') ? $this->postModel->getPostBySlug($slug_or_id) : null;
         }
 
-        // Sidebar : 3 articles récents
+        if(!$post){
+            redirect('pages/blog');
+        }
+
+        // Sidebar : 3 articles récents pour inciter à la lecture
         $recentPosts = $this->postModel->getLatestPosts(3);
 
         $data = [
@@ -101,22 +112,21 @@ if(method_exists($this->reviewModel, 'getApprovedReviews')){
     // =========================================================
     public function subscribe(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
-        // Ajoute cette ligne pour protéger le formulaire
-        verifyCsrfToken();
+            verifyCsrfToken();
             $email = trim($_POST['email']);
 
             if(!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)){
                 if($this->newsletterModel->addEmail($email)){
-                    flash('product_message', 'Inscription réussie à la newsletter !');
+                    flash('newsletter_msg', 'Inscription réussie à la newsletter !');
                 } else {
-                    flash('product_message', 'Vous êtes déjà inscrit.', 'bg-orange-100 text-orange-700');
+                    flash('newsletter_msg', 'Vous êtes déjà inscrit.', 'bg-orange-100 text-orange-700');
                 }
             } else {
-                flash('product_message', 'Email invalide.', 'bg-red-100 text-red-700');
+                flash('newsletter_msg', 'Email invalide.', 'bg-red-100 text-red-700');
             }
         }
         
-        // Redirection vers la page précédente
+        // Redirection vers la page précédente (Stay on same page)
         $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : URLROOT;
         header("Location: $referer");
     }
@@ -126,8 +136,7 @@ if(method_exists($this->reviewModel, 'getApprovedReviews')){
     // =========================================================
     public function contact(){
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
-        // Ajoute cette ligne pour protéger le formulaire
-        verifyCsrfToken();
+            verifyCsrfToken();
             $_POST = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
             $data = [
@@ -139,18 +148,25 @@ if(method_exists($this->reviewModel, 'getApprovedReviews')){
             ];
 
             if(empty($data['name']) || empty($data['email']) || empty($data['message'])){
-                $data['error'] = 'Veuillez remplir tous les champs.';
+                $data['error'] = 'Veuillez remplir tous les champs obligatoires.';
             }
 
             if(empty($data['error'])){
+                // Configuration de l'email admin
                 $to = 'sales@exotikha.com'; 
-                $email_subject = "Contact: " . $data['subject'];
-                $email_body = "Nom: " . $data['name'] . "\nEmail: " . $data['email'] . "\n\n" . $data['message'];
+                $email_subject = "Contact Site: " . $data['subject'];
+                $email_body = "<strong>Nom:</strong> " . $data['name'] . "<br>" .
+                              "<strong>Email:</strong> " . $data['email'] . "<br><br>" .
+                              "<strong>Message:</strong><br>" . nl2br($data['message']);
                 
-                sendEmail($to, $email_subject, nl2br($email_body));
-
-                flash('product_message', 'Merci ! Votre message a été envoyé.');
-                redirect('pages/contact');
+                // Utilisation du Helper mail_helper.php
+                if(sendEmail($to, $email_subject, $email_body)){
+                    flash('contact_msg', 'Merci ! Votre message a été envoyé.');
+                    redirect('pages/contact');
+                } else {
+                    $data['error'] = 'Erreur lors de l\'envoi. Veuillez réessayer.';
+                    $this->view('front/pages/contact', $data);
+                }
             } else {
                 $this->view('front/pages/contact', $data);
             }
@@ -161,51 +177,57 @@ if(method_exists($this->reviewModel, 'getApprovedReviews')){
     }
 
     // =========================================================
-    // 6. LISTE DE TOUS LES ARTICLES (BLOG)
-    // =========================================================
-    public function blog(){
-        $posts = $this->postModel->getPosts();
-
-        $data = [
-            'title' => 'Exotikha Journal',
-            'posts' => $posts
-        ];
-
-        $this->view('front/pages/blog', $data);
-    }
-
-    // =========================================================
-    // 7. SUIVI DE COMMANDE
+    // 6. SUIVI DE COMMANDE (GUEST TRACKING)
     // =========================================================
     public function track(){
+        // Note: Si vous n'avez pas créé la méthode trackOrder dans Order.php,
+        // cette fonction ne marchera pas. Assurez-vous d'avoir ajouté la logique dans le modèle Order.
+        // Sinon, redirigez vers la connexion.
+        
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
-        // Ajoute cette ligne pour protéger le formulaire
-        verifyCsrfToken();
+            verifyCsrfToken();
             $orderNumber = trim($_POST['order_number']);
-            $email = trim($_POST['email']);
+            // On demande l'email pour vérifier l'identité (sécurité simple)
+            // Si votre formulaire n'a pas d'email (juste ID), retirez cette vérification
+            $email = isset($_POST['email']) ? trim($_POST['email']) : ''; 
 
-            if(empty($orderNumber) || empty($email)){
-                flash('track_error', 'Veuillez entrer le numéro et l\'email.', 'bg-red-100 text-red-700');
-                // CORRECTION ICI : Redirection vers profile
-                redirect('users/profile?tab=track');
+            if(empty($orderNumber)){
+                flash('track_error', 'Veuillez entrer le numéro de commande.', 'bg-red-100 text-red-700');
+                redirect('users/account?tab=track');
                 return;
             }
 
-            $order = $this->orderModel->trackOrder($orderNumber, $email);
+            // On suppose que vous avez ajouté cette méthode dans Order.php
+            // Si elle n'existe pas, il faut l'ajouter dans le modèle Order
+            if(method_exists($this->orderModel, 'getOrderByNumber')){
+                 $order = $this->orderModel->getOrderByNumber($orderNumber);
+            } else {
+                 // Fallback si la méthode n'existe pas encore
+                 flash('track_error', 'Fonctionnalité en maintenance.', 'bg-yellow-100 text-yellow-700');
+                 redirect('users/account?tab=track');
+                 return;
+            }
 
             if($order){
+                // Si l'utilisateur a entré un email, on vérifie que ça correspond
+                if(!empty($email) && strtolower($order->email) !== strtolower($email)){
+                     flash('track_error', 'Email ne correspond pas à la commande.', 'bg-red-100 text-red-700');
+                     redirect('users/account?tab=track');
+                     return;
+                }
+
                 $data = [
                     'order' => $order,
                     'items' => $this->orderModel->getOrderItems($order->id)
                 ];
+                // Vue spéciale pour le statut (ou réutiliser details)
                 $this->view('front/pages/order_status', $data);
             } else {
-                flash('product_message', 'Commande introuvable.', 'bg-red-100 text-red-700');
-                // CORRECTION ICI : Redirection vers profile
-                redirect('users/profile?tab=track');
+                flash('track_error', 'Commande introuvable.', 'bg-red-100 text-red-700');
+                redirect('users/account?tab=track');
             }
         } else {
-            redirect('');
+            redirect('users/account?tab=track');
         }
     }
 }

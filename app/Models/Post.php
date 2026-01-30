@@ -7,86 +7,71 @@ class Post {
     }
 
     // =========================================================
-    // 1. LECTURE (READ)
+    // LECTURE
     // =========================================================
 
-    // Récupérer tous les articles
+    // Récupérer tous les articles (Admin & Blog Index)
     public function getPosts(){
-        // CORRECTION ICI : users.full_name au lieu de users.name
-        $this->db->query("SELECT posts.*, 
-                                 users.full_name as author_name,
-                                 posts.id as postId,
-                                 users.id as userId
-                          FROM posts 
-                          LEFT JOIN users ON posts.user_id = users.id 
-                          ORDER BY posts.created_at DESC");
+        $this->db->query('SELECT * FROM posts ORDER BY created_at DESC');
         return $this->db->resultSet();
     }
 
-    // Récupérer les derniers articles (Home Page)
-    public function getLatestPosts($limit = 3){
-        $this->db->query("SELECT * FROM posts ORDER BY created_at DESC LIMIT :limit");
-        $this->db->bind(':limit', $limit); 
-        return $this->db->resultSet();
-    }
-
-    // Récupérer un article par ID
+    // Récupérer un article par ID (Pour l'Admin Edit)
     public function getPostById($id){
-        // CORRECTION ICI : users.full_name
-        $this->db->query("SELECT posts.*, users.full_name as author_name 
-                          FROM posts 
-                          LEFT JOIN users ON posts.user_id = users.id 
-                          WHERE posts.id = :id");
+        $this->db->query('SELECT * FROM posts WHERE id = :id');
         $this->db->bind(':id', $id);
         return $this->db->single();
     }
 
+    // Récupérer un article par SLUG (Pour l'affichage Front-End SEO)
+    public function getPostBySlug($slug){
+        $this->db->query('SELECT * FROM posts WHERE slug = :slug');
+        $this->db->bind(':slug', $slug);
+        return $this->db->single();
+    }
+
+    // Récupérer les derniers articles (Pour la Home Page)
+    public function getLatestPosts($limit = 3){
+        $this->db->query('SELECT * FROM posts ORDER BY created_at DESC LIMIT :limit');
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
+
     // =========================================================
-    // 2. ÉCRITURE (CREATE / UPDATE / DELETE)
+    // ÉCRITURE (ADMIN)
     // =========================================================
 
+    // Ajouter un article
     public function addPost($data){
-        // CORRECTION ICI : content au lieu de body
-        $this->db->query("INSERT INTO posts (user_id, title, category, image, content, created_at) 
-                          VALUES (:uid, :title, :category, :image, :content, NOW())");
+        $this->db->query('INSERT INTO posts (title, slug, category, image, content) VALUES (:title, :slug, :category, :image, :content)');
         
-        $this->db->bind(':uid', $_SESSION['user_id'] ?? 1); 
         $this->db->bind(':title', $data['title']);
-        $this->db->bind(':category', isset($data['category']) ? $data['category'] : 'General');
+        $this->db->bind(':slug', $data['slug']);
+        $this->db->bind(':category', $data['category']);
         $this->db->bind(':image', $data['image']);
-        $this->db->bind(':content', $data['body']); // Attention : ton contrôleur envoie 'body', on le map vers 'content'
-        
+        // Correction : on utilise 'content' partout pour être cohérent avec la BDD
+        $this->db->bind(':content', $data['content']); 
+
         return $this->db->execute();
     }
 
+    // Mettre à jour un article
     public function updatePost($data){
-        // CORRECTION ICI : content au lieu de body
-        $this->db->query("UPDATE posts SET title = :title, content = :content, image = :image WHERE id = :id");
+        $this->db->query('UPDATE posts SET title = :title, slug = :slug, category = :category, image = :image, content = :content WHERE id = :id');
         
         $this->db->bind(':id', $data['id']);
         $this->db->bind(':title', $data['title']);
-        $this->db->bind(':content', $data['body']); // Map body -> content
+        $this->db->bind(':slug', $data['slug']);
+        $this->db->bind(':category', $data['category']);
         $this->db->bind(':image', $data['image']);
-        
+        $this->db->bind(':content', $data['content']);
+
         return $this->db->execute();
     }
 
+    // Supprimer un article
     public function deletePost($id){
-        // 1. Récupérer l'image
-        $this->db->query("SELECT image FROM posts WHERE id = :id");
-        $this->db->bind(':id', $id);
-        $post = $this->db->single();
-
-        if($post && !empty($post->image)){
-            // Correction du chemin d'image
-            $imagePath = '../public/img/' . $post->image;
-            if(file_exists($imagePath)){
-                unlink($imagePath);
-            }
-        }
-
-        // 2. Supprimer en BDD
-        $this->db->query("DELETE FROM posts WHERE id = :id");
+        $this->db->query('DELETE FROM posts WHERE id = :id');
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }

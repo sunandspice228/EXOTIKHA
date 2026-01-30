@@ -8,12 +8,13 @@
         </a>
         <div>
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Edit Post</h1>
-            <p class="text-sm text-slate-500">Updating: <span class="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded"><?php echo $data['post']->title; ?></span></p>
+            <p class="text-sm text-slate-500">Updating: <span class="font-bold text-primary bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100"><?php echo $data['post']->title; ?></span></p>
         </div>
     </div>
 
     <form action="<?php echo URLROOT; ?>/admin/blog_edit/<?php echo $data['post']->id; ?>" method="POST" enctype="multipart/form-data" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
         <?php echo csrfField(); ?>
+        
         <div class="mb-8">
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Post Title <span class="text-red-500">*</span></label>
             <input type="text" name="title" value="<?php echo $data['post']->title; ?>" required 
@@ -27,9 +28,13 @@
                 <div class="relative">
                     <i class="fas fa-folder absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <select name="category" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition appearance-none font-medium text-slate-700 cursor-pointer">
-                        <?php $cats = ['Lifestyle', 'Mode', 'Conseils', 'Événements']; ?>
-                        <?php foreach($cats as $c): ?>
-                            <option value="<?php echo $c; ?>" <?php echo ($data['post']->category == $c) ? 'selected' : ''; ?>><?php echo $c; ?></option>
+                        <?php 
+                            $cats = ['Lifestyle', 'Fashion', 'Tips', 'Events']; 
+                            foreach($cats as $c): 
+                        ?>
+                            <option value="<?php echo $c; ?>" <?php echo ($data['post']->category == $c) ? 'selected' : ''; ?>>
+                                <?php echo $c; ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                     <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
@@ -39,10 +44,15 @@
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Update Cover Image</label>
                 <input type="file" name="image" class="w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:uppercase file:bg-slate-100 file:text-slate-600 hover:file:bg-primary hover:file:text-white transition cursor-pointer border border-slate-200 rounded-xl">
+                
                 <?php if(!empty($data['post']->image)): ?>
-                    <p class="text-[10px] text-slate-400 mt-2 flex items-center gap-1">
-                        <i class="fas fa-image"></i> Current image: <span class="font-mono text-slate-500"><?php echo $data['post']->image; ?></span>
-                    </p>
+                    <div class="mt-3 flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <img src="<?php echo URLROOT . '/public/img/' . $data['post']->image; ?>" class="w-10 h-10 object-cover rounded shadow-sm">
+                        <div class="text-xs">
+                            <p class="text-slate-400 font-bold uppercase">Current Image</p>
+                            <p class="text-slate-600 truncate max-w-[150px]"><?php echo $data['post']->image; ?></p>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -50,13 +60,14 @@
         <div class="mb-8">
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Content <span class="text-red-500">*</span></label>
             <textarea name="content" rows="15" required 
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-700 leading-relaxed"><?php echo $data['post']->content; ?></textarea>
+                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-700 leading-relaxed font-sans"><?php echo $data['post']->content; ?></textarea>
+            <p class="text-[10px] text-slate-400 mt-2 text-right">HTML tags are allowed for formatting.</p>
         </div>
 
         <div class="flex items-center justify-end gap-4 border-t border-slate-50 pt-6">
             <a href="<?php echo URLROOT; ?>/admin/blog" class="text-slate-500 font-bold text-sm hover:text-slate-800 px-4 transition">Cancel</a>
-            <button type="submit" class="bg-primary text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-indigo-600 transition shadow-lg shadow-primary/30 flex items-center gap-2">
-                <i class="fas fa-check"></i> Update Post
+            <button type="submit" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-primary transition shadow-lg shadow-slate-900/20 flex items-center gap-2 transform hover:-translate-y-1">
+                <i class="fas fa-save"></i> Save Changes
             </button>
         </div>
 

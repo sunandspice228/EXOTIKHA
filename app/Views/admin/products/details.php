@@ -8,13 +8,25 @@
                 <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Product Details</h1>
-                <p class="text-xs text-slate-500 font-medium">Internal SKU: <span class="font-mono text-slate-600"><?php echo $data['product']->sku; ?></span></p>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Product Details</h1>
+                    
+                    <?php if(isset($data['product']->status) && $data['product']->status == 'draft'): ?>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">
+                            Draft
+                        </span>
+                    <?php else: ?>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-green-100 text-green-700 border border-green-200">
+                            Active
+                        </span>
+                    <?php endif; ?>
+                </div>
+                <p class="text-xs text-slate-500 font-medium">Internal SKU: <span class="font-mono text-slate-600 bg-slate-100 px-1 rounded"><?php echo $data['product']->sku; ?></span></p>
             </div>
         </div>
         
         <div class="flex gap-3 w-full md:w-auto">
-            <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $data['product']->id; ?>" target="_blank" class="px-4 py-2 bg-white text-slate-600 font-bold rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-primary transition shadow-sm text-sm flex items-center gap-2 justify-center flex-1 md:flex-initial">
+            <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $data['product']->slug; ?>" target="_blank" class="px-4 py-2 bg-white text-slate-600 font-bold rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-primary transition shadow-sm text-sm flex items-center gap-2 justify-center flex-1 md:flex-initial">
                 <i class="fas fa-external-link-alt"></i> View in Store
             </a>
             <a href="<?php echo URLROOT; ?>/admin/products_edit/<?php echo $data['product']->id; ?>" class="px-4 py-2 bg-primary text-white font-bold rounded-xl hover:bg-indigo-600 transition shadow-lg shadow-primary/30 text-sm flex items-center gap-2 justify-center flex-1 md:flex-initial">
@@ -26,6 +38,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         <div class="space-y-6">
+            
             <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
                 <div class="aspect-square rounded-xl overflow-hidden bg-slate-50 relative group">
                     <?php if(!empty($data['product']->image)): ?>
@@ -44,11 +57,24 @@
                 </div>
             </div>
 
+            <?php if(!empty($data['gallery'])): ?>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <h3 class="text-[10px] font-bold uppercase text-slate-400 mb-3 tracking-widest border-b border-slate-50 pb-2">Gallery</h3>
+                <div class="grid grid-cols-4 gap-2">
+                    <?php foreach($data['gallery'] as $img): ?>
+                        <div class="aspect-square rounded-lg overflow-hidden border border-slate-100 relative group cursor-pointer">
+                            <img src="<?php echo URLROOT . '/public/img/' . $img->image; ?>" class="w-full h-full object-cover hover:opacity-90 transition">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="text-[10px] font-bold uppercase text-slate-400 mb-4 tracking-widest border-b border-slate-50 pb-2">Current Status</h3>
                 
                 <div class="flex justify-between items-center py-2 border-b border-slate-50 border-dashed">
-                    <span class="text-slate-600 text-sm font-medium">Total Stock</span>
+                    <span class="text-slate-600 text-sm font-medium">Global Stock</span>
                     <?php if($data['product']->stock > 5): ?>
                         <span class="bg-green-50 text-green-600 px-2.5 py-1 rounded text-xs font-bold border border-green-100"><?php echo $data['product']->stock; ?> Units</span>
                     <?php elseif($data['product']->stock > 0): ?>
@@ -80,9 +106,16 @@
                 </div>
 
                 <div class="relative z-10 mb-8">
-                    <span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest mb-3 inline-block">
-                        <?php echo $data['product']->category_name ?? 'Uncategorized'; ?>
-                    </span>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest inline-block">
+                            <?php echo $data['product']->category_name ?? 'Uncategorized'; ?>
+                        </span>
+                        <?php if(!empty($data['product']->type_name)): ?>
+                            <span class="bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest inline-block">
+                                <?php echo $data['product']->type_name; ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
                     <h2 class="text-3xl font-bold text-slate-900 mb-2 leading-tight"><?php echo $data['product']->name; ?></h2>
                 </div>
 
@@ -99,9 +132,9 @@
                         </span>
                     </div>
                     <div>
-                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Collection Type</span>
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Created At</span>
                         <span class="font-bold text-slate-800 bg-slate-50 px-3 py-1.5 rounded-lg text-sm inline-block border border-slate-100">
-                            <?php echo $data['product']->type_name ?? 'Standard'; ?>
+                            <?php echo date('M d, Y', strtotime($data['product']->created_at)); ?>
                         </span>
                     </div>
                 </div>
@@ -119,6 +152,7 @@
                             <tr>
                                 <th class="p-4">Size</th>
                                 <th class="p-4">Color</th>
+                                <th class="p-4 text-center">Reference</th>
                                 <th class="p-4 text-right">Stock Level</th>
                             </tr>
                         </thead>
@@ -131,6 +165,9 @@
                                         <span class="w-3 h-3 rounded-full border border-slate-200" style="background-color: <?php echo strtolower($v->color); ?>;"></span>
                                         <?php echo $v->color; ?>
                                     </span>
+                                </td>
+                                <td class="p-4 text-center font-mono text-xs text-slate-400">
+                                    #VAR-<?php echo $v->id; ?>
                                 </td>
                                 <td class="p-4 text-right">
                                     <?php if($v->stock < 5): ?>

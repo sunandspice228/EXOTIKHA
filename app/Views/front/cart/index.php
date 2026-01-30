@@ -45,7 +45,8 @@
                                             </div>
                                             <div>
                                                 <h3 class="font-bold text-slate-900 text-sm">
-                                                    <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $item->id; ?>" class="hover:text-primary transition"><?php echo $item->name; ?></a>
+                                                    <?php $link = !empty($item->slug) ? $item->slug : $item->id; ?>
+                                                    <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $link; ?>" class="hover:text-primary transition"><?php echo $item->name; ?></a>
                                                 </h3>
                                                 <p class="text-xs text-slate-400 font-mono mt-1">SKU: <?php echo $item->sku; ?></p>
                                                 <?php if(!empty($item->size) || !empty($item->color)): ?>
@@ -58,7 +59,7 @@
                                         </div>
                                     </td>
                                     <td class="p-6 font-bold text-slate-600 text-sm">
-                                        <?php echo CURRENCY_SYMBOL . number_format($item->price, 0, ',', ' '); ?>
+                                        <?php echo CURRENCY_SYMBOL . number_format($item->price, 2, ',', ' '); ?>
                                     </td>
                                     <td class="p-6">
                                         <form action="<?php echo URLROOT; ?>/cart/update" method="POST" class="flex items-center justify-center">
@@ -73,7 +74,7 @@
                                         </form>
                                     </td>
                                     <td class="p-6 text-right font-bold text-slate-900 text-sm">
-                                        <?php echo CURRENCY_SYMBOL . number_format($item->line_total, 0, ',', ' '); ?>
+                                        <?php echo CURRENCY_SYMBOL . number_format($item->line_total, 2, ',', ' '); ?>
                                     </td>
                                     <td class="p-6 text-right">
                                         <a href="<?php echo URLROOT; ?>/cart/remove/<?php echo $item->id; ?>" class="text-slate-300 hover:text-red-500 transition p-2">
@@ -103,17 +104,17 @@
                         <div class="space-y-4 mb-6 pb-6 border-b border-slate-100 text-sm">
                             <div class="flex justify-between text-slate-500">
                                 <span>Subtotal</span>
-                                <span class="font-bold text-slate-800"><?php echo CURRENCY_SYMBOL . number_format($data['total'], 0, ',', ' '); ?></span>
+                                <span class="font-bold text-slate-800"><?php echo CURRENCY_SYMBOL . number_format($data['total'], 2, ',', ' '); ?></span>
                             </div>
                             <div class="flex justify-between text-slate-500">
                                 <span>Shipping</span>
-                                <span class="text-green-600 font-bold text-xs uppercase">Free Shipping</span>
+                                <span class="text-slate-400 text-xs italic">Calculated at checkout</span>
                             </div>
                         </div>
 
                         <div class="flex justify-between items-center mb-8">
                             <span class="font-bold text-slate-900 text-lg">Total</span>
-                            <span class="font-black text-2xl text-primary"><?php echo CURRENCY_SYMBOL . number_format($data['total'], 0, ',', ' '); ?></span>
+                            <span class="font-black text-2xl text-primary"><?php echo CURRENCY_SYMBOL . number_format($data['total'], 2, ',', ' '); ?></span>
                         </div>
 
                         <a href="<?php echo URLROOT; ?>/cart/checkout" class="block w-full bg-slate-900 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-center hover:bg-primary transition shadow-xl shadow-slate-900/20 group">

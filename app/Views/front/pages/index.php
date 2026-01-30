@@ -1,5 +1,11 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
+<div class="fixed top-24 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+    <?php flash('wishlist_msg'); ?>
+    <?php flash('newsletter_msg'); ?>
+    <?php flash('cart_msg'); ?>
+</div>
+
 <section class="relative h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-slate-900">
     <div class="absolute inset-0 z-0">
         <img src="https://images.unsplash.com/photo-1531384441138-2736e62e0919?q=80&w=1974&auto=format&fit=crop" 
@@ -19,7 +25,7 @@
         </h1>
         <p class="text-slate-200 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-light leading-relaxed">
             A bold fusion of traditions and contemporary cuts. 
-            Discover fashion that celebrates your authenticity.
+            Reveal your authenticity with Exotikha.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a href="<?php echo URLROOT; ?>/shop" class="w-full sm:w-auto bg-white text-slate-900 px-8 py-4 rounded-full font-bold hover:bg-primary hover:text-white transition shadow-xl shadow-white/10 transform hover:-translate-y-1">
@@ -37,21 +43,19 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div class="flex items-center gap-4 group">
                 <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition"><i class="fas fa-motorcycle"></i></div>
-                <div>
-                    <h4 class="font-bold text-sm">Delivery in Accra</h4> <p class="text-xs text-slate-500">Same day or Next day</p> </div>
+                <div><h4 class="font-bold text-sm">Fast Delivery</h4> <p class="text-xs text-slate-500">Accra & Surroundings</p> </div>
             </div>
-            
             <div class="flex items-center gap-4 group">
                 <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition"><i class="fas fa-lock"></i></div>
-                <div><h4 class="font-bold text-sm">Secure Payment</h4><p class="text-xs text-slate-500">Mobile Money & Cards</p></div>
+                <div><h4 class="font-bold text-sm">Secure Payment</h4><p class="text-xs text-slate-500">MOMO & Cards</p></div>
             </div>
             <div class="flex items-center gap-4 group">
                 <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition"><i class="fas fa-sync-alt"></i></div>
-                <div><h4 class="font-bold text-sm">Easy Returns</h4><p class="text-xs text-slate-500">14-Day Return Policy</p></div>
+                <div><h4 class="font-bold text-sm">Easy Returns</h4><p class="text-xs text-slate-500">Within 14 days</p></div>
             </div>
             <div class="flex items-center gap-4 group">
                 <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition"><i class="fas fa-gem"></i></div>
-                <div><h4 class="font-bold text-sm">Premium Quality</h4><p class="text-xs text-slate-500">Authentic Materials</p></div>
+                <div><h4 class="font-bold text-sm">Premium Quality</h4><p class="text-xs text-slate-500">Authentic Fabrics</p></div>
             </div>
         </div>
     </div>
@@ -64,21 +68,21 @@
                 <img src="https://images.unsplash.com/photo-1589156280159-27698a70f29e?q=80&w=1886&auto=format&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent flex flex-col justify-end p-10">
                     <h3 class="text-3xl font-serif text-white mb-2 italic transform translate-y-4 group-hover:translate-y-0 transition">For Her</h3>
-                    <span class="text-primary text-sm font-bold uppercase tracking-widest border-b border-primary w-fit pb-1 opacity-0 group-hover:opacity-100 transition duration-500">Shop Now</span>
+                    <span class="text-primary text-sm font-bold uppercase tracking-widest border-b border-primary w-fit pb-1 opacity-0 group-hover:opacity-100 transition duration-500">Discover</span>
                 </div>
             </a>
             <a href="<?php echo URLROOT; ?>/shop?gender=men" class="group relative h-[500px] rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition duration-500 md:-mt-12">
                 <img src="https://images.unsplash.com/photo-1504199367641-aba8151af406?q=80&w=1888&auto=format&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent flex flex-col justify-end p-10">
                     <h3 class="text-3xl font-serif text-white mb-2 italic transform translate-y-4 group-hover:translate-y-0 transition">For Him</h3>
-                    <span class="text-primary text-sm font-bold uppercase tracking-widest border-b border-primary w-fit pb-1 opacity-0 group-hover:opacity-100 transition duration-500">Discover</span>
+                    <span class="text-primary text-sm font-bold uppercase tracking-widest border-b border-primary w-fit pb-1 opacity-0 group-hover:opacity-100 transition duration-500">Explore</span>
                 </div>
             </a>
-            <a href="<?php echo URLROOT; ?>/shop?category_id=3" class="group relative h-[500px] rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition duration-500">
+            <a href="<?php echo URLROOT; ?>/shop?type_id=3" class="group relative h-[500px] rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition duration-500">
                 <img src="https://images.unsplash.com/photo-1627930060042-30085448bc31?q=80&w=1887&auto=format&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent flex flex-col justify-end p-10">
                     <h3 class="text-3xl font-serif text-white mb-2 italic transform translate-y-4 group-hover:translate-y-0 transition">Accessories</h3>
-                    <span class="text-primary text-sm font-bold uppercase tracking-widest border-b border-primary w-fit pb-1 opacity-0 group-hover:opacity-100 transition duration-500">Explore</span>
+                    <span class="text-primary text-sm font-bold uppercase tracking-widest border-b border-primary w-fit pb-1 opacity-0 group-hover:opacity-100 transition duration-500">View All</span>
                 </div>
             </a>
         </div>
@@ -106,6 +110,7 @@
                 <?php foreach($data['new_arrivals'] as $product): ?>
                     <div class="group">
                         <div class="relative overflow-hidden rounded-2xl bg-white aspect-[3/4] mb-4 shadow-sm group-hover:shadow-lg transition">
+                            
                             <div class="absolute top-3 left-3 z-10 flex flex-col gap-1">
                                 <span class="bg-white/90 backdrop-blur text-slate-900 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-sm">New</span>
                                 <?php if($product->promo_price > 0): ?>
@@ -113,7 +118,11 @@
                                 <?php endif; ?>
                             </div>
 
-                            <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>">
+                            <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $product->id; ?>" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center text-slate-400 hover:text-red-500 hover:scale-110 transition shadow-sm" title="Add to wishlist">
+                                <i class="far fa-heart"></i>
+                            </a>
+
+                            <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>">
                                 <?php if(!empty($product->image)): ?>
                                     <img src="<?php echo URLROOT . '/img/' . $product->image; ?>" class="w-full h-full object-cover transition duration-700 group-hover:scale-105">
                                 <?php else: ?>
@@ -122,11 +131,11 @@
                             </a>
 
                             <?php if($product->stock > 0): ?>
-                            <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="absolute bottom-4 right-4 translate-y-20 group-hover:translate-y-0 transition duration-300">
+                            <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="absolute bottom-4 right-4 translate-y-20 group-hover:translate-y-0 transition duration-300 z-20">
                                 <?php echo csrfField(); ?>    
                                 <input type="hidden" name="product_id" value="<?php echo $product->id; ?>">
                                 <input type="hidden" name="quantity" value="1">
-                                <button class="w-10 h-10 bg-white text-slate-900 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-900 hover:text-white transition" title="Add to Cart">
+                                <button class="w-10 h-10 bg-white text-slate-900 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-900 hover:text-white transition" title="Add to cart">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </form>
@@ -134,8 +143,9 @@
                         </div>
 
                         <h3 class="font-bold text-slate-900 text-sm truncate group-hover:text-primary transition">
-                            <a href="<?php echo URLROOT; ?>/shop/product/<?php echo $product->id; ?>"><?php echo $product->name; ?></a>
+                            <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>"><?php echo $product->name; ?></a>
                         </h3>
+                        
                         <div class="flex items-center gap-2 mt-1">
                             <?php if($product->promo_price > 0): ?>
                                 <span class="text-red-500 font-bold"><?php echo CURRENCY_SYMBOL . number_format($product->promo_price, 2); ?></span>
@@ -151,13 +161,57 @@
     </div>
 </section>
 
+<?php if(!empty($data['promo_products'])): ?>
+<section class="py-20 bg-orange-50 overflow-hidden relative">
+    <div class="absolute -right-20 -top-20 w-64 h-64 bg-orange-200 rounded-full blur-3xl opacity-50"></div>
+    <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-primary rounded-full blur-3xl opacity-20"></div>
+
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10">
+            <div>
+                <span class="text-red-500 font-black uppercase tracking-widest text-xs mb-2 block animate-pulse">Limited Offers</span>
+                <h2 class="text-3xl font-serif font-bold text-slate-900">Flash Sales ⚡</h2>
+            </div>
+            <a href="<?php echo URLROOT; ?>/shop?promo=true" class="mt-4 md:mt-0 px-6 py-2 border border-slate-900 rounded-full hover:bg-slate-900 hover:text-white transition font-bold text-sm">View all offers</a>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <?php foreach($data['promo_products'] as $product): ?>
+                <div class="bg-white p-4 rounded-2xl shadow-sm hover:shadow-md transition group">
+                    <div class="relative overflow-hidden rounded-xl bg-slate-100 aspect-square mb-4">
+                        <span class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">
+                            -<?php echo round((($product->price - $product->promo_price) / $product->price) * 100); ?>%
+                        </span>
+                        
+                        <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>">
+                            <?php if(!empty($product->image)): ?>
+                                <img src="<?php echo URLROOT . '/img/' . $product->image; ?>" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                            <?php else: ?>
+                                <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fas fa-tag"></i></div>
+                            <?php endif; ?>
+                        </a>
+                    </div>
+                    <h3 class="font-bold text-sm truncate hover:text-primary transition">
+                        <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $product->slug; ?>"><?php echo $product->name; ?></a>
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-red-600 font-bold"><?php echo CURRENCY_SYMBOL . number_format($product->promo_price, 2); ?></span>
+                        <span class="text-xs text-slate-400 line-through"><?php echo number_format($product->price, 2); ?></span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <section class="py-24 bg-primary text-white relative overflow-hidden">
     <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
     <div class="max-w-4xl mx-auto px-6 text-center relative z-10">
         <span class="text-4xl mb-6 block animate-bounce">💎</span>
         <h2 class="text-3xl md:text-5xl font-serif font-bold mb-6 italic">Join the Club</h2>
         <p class="text-white/90 mb-10 text-lg leading-relaxed max-w-2xl mx-auto">
-            Get exclusive access to private sales, style tips, and enjoy <strong>10% OFF</strong> your first order.
+            Get access to private sales, receive our style tips, and enjoy <strong>10% off</strong> your first order.
         </p>
         <form action="<?php echo URLROOT; ?>/pages/subscribe" method="POST" class="flex flex-col md:flex-row gap-4 max-w-lg mx-auto">
             <?php echo csrfField(); ?>    
@@ -172,26 +226,23 @@
         <div class="text-center mb-16">
             <span class="text-primary font-bold uppercase tracking-widest text-xs mb-2 block">Testimonials</span>
             <h2 class="text-3xl md:text-5xl font-serif font-bold relative inline-block">
-                Trusted by our Community
+                The Exotikha Community
                 <svg class="absolute w-full h-3 -bottom-2 text-primary" viewBox="0 0 200 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.00025 6.99997C25.7501 5.50002 55.0002 3.00002 88.0002 2.50002C121 2.00002 165.75 2.50002 198 4.49997" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
             </h2>
         </div>
 
         <?php if(empty($data['reviews'])): ?>
-            
             <div class="text-center py-16 border border-dashed border-slate-700 rounded-3xl bg-slate-800/30 max-w-2xl mx-auto">
                 <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
                     <i class="far fa-comment-dots text-2xl"></i>
                 </div>
                 <h3 class="text-xl font-bold text-white mb-2">No reviews yet</h3>
-                <p class="text-slate-400 mb-6">Be the first to share your experience with Exotikha!</p>
+                <p class="text-slate-400 mb-6">Be the first to share your experience!</p>
                 <a href="<?php echo URLROOT; ?>/shop" class="inline-block px-6 py-2 border border-slate-600 rounded-full hover:bg-white hover:text-slate-900 hover:border-white transition font-bold text-sm">
                     Start Shopping
                 </a>
             </div>
-
         <?php else: ?>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <?php foreach($data['reviews'] as $review): ?>
                     <div class="bg-slate-800 p-8 rounded-3xl relative border border-slate-700 hover:border-primary/50 hover:bg-slate-800/80 transition duration-300 group">
@@ -209,20 +260,13 @@
                             </div>
                             <div>
                                 <span class="block font-bold text-base text-white"><?php echo !empty($review->full_name) ? $review->full_name : 'Customer'; ?></span>
-                                <span class="block text-[10px] uppercase font-bold text-primary flex items-center gap-1"><i class="fas fa-check-circle"></i> Verified Buyer</span>
+                                <span class="block text-[10px] uppercase font-bold text-primary flex items-center gap-1"><i class="fas fa-check-circle"></i> Verified Purchase</span>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
-
         <?php endif; ?>
-        
-        <div class="mt-16 pt-8 border-t border-slate-800 flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition duration-500">
-            <div class="flex items-center gap-2"><i class="fab fa-google text-2xl"></i> <span class="font-bold">Google Reviews</span></div>
-            <div class="flex items-center gap-2"><i class="fas fa-shield-alt text-2xl"></i> <span class="font-bold">Secure Shopping</span></div>
-            <div class="flex items-center gap-2"><i class="fas fa-heart text-2xl"></i> <span class="font-bold">Happy Customers</span></div>
-        </div>
     </div>
 </section>
 
@@ -240,8 +284,7 @@
 
         <?php if(empty($data['posts'])): ?>
             <div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">
-                <p class="text-slate-400 italic mb-2">Our lifestyle journal is launching soon.</p>
-                <p class="text-xs font-bold text-slate-300 uppercase">Stay Tuned</p>
+                <p class="text-slate-400 italic mb-2">Our journal is coming soon.</p>
             </div>
         <?php else: ?>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -259,7 +302,7 @@
                                     <?php echo isset($post->category) ? $post->category : 'Fashion'; ?>
                                 </span>
                                 <span class="text-[10px] text-slate-400 font-bold">
-                                    <?php echo date('M d, Y', strtotime($post->created_at)); ?>
+                                    <?php echo date('d M Y', strtotime($post->created_at)); ?>
                                 </span>
                             </div>
                             <h3 class="text-xl font-bold mb-3 text-slate-900 leading-tight group-hover:text-primary transition">
@@ -286,4 +329,4 @@
     .animate-slow-zoom { animation: slow-zoom 20s linear infinite alternate; }
 </style>
 
-<?php require APPROOT . '/Views/front/layout/footer.php'; ?>    
+<?php require APPROOT . '/Views/front/layout/footer.php'; ?>

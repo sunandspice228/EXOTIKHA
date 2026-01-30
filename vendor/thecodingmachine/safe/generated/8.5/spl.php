@@ -117,7 +117,7 @@ function spl_autoload_register(?callable $callback = null, bool $throw = true, b
     } elseif ($callback !== null) {
         $safeResult = \spl_autoload_register($callback);
     } else {
-        $safeResult = \spl_autoload_register();
+        $safeResult = \spl_autoload_registerCustomer();
     }
     if ($safeResult === false) {
         throw SplException::createFromPhpError();

@@ -14,6 +14,7 @@
 
     <form action="<?php echo URLROOT; ?>/admin/blog_add" method="POST" enctype="multipart/form-data" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
         <?php echo csrfField(); ?>
+        
         <div class="mb-8">
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Post Title <span class="text-red-500">*</span></label>
             <input type="text" name="title" required placeholder="Enter a catchy headline..." 
@@ -28,9 +29,9 @@
                     <i class="fas fa-folder absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <select name="category" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition appearance-none font-medium text-slate-700 cursor-pointer">
                         <option value="Lifestyle">Lifestyle</option>
-                        <option value="Mode">Fashion & Trends</option>
-                        <option value="Conseils">Tips & Tricks</option>
-                        <option value="Événements">Events</option>
+                        <option value="Fashion">Fashion & Trends</option>
+                        <option value="Tips">Tips & Tricks</option>
+                        <option value="Events">Events</option>
                     </select>
                     <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 </div>
@@ -45,14 +46,14 @@
         <div class="mb-8">
             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Content <span class="text-red-500">*</span></label>
             <textarea name="content" rows="15" required 
-                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-700 leading-relaxed" 
+                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-700 leading-relaxed font-sans" 
                       placeholder="Write your story here..."></textarea>
             <p class="text-[10px] text-slate-400 mt-2 text-right">HTML tags are allowed for formatting.</p>
         </div>
 
         <div class="flex items-center justify-end gap-4 border-t border-slate-50 pt-6">
             <a href="<?php echo URLROOT; ?>/admin/blog" class="text-slate-500 font-bold text-sm hover:text-slate-800 px-4 transition">Cancel</a>
-            <button type="submit" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-primary transition shadow-lg shadow-slate-900/20 flex items-center gap-2">
+            <button type="submit" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-primary transition shadow-lg shadow-slate-900/20 flex items-center gap-2 transform hover:-translate-y-1">
                 <i class="fas fa-paper-plane"></i> Publish Post
             </button>
         </div>

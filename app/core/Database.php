@@ -17,11 +17,15 @@ class Database {
     private $error;
 
     public function __construct(){
-        // Set DSN
-        $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname;
+        // Set DSN (Data Source Name)
+        // AJOUT : charset=utf8mb4 pour gérer parfaitement les accents et emojis
+        $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname . ';charset=utf8mb4';
+        
         $options = array(
             PDO::ATTR_PERSISTENT => true,
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            // AJOUT : Force l'encodage par défaut
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
         );
 
         // Create PDO instance
@@ -29,7 +33,7 @@ class Database {
             $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
         } catch(PDOException $e){
             $this->error = $e->getMessage();
-            echo $this->error;
+            die("Erreur de connexion BDD : " . $this->error); // On arrête tout si pas de BDD
         }
     }
 
@@ -80,7 +84,9 @@ class Database {
         return $this->stmt->rowCount();
     }
     
-    // --- MÉTHODES AJOUTÉES POUR CORRIGER L'ERREUR ---
+    // =========================================================
+    // MÉTHODES CRITIQUES POUR LES COMMANDES (Transactions)
+    // =========================================================
 
     // Récupérer le dernier ID inséré
     public function lastInsertId(){

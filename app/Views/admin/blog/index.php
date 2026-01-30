@@ -7,30 +7,32 @@
             <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Blog & News</h1>
             <p class="text-slate-500 mt-1">Manage articles, style tips, and updates.</p>
         </div>
-        <a href="<?php echo URLROOT; ?>/admin/blog_add" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-600 transition shadow-lg shadow-primary/30 flex items-center gap-2">
+        <a href="<?php echo URLROOT; ?>/admin/blog_add" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-primary transition shadow-lg shadow-slate-900/20 flex items-center gap-2 transform hover:-translate-y-1">
             <i class="fas fa-pen-nib"></i> Write New Post
         </a>
     </div>
 
+    <?php flash('blog_msg'); // Flash message area ?>
+
     <?php if(empty($data['posts'])): ?>
-        <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
-            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                <i class="fas fa-newspaper text-3xl"></i>
+        <div class="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-16 text-center">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                <i class="fas fa-newspaper text-4xl"></i>
             </div>
-            <h3 class="text-lg font-bold text-slate-800">No posts yet</h3>
-            <p class="text-slate-500 text-sm mb-6">Start sharing content with your customers.</p>
-            <a href="<?php echo URLROOT; ?>/admin/blog_add" class="text-primary font-bold hover:underline text-sm">Create first post</a>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">No posts yet</h3>
+            <p class="text-slate-500 mb-8 max-w-sm mx-auto">Start sharing content with your customers to improve engagement and SEO.</p>
+            <a href="<?php echo URLROOT; ?>/admin/blog_add" class="text-primary font-bold hover:underline">Create first post</a>
         </div>
     <?php else: ?>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <?php foreach($data['posts'] as $post): ?>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-xl transition-all duration-300 flex flex-col h-full hover:-translate-y-1">
                     
                     <div class="h-56 overflow-hidden relative bg-slate-200">
-                        <?php if($post->image): ?>
+                        <?php if(!empty($post->image)): ?>
                             <img src="<?php echo URLROOT . '/public/img/' . $post->image; ?>" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
                         <?php else: ?>
-                            <div class="w-full h-full flex items-center justify-center text-slate-300"><i class="fas fa-image text-4xl opacity-50"></i></div>
+                            <div class="w-full h-full flex items-center justify-center text-slate-300 bg-slate-100"><i class="fas fa-image text-4xl opacity-50"></i></div>
                         <?php endif; ?>
                         
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
@@ -50,8 +52,10 @@
                     </div>
 
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="font-bold text-slate-900 text-lg mb-2 leading-tight group-hover:text-primary transition line-clamp-2">
-                            <?php echo $post->title; ?>
+                        <h3 class="font-bold text-slate-900 text-lg mb-3 leading-tight group-hover:text-primary transition line-clamp-2">
+                            <a href="<?php echo URLROOT; ?>/admin/blog_edit/<?php echo $post->id; ?>">
+                                <?php echo $post->title; ?>
+                            </a>
                         </h3>
                         
                         <p class="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">
@@ -63,7 +67,9 @@
                                 <i class="far fa-calendar"></i>
                                 <?php echo date('M d, Y', strtotime($post->created_at)); ?>
                             </div>
-                            <span class="text-xs font-bold text-primary hover:underline cursor-pointer">Read More</span>
+                            <a href="<?php echo URLROOT; ?>/blog/post/<?php echo $post->id; ?>" target="_blank" class="text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1">
+                                View <i class="fas fa-external-link-alt text-[10px]"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

@@ -1,81 +1,76 @@
 <?php
-class ProductAttribute { // <-- Changement de nom ici
+class ProductAttribute {
     private $db;
 
     public function __construct(){
         $this->db = new Database;
     }
 
-    // LISTE
-    public function getAttributes(){
-        $this->db->query("SELECT a.*, GROUP_CONCAT(av.value SEPARATOR ', ') as values_list 
-                          FROM attributes a 
-                          LEFT JOIN attribute_values av ON a.id = av.attribute_id 
-                          GROUP BY a.id 
-                          ORDER BY a.name ASC");
+    // =========================================================
+    // LECTURE
+    // =========================================================
+
+    public function getAllAttributes(){
+        $this->db->query("SELECT * FROM attributes ORDER BY name ASC");
         return $this->db->resultSet();
     }
 
-    // LECTURE
     public function getAttributeById($id){
         $this->db->query("SELECT * FROM attributes WHERE id = :id");
         $this->db->bind(':id', $id);
-        $attribute = $this->db->single();
-
-        if($attribute){
-            $this->db->query("SELECT * FROM attribute_values WHERE attribute_id = :id ORDER BY id ASC");
-            $this->db->bind(':id', $id);
-            $attribute->values = $this->db->resultSet();
-        }
-        return $attribute;
-    }
-
-    // CRÉATION
-    public function addAttribute($name, $values_array){
-        $this->db->query("INSERT INTO attributes (name) VALUES (:name)");
-        $this->db->bind(':name', $name);
         
-        if($this->db->execute()){
-            $attribute_id = $this->db->lastInsertId();
-            foreach($values_array as $val){
-                $val = trim($val);
-                if(!empty($val)){
-                    $this->db->query("INSERT INTO attribute_values (attribute_id, value) VALUES (:aid, :val)");
-                    $this->db->bind(':aid', $attribute_id);
-                    $this->db->bind(':val', $val);
-                    $this->db->execute();
-                }
-            }
-            return true;
+        $row = $this->db->single();
+
+        // Petite astuce : on prépare les valeurs pour la vue d'édition
+        if($row){
+            // Si values_list est "S,M,L", on crée un faux objet pour simuler la structure attendue
+            // Ou on laisse tel quel si votre vue gère la chaîne.
+            // Ici, on retourne l'objet brut de la BDD.
         }
-        return false;
+        return $row;
     }
 
-    // MISE À JOUR
-    public function updateAttribute($id, $name, $values_array){
-        $this->db->query("UPDATE attributes SET name = :name WHERE id = :id");
+    // =========================================================
+    // ÉCRITURE (Aligné avec Admin.php)
+    // =========================================================
+
+    // Ajouter un attribut
+    // NOTE : On accepte $name et $values séparément comme envoyé par le contrôleur
+    public function addAttribute($name, $values){
+        
+        // Si $values est un tableau (envoyé par explode dans le contrôleur), on le transforme en string pour la BDD
+        if(is_array($values)){
+            $valuesStr = implode(',', $values);
+        } else {
+            $valuesStr = $values;
+        }
+
+        $this->db->query("INSERT INTO attributes (name, values_list, created_at) VALUES (:name, :vals, NOW())");
         $this->db->bind(':name', $name);
-        $this->db->bind(':id', $id);
-        $this->db->execute();
-
-        // On supprime et on recrée les valeurs
-        $this->db->query("DELETE FROM attribute_values WHERE attribute_id = :id");
-        $this->db->bind(':id', $id);
-        $this->db->execute();
-
-        foreach($values_array as $val){
-            $val = trim($val);
-            if(!empty($val)){
-                $this->db->query("INSERT INTO attribute_values (attribute_id, value) VALUES (:aid, :val)");
-                $this->db->bind(':aid', $id);
-                $this->db->bind(':val', $val);
-                $this->db->execute();
-            }
-        }
-        return true;
+        $this->db->bind(':vals', $valuesStr);
+        
+        return $this->db->execute();
     }
 
-    // SUPPRESSION
+    // Mettre à jour un attribut
+    public function updateAttribute($id, $name, $values){
+        
+        // Même conversion Array -> String
+        if(is_array($values)){
+            $valuesStr = implode(',', $values);
+        } else {
+            $valuesStr = $values;
+        }
+
+        $this->db->query("UPDATE attributes SET name = :name, values_list = :vals WHERE id = :id");
+        $this->db->bind(':name', $name);
+        $this->db->bind(':vals', $valuesStr);
+        $this->db->bind(':id', $id);
+        
+        return $this->db->execute();
+    }
+
+    // Supprimer un attribut
     public function deleteAttribute($id){
         $this->db->query("DELETE FROM attributes WHERE id = :id");
         $this->db->bind(':id', $id);

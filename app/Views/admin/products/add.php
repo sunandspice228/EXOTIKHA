@@ -1,6 +1,6 @@
 <?php require APPROOT . '/Views/admin/inc/header.php'; ?>
 
-<div class="max-w-5xl mx-auto">
+<div class="max-w-6xl mx-auto">
     
     <div class="flex items-center gap-4 mb-8">
         <a href="<?php echo URLROOT; ?>/admin/products" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition shadow-sm group">
@@ -8,12 +8,13 @@
         </a>
         <div>
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Add New Product</h1>
-            <p class="text-sm text-slate-500">Create a new item for your store inventory.</p>
+            <p class="text-sm text-slate-500">Create a new item in your inventory.</p>
         </div>
     </div>
 
     <form action="<?php echo URLROOT; ?>/admin/products_add" method="POST" enctype="multipart/form-data">
         <?php echo csrfField(); ?>
+        
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-2 space-y-8">
@@ -21,10 +22,26 @@
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <h2 class="text-sm font-bold uppercase text-slate-500 mb-6 tracking-wide border-b border-slate-50 pb-2">Basic Information</h2>
                     
-                    <div class="mb-6">
-                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Product Name <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" required placeholder="e.g. African Print Dress" 
-                               class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition font-medium text-slate-800">
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Product Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" required placeholder="e.g., Silk Dress" 
+                                   class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition font-medium text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">SKU (Code)</label>
+                            <div class="relative">
+                                <input type="text" name="sku" id="skuField" placeholder="Auto-generated..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
+                                <button type="button" onclick="generateSKU()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-primary hover:text-indigo-700">Generate</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Status</label>
+                            <select name="status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
+                                <option value="active">Active (Visible)</option>
+                                <option value="draft">Draft (Hidden)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-6 mb-6">
@@ -37,7 +54,7 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Promo Price <span class="text-slate-400 font-normal normal-case">(Optional)</span></label>
+                            <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Sale Price <span class="text-slate-400 font-normal normal-case">(Optional)</span></label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-red-400 font-bold"><?php echo CURRENCY_SYMBOL; ?></span>
                                 <input type="number" name="promo_price" step="0.01" placeholder="0.00"
@@ -48,20 +65,50 @@
 
                     <div class="mb-2">
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Description</label>
-                        <textarea name="description" rows="5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-600 leading-relaxed" placeholder="Product details, materials, care instructions..."></textarea>
+                        <textarea name="description" rows="5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition text-slate-600 leading-relaxed" placeholder="Product details..."></textarea>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-sm font-bold uppercase text-slate-500 mb-6 tracking-wide border-b border-slate-50 pb-2">Media</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition relative">
+                            <label class="cursor-pointer block">
+                                <span class="block text-xs font-bold uppercase text-slate-500 mb-2">Main Image *</span>
+                                <input type="file" name="image" class="hidden" onchange="previewImage(this, 'mainPreview')" required>
+                                <img id="mainPreview" src="" class="hidden w-32 h-32 object-cover rounded-lg mx-auto mb-2 shadow-sm">
+                                <div id="mainPlaceholder">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-slate-300 mb-2"></i>
+                                    <p class="text-xs text-slate-400">Click to upload</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition relative">
+                            <label class="cursor-pointer block">
+                                <span class="block text-xs font-bold uppercase text-slate-500 mb-2">Photo Gallery</span>
+                                <input type="file" name="gallery[]" multiple class="hidden" onchange="previewGallery(this)">
+                                <div id="galleryPlaceholder">
+                                    <i class="fas fa-images text-3xl text-slate-300 mb-2"></i>
+                                    <p class="text-xs text-slate-400">Multiple selection (Ctrl+Click)</p>
+                                </div>
+                                <div id="galleryPreview" class="grid grid-cols-3 gap-2 mt-2 hidden"></div>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100" id="stock-section">
                     <div class="flex justify-between items-center mb-6 border-b border-slate-50 pb-4">
-                        <h2 class="text-sm font-bold uppercase text-slate-500 tracking-wide">Inventory & Variants</h2>
+                        <h2 class="text-sm font-bold uppercase text-slate-500 tracking-wide">Inventory</h2>
                         
                         <label class="flex items-center gap-3 cursor-pointer group">
                             <div class="relative">
                                 <input type="checkbox" name="has_variants" id="hasVariantsToggle" value="1" class="sr-only peer">
                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                             </div>
-                            <span class="text-xs font-bold text-slate-600 group-hover:text-primary transition">Has Variants (Size/Color)</span>
+                            <span class="text-xs font-bold text-slate-600 group-hover:text-primary transition">This product has variants</span>
                         </label>
                     </div>
 
@@ -71,54 +118,25 @@
                     </div>
 
                     <div id="variableProductStock" class="hidden">
-                        
                         <div class="bg-slate-50 p-5 rounded-xl mb-6 border border-slate-200">
                             <p class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-2"><i class="fas fa-plus-circle text-primary"></i> Add Variant</p>
                             
                             <div class="flex flex-wrap gap-4 items-end">
                                 <div class="flex-1 min-w-[120px]">
                                     <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Size</label>
-                                    <select id="variantSize" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer">
+                                    <select id="variantSize" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 outline-none">
                                         <option value="">-- None --</option>
-                                        <?php 
-                                            // Dynamic Attribute Logic (Simplified)
-                                            // In a real app, filter by Attribute ID
-                                            foreach($data['attributes'] as $attr){
-                                                if(stripos($attr->name, 'taille') !== false || stripos($attr->name, 'size') !== false){
-                                                    echo '<optgroup label="'.$attr->name.'">';
-                                                    foreach(explode(',', $attr->values_list) as $val){
-                                                        echo '<option value="'.trim($val).'">'.trim($val).'</option>';
-                                                    }
-                                                    echo '</optgroup>';
-                                                }
-                                            }
-                                        ?>
-                                        <optgroup label="Other Options">
-                                            <?php foreach($data['attributes'] as $attr): ?>
-                                                <?php foreach(explode(',', $attr->values_list) as $val): ?>
-                                                    <option value="<?php echo trim($val); ?>"><?php echo $attr->name . ': ' . trim($val); ?></option>
-                                                <?php endforeach; ?>
-                                            <?php endforeach; ?>
-                                        </optgroup>
+                                        <option value="S">S</option>
+                                        <option value="M">M</option>
+                                        <option value="L">L</option>
+                                        <option value="XL">XL</option>
+                                        <option value="XXL">XXL</option>
                                     </select>
                                 </div>
 
                                 <div class="flex-1 min-w-[120px]">
                                     <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">Color</label>
-                                    <select id="variantColor" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer">
-                                        <option value="">-- None --</option>
-                                        <?php 
-                                            foreach($data['attributes'] as $attr){
-                                                if(stripos($attr->name, 'couleur') !== false || stripos($attr->name, 'color') !== false){
-                                                    echo '<optgroup label="'.$attr->name.'">';
-                                                    foreach(explode(',', $attr->values_list) as $val){
-                                                        echo '<option value="'.trim($val).'">'.trim($val).'</option>';
-                                                    }
-                                                    echo '</optgroup>';
-                                                }
-                                            }
-                                        ?>
-                                    </select>
+                                    <input type="text" id="variantColor" placeholder="e.g., Red" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 outline-none">
                                 </div>
 
                                 <div class="w-24">
@@ -142,14 +160,12 @@
                                         <th class="p-3 text-right">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody id="variantsContainer" class="divide-y divide-slate-100 bg-white">
-                                    </tbody>
+                                <tbody id="variantsContainer" class="divide-y divide-slate-100 bg-white"></tbody>
                             </table>
                             <div id="emptyVariantsMsg" class="p-6 text-center text-slate-400 text-xs italic">
                                 No variants added yet. Use the form above.
                             </div>
                         </div>
-
                     </div>
                 </div>
 
@@ -164,21 +180,29 @@
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Category</label>
                         <div class="relative">
                             <select name="category_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-primary cursor-pointer text-sm font-medium text-slate-700">
-                                <?php foreach($data['categories'] as $cat): ?>
-                                    <option value="<?php echo $cat->id; ?>"><?php echo $cat->name; ?></option>
-                                <?php endforeach; ?>
+                                <?php if(isset($data['categories'])): ?>
+                                    <?php foreach($data['categories'] as $cat): ?>
+                                        <option value="<?php echo $cat->id; ?>"><?php echo $cat->name; ?></option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="" disabled>No categories</option>
+                                <?php endif; ?>
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Type / Collection</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Product Type</label>
                         <div class="relative">
                             <select name="type_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-primary cursor-pointer text-sm font-medium text-slate-700">
-                                <?php foreach($data['types'] as $type): ?>
-                                    <option value="<?php echo $type->id; ?>"><?php echo $type->name; ?></option>
-                                <?php endforeach; ?>
+                                <?php if(isset($data['types'])): ?>
+                                    <?php foreach($data['types'] as $type): ?>
+                                        <option value="<?php echo $type->id; ?>"><?php echo $type->name; ?></option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="" disabled>No types</option>
+                                <?php endif; ?>
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                         </div>
@@ -188,26 +212,12 @@
                         <label class="block text-xs font-bold text-slate-700 mb-2 uppercase ml-1">Gender</label>
                         <div class="relative">
                             <select name="gender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-primary cursor-pointer text-sm font-medium text-slate-700">
-                                <option value="women">Women</option>
-                                <option value="men">Men</option>
-                                <option value="kids">Kids</option>
-                                <option value="unisex">Unisex</option>
+                                <option value="Women">Women</option>
+                                <option value="Men">Men</option>
+                                <option value="Kids">Kids</option>
+                                <option value="Unisex">Unisex</option>
                             </select>
                             <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h2 class="text-sm font-bold uppercase text-slate-500 mb-4 tracking-wide border-b border-slate-50 pb-2">Main Image</h2>
-                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-primary hover:bg-primary/5 transition cursor-pointer relative group">
-                        <input type="file" name="image" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                        <div class="flex flex-col items-center justify-center transition-transform group-hover:scale-105">
-                            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 group-hover:bg-white group-hover:text-primary transition">
-                                <i class="fas fa-cloud-upload-alt text-xl text-slate-400 group-hover:text-primary"></i>
-                            </div>
-                            <p class="text-sm text-slate-600 font-bold">Click to Upload</p>
-                            <p class="text-[10px] text-slate-400 mt-1">JPG, PNG (Max 2MB)</p>
                         </div>
                     </div>
                 </div>
@@ -222,14 +232,11 @@
 </div>
 
 <script>
+    // 1. Toggle Variants
     const toggle = document.getElementById('hasVariantsToggle');
     const simpleStock = document.getElementById('simpleProductStock');
     const variableStock = document.getElementById('variableProductStock');
-    const container = document.getElementById('variantsContainer');
-    const emptyMsg = document.getElementById('emptyVariantsMsg');
-    let variantCount = 0;
-
-    // Toggle Simple/Variable
+    
     toggle.addEventListener('change', function() {
         if(this.checked){
             simpleStock.classList.add('hidden');
@@ -240,20 +247,19 @@
         }
     });
 
-    // Add Variant Row
+    // 2. Add Variant Row
+    let variantCount = 0;
     function addVariantRow() {
         const size = document.getElementById('variantSize').value;
         const color = document.getElementById('variantColor').value;
         const stock = document.getElementById('variantStock').value;
 
         if(size === '' && color === '') {
-            alert("Please select at least a Size or a Color.");
+            alert("Please select at least one size or color.");
             return;
         }
 
-        // Hide empty message
-        emptyMsg.style.display = 'none';
-
+        document.getElementById('emptyVariantsMsg').style.display = 'none';
         const rowId = variantCount++;
         
         const html = `
@@ -277,8 +283,48 @@
                 </td>
             </tr>
         `;
+        document.getElementById('variantsContainer').insertAdjacentHTML('beforeend', html);
+    }
+
+    // 3. Image Previews
+    function previewImage(input, previewId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById(previewId).src = e.target.result;
+                document.getElementById(previewId).classList.remove('hidden');
+                document.getElementById('mainPlaceholder').classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewGallery(input) {
+        const previewContainer = document.getElementById('galleryPreview');
+        const placeholder = document.getElementById('galleryPlaceholder');
+        previewContainer.innerHTML = ''; // Clear prev
         
-        container.insertAdjacentHTML('beforeend', html);
+        if (input.files) {
+            placeholder.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            
+            Array.from(input.files).forEach(file => {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-16 object-cover rounded shadow-sm';
+                    previewContainer.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    // 4. Auto Generate SKU
+    function generateSKU() {
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('skuField').value = 'PROD-' + rand;
     }
 </script>
 

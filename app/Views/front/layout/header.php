@@ -1,21 +1,28 @@
 <?php
 // --- LOGIQUE MENU DYNAMIQUE (DIRECTEMENT DANS LE HEADER) ---
-require_once '../app/Models/Category.php';
-$menuCatModel = new Category();
-$allCategories = $menuCatModel->getCategories();
+// On vérifie si le fichier existe pour éviter les erreurs fatales si le chemin change
+if(file_exists('../app/Models/Category.php')){
+    require_once '../app/Models/Category.php';
+    $menuCatModel = new Category();
+    $allCategories = $menuCatModel->getAllCategories();
+} else {
+    $allCategories = [];
+}
 
 $idCouple = null;
 $idGifts = null;
 $otherCategories = [];  
 
-foreach($allCategories as $cat){
-    $name = strtolower($cat->name);
-    if(strpos($name, 'couple') !== false || strpos($name, 'intimacy') !== false) {
-        $idCouple = $cat->id;
-    } elseif(strpos($name, 'gift') !== false || strpos($name, 'box') !== false || strpos($name, 'cadeau') !== false) {
-        $idGifts = $cat->id;
-    } else {
-        $otherCategories[] = $cat;
+if(!empty($allCategories)){
+    foreach($allCategories as $cat){
+        $name = strtolower($cat->name);
+        if(strpos($name, 'couple') !== false || strpos($name, 'intimacy') !== false) {
+            $idCouple = $cat->id;
+        } elseif(strpos($name, 'gift') !== false || strpos($name, 'box') !== false || strpos($name, 'cadeau') !== false) {
+            $idGifts = $cat->id;
+        } else {
+            $otherCategories[] = $cat;
+        }
     }
 }
 ?>
@@ -28,7 +35,9 @@ foreach($allCategories as $cat){
     <title><?php echo defined('SITENAME') ? SITENAME : 'Exotikha'; ?> | Premium Store</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -61,12 +70,14 @@ foreach($allCategories as $cat){
             }
         }
     </script>
+    
     <style>[x-cloak] { display: none !important; }</style>
 </head>
+
 <body class="bg-white text-slate-800 antialiased flex flex-col min-h-screen" x-data="{ mobileMenuOpen: false, searchOpen: false }">
 
     <div class="bg-primary text-white text-[10px] md:text-xs text-center py-2 tracking-widest uppercase font-bold px-4">
-        Free shipping on all orders over 500 GHS in Accra!
+        Free shipping on all orders over 1,000 GHS in Accra!
     </div>
 
     <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 transition-all duration-300 relative">
@@ -129,7 +140,7 @@ foreach($allCategories as $cat){
                             <?php if(isset($_SESSION['user_id'])): ?>
                                 <div class="px-4 py-3 border-b border-slate-50 mb-1">
                                     <p class="text-xs text-slate-400 font-bold uppercase">Signed in as</p>
-                                    <p class="text-sm font-bold text-slate-900 truncate"><?php echo $_SESSION['user_name']; ?></p>
+                                    <p class="text-sm font-bold text-slate-900 truncate"><?php echo isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Client'; ?></p>
                                 </div>
                                 <a href="<?php echo URLROOT; ?>/users/account" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"><i class="fas fa-tachometer-alt w-5 text-slate-400"></i> Dashboard</a>
                                 <a href="<?php echo URLROOT; ?>/users/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-5 text-red-400"></i> Logout</a>
@@ -157,14 +168,14 @@ foreach($allCategories as $cat){
         </div>
 
         <div x-show="searchOpen" 
-             @click.away="searchOpen = false"
+             @click.outside="searchOpen = false"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 -translate-y-2"
              x-transition:enter-end="opacity-100 translate-y-0"
              x-cloak
              class="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-xl p-6 z-40">
             <form action="<?php echo URLROOT; ?>/shop" method="GET" class="max-w-3xl mx-auto relative">
-            <?php echo csrfField(); ?>    
+            <?php if(function_exists('csrfField')) echo csrfField(); ?>    
             <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 <input type="text" name="search" placeholder="Search for products, brands and more..." class="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-32 text-slate-900 font-medium focus:ring-2 focus:ring-accent focus:bg-white transition shadow-inner" autofocus>
                 <button type="submit" class="absolute right-2 top-2 bottom-2 bg-primary text-white px-6 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-accent transition">Search</button>
@@ -173,14 +184,29 @@ foreach($allCategories as $cat){
     </nav>
     
     <div class="max-w-7xl mx-auto px-4 mt-4 w-full empty:hidden">
-        <?php flash('cart_msg'); ?>
-        <?php flash('product_message'); ?>
+        <?php if(function_exists('flash')) { flash('cart_msg'); flash('product_message'); } ?>
     </div>
 
-    <div x-show="mobileMenuOpen" class="relative z-50 lg:hidden" role="dialog" aria-modal="true">
-        <div x-show="mobileMenuOpen" x-transition.opacity @click="mobileMenuOpen = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div x-show="mobileMenuOpen" class="relative z-[60] lg:hidden" role="dialog" aria-modal="true" x-cloak>
+        
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="mobileMenuOpen = false"
+             class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
 
-        <div x-show="mobileMenuOpen" x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm shadow-2xl">
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-in-out duration-300 transform"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in-out duration-300 transform"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
+             class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm shadow-2xl">
             
             <div class="flex items-center justify-between mb-8">
                 <a href="#" class="-m-1.5 p-1.5">
@@ -225,7 +251,7 @@ foreach($allCategories as $cat){
                         <a href="<?php echo URLROOT; ?>/pages/contact" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50">Contact Us</a>
                     </div>
                     
-                    <?php if(!isLoggedIn()): ?>
+                    <?php if(!isset($_SESSION['user_id'])): ?>
                     <div class="py-6 space-y-3">
                         <a href="<?php echo URLROOT; ?>/users/login" class="flex w-full items-center justify-center rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold leading-6 text-slate-900 hover:bg-slate-50">Log in</a>
                         <a href="<?php echo URLROOT; ?>/users/register" class="flex w-full items-center justify-center rounded-xl bg-primary px-3 py-3 text-sm font-bold leading-6 text-white hover:bg-accent transition shadow-lg">Register</a>

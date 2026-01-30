@@ -1,13 +1,9 @@
 <?php
-// Démarrage de session sécurisé (évite les erreurs si déjà démarrée)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Fonction Flash Message
-// Utilisation : flash('register_success', 'Vous êtes inscrit');
-// Affichage : echo flash('register_success');
-function flash($name = '', $message = '', $class = 'bg-green-100 text-green-700 border border-green-200 rounded p-4 mb-4'){
+function flash($name = '', $message = '', $class = 'alert-success'){
     if(!empty($name)){
         if(!empty($message) && empty($_SESSION[$name])){
             if(!empty($_SESSION[$name. '_class'])){
@@ -17,16 +13,22 @@ function flash($name = '', $message = '', $class = 'bg-green-100 text-green-700 
             $_SESSION[$name. '_class'] = $class;
         } elseif(empty($message) && !empty($_SESSION[$name])){
             $class = !empty($_SESSION[$name. '_class']) ? $_SESSION[$name. '_class'] : '';
-            // J'ai ajouté un ID pour pouvoir le cibler en JS si besoin (ex: disparition auto)
-            echo '<div class="'.$class.'" id="msg-flash">'.$_SESSION[$name].'</div>';
+            
+            $tailwindClass = ($class == 'alert-danger') 
+                ? 'bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm font-bold flex items-center gap-2 shadow-sm' 
+                : 'bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-xl mb-4 text-sm font-bold flex items-center gap-2 shadow-sm';
+            
+            $icon = ($class == 'alert-danger') ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="fas fa-check-circle"></i>';
+            
+            echo '<div class="'.$tailwindClass.'" id="msg-flash">'.$icon.' '.$_SESSION[$name].'</div>';
             unset($_SESSION[$name]);
             unset($_SESSION[$name. '_class']);
         }
     }
 }
 
-// Vérifier si l'utilisateur est connecté
 function isLoggedIn(){
+    // On vérifie que l'ID est là
     if(isset($_SESSION['user_id'])){
         return true;
     } else {
@@ -34,9 +36,8 @@ function isLoggedIn(){
     }
 }
 
-// Vérifier si Admin (Très utile pour protéger l'accès au Back-office)
 function isAdmin(){
-    if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'){
+    if(isset($_SESSION['user_id']) && isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'){
         return true;
     }
     return false;

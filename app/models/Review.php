@@ -10,63 +10,94 @@ class Review {
     // 1. LECTURE (ADMIN & FRONT)
     // =========================================================
 
-    // 1. Récupérer TOUS les avis (Pour la liste Admin)
-    // MODIF : J'ai ajouté un JOIN pour récupérer le nom du produit
+    // Récupérer TOUS les avis (Admin - Liste complète)
     public function getAllReviews(){
-        $this->db->query("SELECT reviews.*, products.name as product_name, products.image as product_image
+        $this->db->query("SELECT reviews.*, 
+                                 products.name as product_name, 
+                                 products.image as product_image,
+                                 CONCAT(customers.first_name, ' ', customers.last_name) as full_name
                           FROM reviews 
                           LEFT JOIN products ON reviews.product_id = products.id 
+                          LEFT JOIN customers ON reviews.customer_id = customers.id 
                           ORDER BY reviews.created_at DESC");
         return $this->db->resultSet();
     }
 
-    // 2. Récupérer les avis EN ATTENTE (Pour le compteur du Dashboard Admin)
+    // Récupérer les avis EN ATTENTE (Admin - Dashboard)
     public function getPendingReviews(){
-        $this->db->query("SELECT * FROM reviews WHERE status = 'pending'");
+        $this->db->query("SELECT reviews.*, 
+                                 products.name as product_name,
+                                 CONCAT(customers.first_name, ' ', customers.last_name) as full_name
+                          FROM reviews 
+                          LEFT JOIN products ON reviews.product_id = products.id 
+                          LEFT JOIN customers ON reviews.customer_id = customers.id
+                          WHERE reviews.status = 'pending'
+                          ORDER BY reviews.created_at DESC");
         return $this->db->resultSet();
     }
 
-    // 3. Récupérer les avis APPROUVÉS d'un produit spécifique (Pour la fiche produit)
+    // Récupérer les avis APPROUVÉS d'un produit (Front - Page Détails Produit)
     public function getReviewsByProductId($product_id){
-        $this->db->query("SELECT * FROM reviews WHERE product_id = :pid AND status = 'approved' ORDER BY created_at DESC");
+        $this->db->query("SELECT reviews.*, 
+                                 CONCAT(customers.first_name, ' ', customers.last_name) as full_name
+                          FROM reviews 
+                          LEFT JOIN customers ON reviews.customer_id = customers.id
+                          WHERE product_id = :pid AND status = 'approved' 
+                          ORDER BY created_at DESC");
         $this->db->bind(':pid', $product_id);
         return $this->db->resultSet();
     }
 
-    // 4. Récupérer les avis d'un UTILISATEUR (Pour le compte client)
-    public function getReviewsByUserId($user_id){
-        // On récupère aussi le nom du produit pour que le client sache de quoi il parle
-        $this->db->query("SELECT reviews.*, products.name as product_name, products.sku 
+    // Récupérer les avis d'un CLIENT (Front - Espace Mon Compte)
+    public function getReviewsByUserId($customer_id){
+        // Note : On utilise 'customer_id' dans la clause WHERE
+        $this->db->query("SELECT reviews.*, 
+                                 products.name as product_name, 
+                                 products.slug as product_slug,
+                                 products.image as product_image
                           FROM reviews 
                           LEFT JOIN products ON reviews.product_id = products.id 
-                          WHERE user_id = :uid 
+                          WHERE customer_id = :uid 
                           ORDER BY reviews.created_at DESC");
-        $this->db->bind(':uid', $user_id);
+        $this->db->bind(':uid', $customer_id);
+        return $this->db->resultSet();
+    }
+
+    // Récupérer les derniers avis APPROUVÉS (Front - Page d'accueil / Témoignages)
+    public function getApprovedReviews(){
+        // Correction : On ne demande plus 'customers.image' car la colonne n'existe pas.
+        // On récupère juste les infos de l'avis et le nom complet du client.
+        
+        $this->db->query("SELECT reviews.*, 
+                                 CONCAT(customers.first_name, ' ', customers.last_name) as customer_name
+                          FROM reviews
+                          JOIN customers ON reviews.customer_id = customers.id
+                          WHERE reviews.status = 'approved'
+                          ORDER BY reviews.created_at DESC");
+        
         return $this->db->resultSet();
     }
 
     // =========================================================
-    // 2. ÉCRITURE
+    // 2. ÉCRITURE (AJOUT / MODIFICATION / SUPPRESSION)
     // =========================================================
 
-    // 5. Ajouter un avis
+    // Ajouter un avis (Front)
     public function addReview($data){
-        // MODIF : Ajout de product_id indispensable
-        $this->db->query("INSERT INTO reviews (product_id, user_id, full_name, email, rating, comment, status, created_at) 
-                          VALUES (:pid, :uid, :name, :email, :rating, :comment, 'pending', NOW())");
+        // Attention : La colonne s'appelle 'customer_id'
+        $this->db->query("INSERT INTO reviews (product_id, customer_id, rating, comment, status, created_at) 
+                          VALUES (:pid, :uid, :rating, :comment, 'pending', NOW())");
         
         $this->db->bind(':pid', $data['product_id']);
-        $this->db->bind(':uid', $data['user_id']);
-        $this->db->bind(':name', $data['full_name']); // Nom affiché (ex: Jean D.)
-        $this->db->bind(':email', $data['email']);
+        // On mappe 'user_id' (session) vers 'customer_id' (bdd)
+        $this->db->bind(':uid', $data['user_id']); 
         $this->db->bind(':rating', $data['rating']);
         $this->db->bind(':comment', $data['comment']);
         
         return $this->db->execute();
     }
 
-    // 6. Mettre à jour le statut (Approuver / Rejeter)
-    // MODIF : Renommé en updateStatus pour matcher le contrôleur Admin
+    // Mettre à jour le statut (Admin - Approuver/Rejeter)
     public function updateStatus($id, $status){
         $this->db->query("UPDATE reviews SET status = :status WHERE id = :id");
         $this->db->bind(':status', $status);
@@ -74,22 +105,10 @@ class Review {
         return $this->db->execute();
     }
 
-    // 7. Supprimer un avis (Admin)
+    // Supprimer un avis (Admin ou Client)
     public function deleteReview($id){
         $this->db->query("DELETE FROM reviews WHERE id = :id");
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
-    // Dans app/Models/Review.php
-
-// Récupérer les avis APPROUVÉS (Pour le site public / Accueil)
-public function getApprovedReviews(){
-    // On joint pour avoir le nom du produit si besoin
-    $this->db->query("SELECT reviews.*, products.name as product_name 
-                      FROM reviews 
-                      LEFT JOIN products ON reviews.product_id = products.id 
-                      WHERE reviews.status = 'approved' 
-                      ORDER BY reviews.created_at DESC LIMIT 6");
-    return $this->db->resultSet();
-}
 }

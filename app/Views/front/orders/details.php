@@ -7,12 +7,17 @@
             <a href="<?php echo URLROOT; ?>/orders" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white transition shadow-sm">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <div>
+            <div class="flex-1">
                 <h1 class="text-2xl font-serif font-bold text-slate-900">Order #<?php echo $data['order']->order_number; ?></h1>
-                <p class="text-sm text-slate-500">Placed on <?php echo date('F j, Y \a\t g:i a', strtotime($data['order']->created_at)); ?></p>
+                <p class="text-sm text-slate-500">Placed on <?php echo date('M j, Y \a\t g:i a', strtotime($data['order']->created_at)); ?></p>
+            </div>
+            <div class="flex gap-3">
+                <a href="<?php echo URLROOT; ?>/orders/invoice/<?php echo $data['order']->id; ?>" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition shadow-sm">
+                    <i class="fas fa-print"></i> Invoice
+                </a>
             </div>
         </div>
-
+        
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
             <h3 class="font-bold text-slate-800 mb-8">Order Tracking</h3>
             
@@ -89,7 +94,12 @@
                                 </div>
 
                                 <div class="flex-1">
-                                    <h4 class="font-bold text-sm text-slate-900 mb-1"><?php echo $item->product_name; ?></h4>
+                                    <h4 class="font-bold text-sm text-slate-900 mb-1">
+                                        <?php $link = !empty($item->slug) ? $item->slug : $item->product_id; ?>
+                                        <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $link; ?>" class="hover:text-primary transition">
+                                            <?php echo $item->product_name; ?>
+                                        </a>
+                                    </h4>
                                     
                                     <?php if(!empty($item->variant_info)): ?>
                                         <span class="inline-block bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase mb-1">
@@ -197,7 +207,7 @@
                     </div>
                     <h4 class="font-bold text-sm mb-1">Need Help?</h4>
                     <p class="text-xs text-slate-400 mb-4">Issues with this order?</p>
-                    <a href="https://wa.me/233XXXXXXXXX" class="inline-block bg-white text-slate-900 px-6 py-2 rounded-full text-xs font-bold hover:bg-primary hover:text-white transition">
+                    <a href="https://wa.me/233539382808" class="inline-block bg-white text-slate-900 px-6 py-2 rounded-full text-xs font-bold hover:bg-primary hover:text-white transition">
                         Contact Support
                     </a>
                 </div>

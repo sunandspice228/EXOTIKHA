@@ -88,7 +88,7 @@ abstract class AbstractTag
     {
     }
 
-    public function getAttributes()
+    public function getAllAttributes()
     {
         return $this->attributes;
     }
