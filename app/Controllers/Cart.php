@@ -1,4 +1,7 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
 // On charge le helper
 require_once '../app/Helpers/mail_helper.php';
 
@@ -60,20 +63,35 @@ class Cart extends Controller {
             if(!$product){ redirect('shop'); }
 
             $variant = null;
+            // On vérifie si la méthode existe pour éviter les crashs si Product.php n'est pas à jour
             if($variant_id && method_exists($this->productModel, 'getVariantById')){
                 $variant = $this->productModel->getVariantById($variant_id);
+            } else if($variant_id){
+                // Fallback manuel si la méthode n'existe pas encore dans le modèle principal
+                // (Normalement on l'a gérée via getProductVariants, mais c'est une sécurité)
+                $db = new Database;
+                $db->query('SELECT * FROM product_variants WHERE id = :id');
+                $db->bind(':id', $variant_id);
+                $variant = $db->single();
             }
 
             $availableStock = ($variant) ? $variant->stock : $product->stock;
 
             if($availableStock < $qty){
-                redirect('shop/product/' . $product_id); // Tu pourrais ajouter un flash message ici
+                redirect('shop/details/' . $product->slug); 
                 return;
             }
 
             $cartKey = $product_id . '-' . ($variant_id ?? '0');
 
             if(!isset($_SESSION['cart'])){ $_SESSION['cart'] = []; }
+
+            // --- TRADUCTION DU NOM DANS LE PANIER ---
+            // Si l'utilisateur est en français et que le produit a un nom français, on l'utilise.
+            $productName = $product->name;
+            if(isset($_SESSION['lang']) && $_SESSION['lang'] === 'fr' && !empty($product->name_fr)){
+                $productName = $product->name_fr;
+            }
 
             if(isset($_SESSION['cart'][$cartKey])){
                 $newQty = $_SESSION['cart'][$cartKey]['qty'] + $qty;
@@ -85,7 +103,7 @@ class Cart extends Controller {
                     'id' => $product_id,
                     'variant_id' => $variant_id,
                     'sku' => $product->sku,
-                    'name' => $product->name,
+                    'name' => $productName, // Utilise le nom traduit
                     'image' => $product->image,
                     'price' => $price,
                     'qty' => $qty,
@@ -100,6 +118,7 @@ class Cart extends Controller {
             foreach($_SESSION['cart'] as $item){ $totalQty += $item['qty']; }
             $_SESSION['cart_count'] = $totalQty;
             
+            // Redirection intelligente (retour à la page précédente ou panier)
             redirect('cart');
         } else {
             redirect('shop');
@@ -249,7 +268,7 @@ class Cart extends Controller {
                 }
 
             } else {
-                die('Erreur système : Impossible de créer la commande.');
+                die('System error: Unable to create order.');
             }
         } else {
             redirect('cart');
@@ -330,7 +349,7 @@ class Cart extends Controller {
     public function payment_callback(){
         $reference = isset($_GET['reference']) ? $_GET['reference'] : null;
 
-        if(!$reference){ die('Pas de référence fournie'); }
+        if(!$reference){ die('No reference provided'); }
 
         $url = 'https://api.paystack.co/transaction/verify/' . $reference;
         $ch = curl_init();
@@ -350,14 +369,14 @@ class Cart extends Controller {
         curl_close($ch);
 
         if($err){
-            die("Erreur de connexion Paystack (Verify) : " . $err);
+            die("Paystack connection error (Verify) : " . $err);
         }
 
         $result = json_decode($request, true);
 
         // Debug si le JSON est mal formé
         if(!$result){
-            die("Erreur de lecture de la réponse Paystack. Réponse brute : " . $request);
+            die("Error reading Paystack response. Raw response: " . $request);
         }
 
         if(isset($result['status']) && $result['status'] && $result['data']['status'] == 'success'){
@@ -370,7 +389,7 @@ class Cart extends Controller {
                 // Rediriger vers succès
                 redirect('cart/success/' . $order_id);
             } else {
-                die("Paiement validé mais erreur lors de la mise à jour de la base de données.");
+                die("Payment validated but error when updating the database.");
             }
 
         } else {
@@ -420,12 +439,12 @@ class Cart extends Controller {
         require_once APPROOT . '/Libraries/Mail.php';
         $mail = new Mail();
 
-        $subject = "Votre commande #{$order->order_number} sur Exotikha";
-        $body = "<h1>Merci pour votre commande !</h1>
-                 <p>Bonjour {$order->full_name},</p>
-                 <p>Votre commande a bien été reçue et est en cours de traitement.</p>
-                 <p>Vous trouverez votre facture en pièce jointe.</p>
-                 <p>Cordialement,<br>L'équipe Exotikha</p>";
+        $subject = "Your order #{$order->order_number} on Exotikha";
+        $body = "<h1>Thank you for your order!</h1>
+                 <p>Hello {$order->full_name},</p>
+                 <p>Your order has been received and is being processed.</p>
+                 <p>You will find your invoice attached.</p>
+                 <p>Sincerely,<br>The Exotikha team</p>";
 
         // Envoi
         $mail->send($order->email, $subject, $body, $pdfContent, "Facture_{$order->order_number}.pdf");

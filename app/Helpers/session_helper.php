@@ -1,7 +1,11 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 
 function flash($name = '', $message = '', $class = 'alert-success'){
     if(!empty($name)){
@@ -42,3 +46,4 @@ function isAdmin(){
     }
     return false;
 }
+

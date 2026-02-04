@@ -1,4 +1,7 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
 // 1. Redirection simple
 function redirect($page){
     header('location: ' . URLROOT . '/' . $page);

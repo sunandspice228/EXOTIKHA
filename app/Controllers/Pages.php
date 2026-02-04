@@ -1,4 +1,7 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
 // On charge le helper pour l'envoi d'email
 require_once '../app/Helpers/mail_helper.php';
 
@@ -24,26 +27,15 @@ class Pages extends Controller {
     // 1. PAGE D'ACCUEIL (HOME)
     // =========================================================
     public function index(){
-        // A. Nouveautés (4 derniers produits)
         $newArrivals = $this->productModel->getNewArrivals(4);
-
-        // B. Promotions (4 produits en promo)
         $promoProducts = $this->productModel->getPromoProducts(4);
-
-        // C. Catégories
-        // Si vous avez ajouté une gestion d'image de couverture dans Category, utilisez getAllCategoriesWithCover
-        // Sinon, la méthode standard suffit.
         $categories = $this->categoryModel->getAllCategories();
-
-        // D. Blog (3 derniers articles)
         $posts = $this->postModel->getLatestPosts(3);
-
-        // E. Témoignages (Validés uniquement)
         $reviews = $this->reviewModel->getApprovedReviews();
 
         $data = [
-            'title' => 'Exotikha - Mode Africaine Moderne',
-            'description' => 'Découvrez notre collection unique de vêtements et accessoires.',
+            'title' => defined('SITENAME') ? SITENAME : 'Exotikha',
+            'description' => lang('meta_desc_home'), // Clé à ajouter dans fr.php/en.php
             'new_arrivals' => $newArrivals,
             'promo_products' => $promoProducts,
             'categories' => $categories,
@@ -59,8 +51,8 @@ class Pages extends Controller {
     // =========================================================
     public function about(){
         $data = [
-            'title' => 'À Propos de Nous',
-            'description' => 'L\'histoire d\'Exotikha et notre mission.'
+            'title' => lang('page_about_title'),
+            'description' => lang('page_about_desc')
         ];
         $this->view('front/pages/about', $data);
     }
@@ -69,12 +61,11 @@ class Pages extends Controller {
     // 3. BLOG (LISTE & DÉTAIL)
     // =========================================================
     
-    // Liste de tous les articles
     public function blog(){
         $posts = $this->postModel->getPosts();
         $data = [
-            'title' => 'Exotikha Journal',
-            'description' => 'Actualités, mode et tendances.',
+            'title' => lang('page_blog_title'),
+            'description' => lang('page_blog_desc'),
             'posts' => $posts
         ];
         $this->view('front/pages/blog', $data);
@@ -82,12 +73,9 @@ class Pages extends Controller {
 
     // Article unique
     public function post($slug_or_id){
-        // On essaie de récupérer par ID ou par Slug (si vous avez implémenté getPostBySlug)
-        // Ici on suppose ID pour rester simple, ou Slug si le modèle le gère
         if(is_numeric($slug_or_id)){
             $post = $this->postModel->getPostById($slug_or_id);
         } else {
-            // Si vous avez ajouté getPostBySlug dans Post.php
             $post = method_exists($this->postModel, 'getPostBySlug') ? $this->postModel->getPostBySlug($slug_or_id) : null;
         }
 
@@ -95,11 +83,17 @@ class Pages extends Controller {
             redirect('pages/blog');
         }
 
-        // Sidebar : 3 articles récents pour inciter à la lecture
         $recentPosts = $this->postModel->getLatestPosts(3);
 
+        // --- TRADUCTION DU TITRE ---
+        // Si FR, on affiche le titre FR, sinon EN
+        $displayTitle = $post->title;
+        if(isset($_SESSION['lang']) && $_SESSION['lang'] === 'fr' && !empty($post->title_fr)){
+            $displayTitle = $post->title_fr;
+        }
+
         $data = [
-            'title' => $post->title,
+            'title' => $displayTitle,
             'post' => $post,
             'recent' => $recentPosts
         ];
@@ -115,18 +109,17 @@ class Pages extends Controller {
             verifyCsrfToken();
             $email = trim($_POST['email']);
 
-            if(!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)){
-                if($this->newsletterModel->addEmail($email)){
-                    flash('newsletter_msg', 'Inscription réussie à la newsletter !');
+            if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                if ($this->newsletterModel->addEmail($email)) {
+                    flash('newsletter_msg', lang('msg_sub_success'));
                 } else {
-                    flash('newsletter_msg', 'Vous êtes déjà inscrit.', 'bg-orange-100 text-orange-700');
+                    flash('newsletter_msg', lang('msg_sub_exist'), 'bg-orange-100 text-orange-700');
                 }
             } else {
-                flash('newsletter_msg', 'Email invalide.', 'bg-red-100 text-red-700');
+                flash('newsletter_msg', lang('msg_sub_invalid'), 'bg-red-100 text-red-700');
             }
         }
         
-        // Redirection vers la page précédente (Stay on same page)
         $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : URLROOT;
         header("Location: $referer");
     }
@@ -148,23 +141,21 @@ class Pages extends Controller {
             ];
 
             if(empty($data['name']) || empty($data['email']) || empty($data['message'])){
-                $data['error'] = 'Veuillez remplir tous les champs obligatoires.';
+                $data['error'] = lang('err_fill_all');
             }
 
             if(empty($data['error'])){
-                // Configuration de l'email admin
                 $to = 'sales@exotikha.com'; 
                 $email_subject = "Contact Site: " . $data['subject'];
-                $email_body = "<strong>Nom:</strong> " . $data['name'] . "<br>" .
+                $email_body = "<strong>Name:</strong> " . $data['name'] . "<br>" .
                               "<strong>Email:</strong> " . $data['email'] . "<br><br>" .
                               "<strong>Message:</strong><br>" . nl2br($data['message']);
                 
-                // Utilisation du Helper mail_helper.php
                 if(sendEmail($to, $email_subject, $email_body)){
-                    flash('contact_msg', 'Merci ! Votre message a été envoyé.');
+                    flash('contact_msg', lang('msg_contact_success'));
                     redirect('pages/contact');
                 } else {
-                    $data['error'] = 'Erreur lors de l\'envoi. Veuillez réessayer.';
+                    $data['error'] = lang('err_contact_send');
                     $this->view('front/pages/contact', $data);
                 }
             } else {
@@ -177,53 +168,42 @@ class Pages extends Controller {
     }
 
     // =========================================================
-    // 6. SUIVI DE COMMANDE (GUEST TRACKING)
+    // 6. SUIVI DE COMMANDE
     // =========================================================
     public function track(){
-        // Note: Si vous n'avez pas créé la méthode trackOrder dans Order.php,
-        // cette fonction ne marchera pas. Assurez-vous d'avoir ajouté la logique dans le modèle Order.
-        // Sinon, redirigez vers la connexion.
-        
         if($_SERVER['REQUEST_METHOD'] == 'POST'){
             verifyCsrfToken();
             $orderNumber = trim($_POST['order_number']);
-            // On demande l'email pour vérifier l'identité (sécurité simple)
-            // Si votre formulaire n'a pas d'email (juste ID), retirez cette vérification
             $email = isset($_POST['email']) ? trim($_POST['email']) : ''; 
 
             if(empty($orderNumber)){
-                flash('track_error', 'Veuillez entrer le numéro de commande.', 'bg-red-100 text-red-700');
+                flash('track_error', lang('err_track_empty'), 'bg-red-100 text-red-700');
                 redirect('users/account?tab=track');
                 return;
             }
 
-            // On suppose que vous avez ajouté cette méthode dans Order.php
-            // Si elle n'existe pas, il faut l'ajouter dans le modèle Order
             if(method_exists($this->orderModel, 'getOrderByNumber')){
                  $order = $this->orderModel->getOrderByNumber($orderNumber);
             } else {
-                 // Fallback si la méthode n'existe pas encore
-                 flash('track_error', 'Fonctionnalité en maintenance.', 'bg-yellow-100 text-yellow-700');
+                 flash('track_error', lang('err_maintenance'), 'bg-yellow-100 text-yellow-700');
                  redirect('users/account?tab=track');
                  return;
             }
 
             if($order){
-                // Si l'utilisateur a entré un email, on vérifie que ça correspond
                 if(!empty($email) && strtolower($order->email) !== strtolower($email)){
-                     flash('track_error', 'Email ne correspond pas à la commande.', 'bg-red-100 text-red-700');
-                     redirect('users/account?tab=track');
-                     return;
+                      flash('track_error', lang('err_track_email'), 'bg-red-100 text-red-700');
+                      redirect('users/account?tab=track');
+                      return;
                 }
 
                 $data = [
                     'order' => $order,
                     'items' => $this->orderModel->getOrderItems($order->id)
                 ];
-                // Vue spéciale pour le statut (ou réutiliser details)
                 $this->view('front/pages/order_status', $data);
             } else {
-                flash('track_error', 'Commande introuvable.', 'bg-red-100 text-red-700');
+                flash('track_error', lang('err_track_not_found'), 'bg-red-100 text-red-700');
                 redirect('users/account?tab=track');
             }
         } else {

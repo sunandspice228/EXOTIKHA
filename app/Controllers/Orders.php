@@ -1,6 +1,15 @@
 <?php
-// Nécessaire pour la génération de facture PDF
-require_once '../vendor/autoload.php'; 
+
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
+
+// Chargement de l'autoloader Composer pour Dompdf
+// On utilise dirname(APPROOT) pour remonter à la racine du projet de manière sûre
+if(file_exists(dirname(APPROOT) . '/vendor/autoload.php')){
+    require_once dirname(APPROOT) . '/vendor/autoload.php';
+}
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -21,8 +30,7 @@ class Orders extends Controller {
     // 1. LISTE DES COMMANDES (Redirection vers Mon Compte)
     // =========================================================
     public function index(){
-        // Comme la liste est déjà gérée dans Users::account, 
-        // on redirige simplement vers l'onglet commandes
+        // La liste est gérée dans le dashboard utilisateur
         redirect('users/account?tab=orders');
     }
 
@@ -63,24 +71,25 @@ class Orders extends Controller {
 
         $items = $this->orderModel->getOrderItems($id);
 
-        // 3. Générer le HTML (On utilise le même template que pour l'email)
-        // On passe les variables $order et $items au template via le scope global ou extraction
+        // 3. Générer le HTML
+        // On capture le HTML de la vue facture
         ob_start();
-        require_once APPROOT . '/Views/admin/orders/invoice_template.php'; 
+        require APPROOT . '/Views/admin/orders/invoice_template.php'; 
         $html = ob_get_clean();
 
-        // 4. Générer le PDF
+        // 4. Configuration Dompdf
         $options = new Options();
         $options->set('defaultFont', 'Arial');
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', true); // Pour charger le logo
         
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        // 5. Forcer le téléchargement (stream)
-        // "Attachment" => true force le téléchargement, false l'ouvre dans le navigateur
+        // 5. Forcer le téléchargement
+        // 'Attachment' => false permet de l'ouvrir dans le navigateur (preview)
+        // Mets 'true' pour forcer le téléchargement direct
         $dompdf->stream("Facture_" . $order->order_number . ".pdf", ["Attachment" => false]);
     }
 
@@ -90,14 +99,16 @@ class Orders extends Controller {
     private function checkOwnership($order){
         // Si la commande n'existe pas
         if(!$order){
-            flash('product_message', 'Cette commande est introuvable.', 'bg-red-50 text-red-600');
+            // TRADUCTION : "Order not found"
+            flash('product_message', lang('err_order_not_found'), 'bg-red-50 text-red-600');
             redirect('users/account?tab=orders');
             return false;
         }
 
         // Si l'ID utilisateur de la commande ne correspond pas à la session
         if($order->user_id != $_SESSION['user_id']){
-            flash('product_message', 'Vous n\'êtes pas autorisé à consulter cette commande.', 'bg-red-50 text-red-600');
+            // TRADUCTION : "Not authorized"
+            flash('product_message', lang('err_not_authorized'), 'bg-red-50 text-red-600');
             redirect('users/account?tab=orders');
             return false;
         }

@@ -1,4 +1,7 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
 class SavedCard {
     private $db;
 

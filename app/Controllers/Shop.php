@@ -1,4 +1,8 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
+
 class Shop extends Controller {
     private $productModel;
     private $categoryModel;
@@ -21,8 +25,7 @@ class Shop extends Controller {
     public function index(){
         // A. Récupération des Filtres depuis l'URL
         $filters = [
-            'search'      => isset($_GET['q']) ? trim($_GET['q']) : '',
-            // Petite correction ici : on garde une seule clé pour l'ID catégorie
+            'search'      => isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['search']) ? trim($_GET['search']) : ''),
             'category_id' => isset($_GET['category_id']) ? trim($_GET['category_id']) : (isset($_GET['category']) ? trim($_GET['category']) : ''),
             'gender'      => isset($_GET['gender']) ? trim($_GET['gender']) : '',
             'promo_only'  => isset($_GET['promo']) || isset($_GET['promo_only']),
@@ -30,7 +33,7 @@ class Shop extends Controller {
             'sort'        => isset($_GET['sort']) ? $_GET['sort'] : 'newest'
         ];
 
-        // B. Récupération des produits (Sécurisé : si la méthode n'existe pas, tableau vide)
+        // B. Récupération des produits
         $products = method_exists($this->productModel, 'getShopProducts') 
                     ? $this->productModel->getShopProducts($filters) 
                     : [];
@@ -38,7 +41,6 @@ class Shop extends Controller {
         // C. Gestion de la Wishlist (Récupérer les IDs des produits likés)
         $liked_products = [];
         if(isLoggedIn()){
-            // Vérification de sécurité sur la méthode wishlist
             if(method_exists($this->wishlist, 'getUserWishlist')){
                 $user_wishlist = $this->wishlist->getUserWishlist($_SESSION['user_id']);
                 foreach($user_wishlist as $item) { 
@@ -47,18 +49,14 @@ class Shop extends Controller {
             }
         }
 
-        // Sécurité pour les genres
-        $genres = method_exists($this->productModel, 'getAllGenres') ? $this->productModel->getAllGenres() : [];
-
         // D. Données pour la Vue
         $data = [
-            'title'      => 'Boutique Exotikha',
+            'title'      => lang('page_shop_title'), // Traduction du titre
             'products'   => $products,
             'categories' => $this->categoryModel->getAllCategories(),
             'types'      => $this->typeModel->getAllTypes(),
             'filters'    => $filters,
-            'liked'      => $liked_products,
-            'genres'     => $genres,
+            'liked'      => $liked_products
         ];
 
         $this->view('front/shop/index', $data);
@@ -79,38 +77,40 @@ class Shop extends Controller {
 
         // Si le slug est incorrect (produit introuvable)
         if(!$product){
-            // MODIFICATION : Au lieu de die(), on redirige proprement
-            // flash('shop_message', 'Ce produit est introuvable.', 'alert alert-danger'); // Si tu as un flash helper
             redirect('shop');
             return;
         }
 
-        // On a trouvé le produit
         $id = $product->id; 
 
-        // 2. Récupérer les variantes (Sécurisé avec method_exists)
-        $variants = method_exists($this->productModel, 'getVariantsByProductId') 
-                    ? $this->productModel->getVariantsByProductId($id) 
+        // 2. Récupérer les variantes
+        $variants = method_exists($this->productModel, 'getProductVariants') 
+                    ? $this->productModel->getProductVariants($id) 
                     : [];
 
-        // 3. Récupérer la galerie (C'est ici que ça plantait avant -> Sécurisé)
-        $gallery = method_exists($this->productModel, 'getGalleryImages') 
-                   ? $this->productModel->getGalleryImages($id) 
-                   : [];
+        // 3. Récupérer la galerie (On utilise product_images)
+        $gallery = method_exists($this->productModel, 'getProductGallery') 
+                    ? $this->productModel->getProductGallery($id) 
+                    : [];
 
         // 4. Récupérer les avis
         $reviews = method_exists($this->reviewModel, 'getReviewsByProductId')
-                   ? $this->reviewModel->getReviewsByProductId($id)
-                   : [];
+                    ? $this->reviewModel->getReviewsByProductId($id)
+                    : [];
 
-        // 5. Produits Similaires
-        // On vérifie quelle méthode existe dans ton modèle
-        if(method_exists($this->productModel, 'getRelatedProducts')){
-            $related = $this->productModel->getRelatedProducts($product->category_id, $id);
-        } elseif(method_exists($this->productModel, 'getProductsByCategory')){
-            $related = $this->productModel->getProductsByCategory($product->category_id, 4);
-        } else {
-            $related = [];
+        // 5. Produits Similaires (Logique simplifiée : même catégorie)
+        $related = [];
+        // On récupère 4 produits de la même catégorie, sauf celui actuel
+        // On utilise getShopProducts avec le filtre catégorie
+        if($product->category_id){
+            $relatedAll = $this->productModel->getShopProducts(['category_id' => $product->category_id]);
+            // On filtre en PHP pour exclure le produit courant et en garder 4
+            foreach($relatedAll as $p){
+                if($p->id != $id){
+                    $related[] = $p;
+                }
+                if(count($related) >= 4) break;
+            }
         }
 
         // 6. Vérifier si liké (Wishlist)
@@ -119,8 +119,15 @@ class Shop extends Controller {
             $is_liked = $this->wishlist->check($_SESSION['user_id'], $id);
         }
 
+        // --- TRADUCTION DU TITRE ---
+        // C'est ici que la magie opère pour le SEO et l'affichage
+        $displayTitle = $product->name;
+        if(isset($_SESSION['lang']) && $_SESSION['lang'] === 'fr' && !empty($product->name_fr)){
+            $displayTitle = $product->name_fr;
+        }
+
         $data = [
-            'title'    => $product->name,
+            'title'    => $displayTitle,
             'product'  => $product,
             'variants' => $variants,
             'gallery'  => $gallery,
@@ -136,7 +143,6 @@ class Shop extends Controller {
     // 3. PAGE PROMOTIONS (VENTES FLASH)
     // =========================================================
     public function promotions(){
-        // Sécurité si la méthode n'existe pas encore
         if(!method_exists($this->productModel, 'getPromoProducts')){
             redirect('shop');
             return;
@@ -144,7 +150,7 @@ class Shop extends Controller {
 
         $products = $this->productModel->getPromoProducts(50); 
 
-        // Trouver le produit avec la plus grosse réduction
+        // Trouver le produit avec la plus grosse réduction (Star Product)
         $starProduct = null;
         $maxPercent = 0;
 
@@ -152,6 +158,7 @@ class Shop extends Controller {
             foreach($products as $p){
                 if($p->price > 0 && $p->promo_price > 0){
                     $percent = round((($p->price - $p->promo_price) / $p->price) * 100);
+                    // On injecte le pourcentage directement dans l'objet pour l'affichage
                     $p->discount_percent = $percent;
                     
                     if($percent > $maxPercent){
@@ -163,7 +170,7 @@ class Shop extends Controller {
         }
 
         $data = [
-            'title'        => 'Ventes Flash - Exotikha',
+            'title'        => lang('page_promo_title'),
             'products'     => $products,
             'star_product' => $starProduct,
             'max_percent'  => $maxPercent

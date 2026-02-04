@@ -1,124 +1,152 @@
 <?php 
-// Extraction des données pour simplifier le code HTML
+// Extraction des données
 $order = $data['order'];
 $items = $data['items'];
+
+// Helper langue (si nécessaire pour des formats spécifiques)
+$lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo $lang; ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Invoice #<?php echo $order->order_number; ?></title>
+    <title><?php echo lang('invoice_title'); ?> #<?php echo $order->order_number; ?></title>
     <style>
-        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 12px; color: #333; line-height: 1.4; margin: 0; padding: 20px; }
+        /* BASE STYLES - Optimisé pour MPDF/DomPDF et Impression Navigateur */
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 12px; color: #333; line-height: 1.4; margin: 0; padding: 20px; background: #fff; }
         
-        /* Layout */
-        .container { max-width: 800px; margin: 0 auto; background: white; }
+        .container { width: 100%; max-width: 800px; margin: 0 auto; }
+        
+        /* HEADER */
         .header { width: 100%; border-bottom: 2px solid #ca8a04; padding-bottom: 20px; margin-bottom: 30px; }
-        
-        /* Typography */
-        .title { font-weight: bold; font-size: 14px; margin-bottom: 5px; color: #ca8a04; text-transform: uppercase; }
-        h1 { margin: 0; font-size: 24px; font-family: serif; color: #1a1a1a; }
-        
-        /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { background-color: #f8fafc; color: #111; padding: 12px 10px; text-align: left; font-weight: bold; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; font-size: 11px; }
-        td { padding: 12px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
-        
-        /* Utilities */
-        .text-right { text-align: right; }
-        .total-row td { border-top: 2px solid #333; font-weight: bold; font-size: 16px; padding-top: 15px; }
-        
-        /* Footer */
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; height: 30px; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px; background: white; }
-        
-        /* Badges */
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10px; display: inline-block; }
-        .paid { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .pending { background-color: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; }
+        .header-table { width: 100%; }
+        .header-left { text-align: left; vertical-align: top; }
+        .header-right { text-align: right; vertical-align: top; }
 
-        /* Print Specifics - Cache les éléments inutiles à l'impression */
-        @media print {
-            .no-print { display: none !important; }
-            body { padding: 0; }
-            .container { max-width: 100%; }
-        }
+        .logo h1 { margin: 0; font-size: 24px; font-family: serif; color: #0f172a; text-transform: uppercase; }
+        .logo p { margin: 0; color: #ca8a04; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
         
-        /* Action Button */
-        .btn-print {
-            display: block; width: 100%; padding: 15px; background: #1e293b; color: white; text-align: center; text-decoration: none; font-weight: bold; margin-bottom: 20px; border-radius: 8px; cursor: pointer; border: none;
+        .company-info { font-size: 10px; color: #64748b; line-height: 1.4; }
+        .company-info strong { color: #0f172a; font-size: 11px; }
+
+        /* INFO GRID */
+        .info-table { width: 100%; margin-bottom: 30px; }
+        .info-col { vertical-align: top; width: 50%; }
+        .info-col.right { text-align: right; }
+
+        .label { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; display: block; }
+        .info-value { font-size: 12px; color: #0f172a; }
+        
+        /* BADGES */
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+        .badge.paid { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge.pending { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .badge.cancelled { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* ITEMS TABLE */
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .items-table th { text-align: left; padding: 10px 5px; border-bottom: 2px solid #e2e8f0; font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: bold; background-color: #f8fafc; }
+        .items-table td { padding: 10px 5px; border-bottom: 1px solid #f1f5f9; vertical-align: top; font-size: 11px; }
+        
+        .text-right { text-align: right; }
+        .item-name { font-weight: bold; color: #0f172a; }
+        .item-meta { font-size: 10px; color: #64748b; display: block; margin-top: 2px; }
+
+        /* TOTALS */
+        .totals-table { width: 40%; margin-left: auto; border-collapse: collapse; }
+        .totals-table td { padding: 5px 0; font-size: 11px; }
+        .totals-table .total-row td { border-top: 2px solid #ca8a04; padding-top: 10px; font-size: 14px; font-weight: bold; color: #0f172a; }
+        .totals-table .total-row .amount { color: #ca8a04; }
+
+        /* FOOTER */
+        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px dashed #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; }
+        
+        /* PRINT UTILS */
+        .no-print { margin-bottom: 20px; text-align: center; }
+        .btn-print { background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        
+        @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .container { width: 100%; max-width: 100%; margin: 0; }
         }
-        .btn-print:hover { background: #0f172a; }
     </style>
 </head>
 <body>
 
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">
+            🖨️ <?php echo lang('btn_print'); ?>
+        </button>
+    </div>
+
     <div class="container">
         
-        <div class="no-print">
-            <button onclick="window.print()" class="btn-print">Click to Print / Download PDF</button>
-        </div>
-
         <div class="header">
-            <table width="100%">
+            <table class="header-table">
                 <tr>
-                    <td style="border:none;">
-                        <h1>EXOTIKHA.</h1>
-                        <p style="color: #64748b; margin-top: 5px;">Sensual • Elegant • Confident</p>
+                    <td class="header-left">
+                        <div class="logo">
+                            <h1>Exotikha.</h1>
+                            <p>Sensual • Elegant • Confident</p>
+                        </div>
                     </td>
-                    <td style="border:none; text-align:right;">
-                        <strong style="font-size: 14px;">EXOTIKHA GHANA LTD</strong><br>
-                        Haatso, Accra - Ghana<br>
-                        Tel: +233 53 938 2808<br>
-                        Email: sales@exotikha.com
+                    <td class="header-right">
+                        <div class="company-info">
+                            <strong>EXOTIKHA GHANA LTD</strong><br>
+                            Haatso, Accra - Ghana<br>
+                            +233 53 938 2808<br>
+                            sales@exotikha.com
+                        </div>
                     </td>
                 </tr>
             </table>
         </div>
 
-        <div class="details-box">
-            <table width="100%">
-                <tr>
-                    <td style="border:none; width:50%;">
-                        <div class="title">Billed To</div>
-                        <strong style="font-size: 13px;"><?php echo $order->full_name; ?></strong><br>
-                        <?php echo $order->shipping_phone; ?><br>
+        <table class="info-table">
+            <tr>
+                <td class="info-col">
+                    <span class="label"><?php echo lang('inv_billed_to'); ?></span>
+                    <div class="info-value">
+                        <strong><?php echo strtoupper($order->full_name); ?></strong><br>
                         <?php echo $order->shipping_address; ?><br>
-                        <?php echo $order->shipping_city . ', ' . $order->shipping_region; ?>
-                    </td>
-                    <td style="border:none; width:50%; text-align:right;">
-                        <div class="title">Order Details</div>
-                        <strong>Invoice No: #<?php echo $order->order_number; ?></strong><br>
-                        Date: <?php echo date('M d, Y', strtotime($order->created_at)); ?><br>
-                        Status: 
-                        <span class="badge <?php echo ($order->payment_status == 'paid') ? 'paid' : 'pending'; ?>">
-                            <?php echo strtoupper($order->payment_status); ?>
+                        <?php echo $order->shipping_city . ', ' . $order->shipping_region; ?><br>
+                        <?php echo $order->shipping_phone; ?><br>
+                        <?php echo $order->email; ?>
+                    </div>
+                </td>
+                <td class="info-col right">
+                    <span class="label"><?php echo lang('inv_details'); ?></span>
+                    <div class="info-value">
+                        <strong><?php echo lang('invoice_title'); ?> #<?php echo $order->order_number; ?></strong><br>
+                        <?php echo date('d M Y', strtotime($order->created_at)); ?><br>
+                        <span class="badge <?php echo strtolower($order->payment_status); ?>">
+                            <?php echo lang('status_' . strtolower($order->payment_status)); ?>
                         </span>
-                    </td>
-                </tr>
-            </table>
-        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
 
-        <table>
+        <table class="items-table">
             <thead>
                 <tr>
-                    <th width="50%">Item Description</th>
-                    <th width="15%" class="text-right">Unit Price</th>
-                    <th width="10%" class="text-right">Qty</th>
-                    <th width="25%" class="text-right">Total</th>
+                    <th width="50%"><?php echo lang('inv_item'); ?></th>
+                    <th width="15%" class="text-right"><?php echo lang('inv_price'); ?></th>
+                    <th width="10%" class="text-right"><?php echo lang('inv_qty'); ?></th>
+                    <th width="25%" class="text-right"><?php echo lang('inv_total'); ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach($items as $item): ?>
                 <tr>
                     <td>
-                        <strong style="color: #1e293b;"><?php echo $item->product_name; ?></strong>
-                        
-                        <?php if(!empty($item->variant_info)): ?>
-                            <br><span style="font-size:10px; color:#64748b;">Specs: <?php echo $item->variant_info; ?></span>
-                        <?php endif; ?>
-                        
-                        <?php if(!empty($item->sku)): ?>
-                            <br><span style="font-size:10px; color:#94a3b8;">SKU: <?php echo $item->sku; ?></span>
+                        <span class="item-name"><?php echo $item->product_name; ?></span>
+                        <?php if(!empty($item->variant_info) || !empty($item->sku)): ?>
+                            <span class="item-meta">
+                                <?php echo !empty($item->sku) ? 'SKU: ' . $item->sku . ' • ' : ''; ?>
+                                <?php echo $item->variant_info; ?>
+                            </span>
                         <?php endif; ?>
                     </td>
                     <td class="text-right"><?php echo number_format($item->price, 2); ?></td>
@@ -127,37 +155,31 @@ $items = $data['items'];
                 </tr>
                 <?php endforeach; ?>
             </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="2" style="border:none;"></td>
-                    <td class="text-right" style="padding-top:20px; color: #64748b;">Subtotal</td>
-                    <td class="text-right" style="padding-top:20px; font-weight: bold;">
-                        <?php echo number_format($order->total_amount - $order->shipping_cost, 2); ?>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="border:none;"></td>
-                    <td class="text-right" style="color: #64748b;">Shipping</td>
-                    <td class="text-right"><?php echo number_format($order->shipping_cost, 2); ?></td> 
-                </tr>
-                <tr class="total-row">
-                    <td colspan="2" style="border:none;"></td>
-                    <td class="text-right" style="color: #1a1a1a;">NET TOTAL (<?php echo CURRENCY_SYMBOL; ?>)</td>
-                    <td class="text-right" style="color: #ca8a04;"><?php echo number_format($order->total_amount, 2); ?></td>
-                </tr>
-            </tfoot>
         </table>
 
-        <div style="margin-top: 40px; border-left: 4px solid #ca8a04; padding-left: 15px; background: #fffbeb; padding: 15px; font-size: 11px; color: #78350f;">
-            <strong>Payment Method:</strong> 
-            <?php echo ($order->payment_method == 'paystack') ? 'Paystack (Mobile Money / Card)' : 'Cash on Delivery'; ?><br>
-            <em>Thank you for your business. If you have any questions about this invoice, please contact us at support@exotikha.com</em>
+        <table class="totals-table">
+            <tr>
+                <td class="text-right label"><?php echo lang('order_subtotal'); ?></td>
+                <td class="text-right"><?php echo number_format($order->total_amount - $order->shipping_cost, 2); ?></td>
+            </tr>
+            <tr>
+                <td class="text-right label"><?php echo lang('order_shipping'); ?></td>
+                <td class="text-right"><?php echo number_format($order->shipping_cost, 2); ?></td>
+            </tr>
+            <tr class="total-row">
+                <td class="text-right"><?php echo lang('inv_total_due'); ?> (<?php echo CURRENCY_SYMBOL; ?>)</td>
+                <td class="text-right amount"><?php echo number_format($order->total_amount, 2); ?></td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <p>
+                <strong><?php echo lang('order_payment_method'); ?>:</strong> 
+                <?php echo ($order->payment_method == 'paystack') ? 'Paystack (Online)' : 'Cash on Delivery'; ?>
+            </p>
+            <p><?php echo lang('inv_thank_you'); ?></p>
         </div>
 
-    </div>
-
-    <div class="footer">
-        Exotikha Ghana Ltd - Generated automatically on <?php echo date('F d, Y \a\t H:i'); ?>
     </div>
 
 </body>

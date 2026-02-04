@@ -1,6 +1,17 @@
 <?php
-// Charger la configuration
+// Load Config
 require_once 'Config/config.php';
+
+// Load Helpers
+require_once 'Helpers/url_helper.php';
+require_once 'Helpers/session_helper.php';
+require_once 'Helpers/mail_helper.php'; // (Si vous l'avez)
+require_once 'Helpers/lang_helper.php'; // <--- AJOUTEZ CETTE LIGNE ICI !
+
+// Autoload Core Libraries
+spl_autoload_register(function($className){
+    require_once 'Core/' . $className . '.php';
+});
 
 // A. CHARGER COMPOSER (Pour Dompdf, Paystack, PHPMailer, etc.)
 // C'est cette ligne qui manquait ou qui était mal placée !

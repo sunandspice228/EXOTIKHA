@@ -1,4 +1,7 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
 // app/Helpers/mail_helper.php
 
 /**

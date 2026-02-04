@@ -4,13 +4,13 @@
     
     <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Orders Management</h1>
-            <p class="text-slate-500 mt-1">Track and manage customer purchases.</p>
+            <h1 class="text-3xl font-bold text-slate-800 tracking-tight"><?php echo lang('adm_orders_title'); ?></h1>
+            <p class="text-slate-500 mt-1"><?php echo lang('adm_orders_subtitle'); ?></p>
         </div>
         
         <div class="flex gap-3">
             <button onclick="window.print()" class="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-50 transition shadow-sm flex items-center gap-2">
-                <i class="fas fa-print"></i> Print List
+                <i class="fas fa-print"></i> <?php echo lang('btn_print_list'); ?>
             </button>
         </div>
     </div>
@@ -20,12 +20,12 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-50 border-b border-slate-200">
                     <tr>
-                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider">Order ID</th>
-                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider">Customer</th>
-                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider">Date</th>
-                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider">Status</th>
-                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider">Total</th>
-                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider text-right">Action</th>
+                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider"><?php echo lang('col_order_id'); ?></th>
+                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider"><?php echo lang('col_customer'); ?></th>
+                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider"><?php echo lang('col_date'); ?></th>
+                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider"><?php echo lang('col_status'); ?></th>
+                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider"><?php echo lang('col_total'); ?></th>
+                        <th class="p-5 font-black text-slate-400 text-[10px] uppercase tracking-wider text-right"><?php echo lang('col_action'); ?></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -36,8 +36,7 @@
                                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                         <i class="fas fa-shopping-basket text-3xl text-slate-300"></i>
                                     </div>
-                                    <p class="text-lg font-bold text-slate-600">No orders found.</p>
-                                    <p class="text-sm text-slate-400">New orders will appear here.</p>
+                                    <p class="text-lg font-bold text-slate-600"><?php echo lang('adm_no_orders'); ?></p>
                                 </div>
                             </td>
                         </tr>
@@ -71,7 +70,7 @@
                                         <?php echo date('M d, Y', strtotime($order->created_at)); ?>
                                     </span>
                                     <span class="text-xs text-slate-400">
-                                        <?php echo date('h:i A', strtotime($order->created_at)); ?>
+                                        <?php echo date('H:i', strtotime($order->created_at)); ?>
                                     </span>
                                 </div>
                             </td>
@@ -88,11 +87,11 @@
                                 ?>
                                 <div class="flex flex-col gap-1">
                                     <span class="inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border <?php echo $statusClass; ?>">
-                                        <?php echo $order->status; ?>
+                                        <?php echo lang('status_' . $order->status); ?>
                                     </span>
                                     
                                     <span class="text-[10px] font-bold <?php echo ($order->payment_status == 'paid') ? 'text-emerald-600' : 'text-amber-600'; ?>">
-                                        <?php echo ucfirst($order->payment_status); ?>
+                                        <?php echo lang('status_' . $order->payment_status); ?>
                                     </span>
                                 </div>
                             </td>
@@ -104,9 +103,9 @@
                             </td>
 
                             <td class="p-5 text-right">
-                                <a href="<?php echo URLROOT; ?>/admin/order_details/<?php echo $order->id; ?>" 
+                                <a href="<?php echo URLROOT; ?>/admin/orders/details/<?php echo $order->id; ?>" 
                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary transition shadow-sm"
-                                   title="View Details">
+                                   title="<?php echo lang('btn_view_details'); ?>">
                                     <i class="fas fa-eye text-xs"></i>
                                 </a>
                             </td>
@@ -119,7 +118,7 @@
         </div>
         
         <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-xs text-slate-500 font-medium">
-            <span>Showing last <strong><?php echo isset($data['orders']) ? count($data['orders']) : 0; ?></strong> orders</span>
+            <span><?php echo lang('adm_showing_last'); ?> <strong><?php echo isset($data['orders']) ? count($data['orders']) : 0; ?></strong> <?php echo lang('adm_orders_count'); ?></span>
         </div>
     </div>
 </div>

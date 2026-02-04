@@ -1,88 +1,55 @@
 <?php require APPROOT . '/Views/admin/inc/header.php'; ?>
 
 <div class="max-w-2xl mx-auto">
-    
     <div class="flex items-center gap-4 mb-8">
-        <a href="<?php echo URLROOT; ?>/admin/users" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary transition shadow-sm group">
-            <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+        <a href="<?php echo URLROOT; ?>/admin/users" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-800 transition">
+            <i class="fas fa-arrow-left"></i>
         </a>
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Add Staff Member</h1>
-            <p class="text-sm text-slate-500">Create a new administrator account with dashboard access.</p>
-        </div>
+        <h1 class="text-2xl font-bold text-slate-800"><?php echo lang('title_add_staff'); ?></h1>
     </div>
 
-    <?php flash('admin_msg'); ?>
-
-    <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
-        <form action="<?php echo URLROOT; ?>/admin/users_add" method="POST" class="space-y-6">
-            <?php echo csrfField(); ?>
-            
-            <?php if(!empty($data['name_err']) || !empty($data['email_err']) || !empty($data['password_err']) || !empty($data['confirm_password_err'])): ?>
-                <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3 text-sm">
-                    <i class="fas fa-exclamation-circle text-lg mt-0.5"></i>
-                    <div>
-                        <p class="font-bold">Please correct the following errors:</p>
-                        <ul class="list-disc list-inside mt-1 space-y-1 text-xs">
-                            <?php if(!empty($data['name_err'])) echo "<li>" . $data['name_err'] . "</li>"; ?>
-                            <?php if(!empty($data['email_err'])) echo "<li>" . $data['email_err'] . "</li>"; ?>
-                            <?php if(!empty($data['password_err'])) echo "<li>" . $data['password_err'] . "</li>"; ?>
-                            <?php if(!empty($data['confirm_password_err'])) echo "<li>" . $data['confirm_password_err'] . "</li>"; ?>
-                        </ul>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-2 ml-1">Full Name <span class="text-red-500">*</span></label>
-                <div class="relative">
-                    <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" name="name" value="<?php echo $data['name']; ?>" required
-                           class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition font-medium text-slate-800 <?php echo (!empty($data['name_err'])) ? 'border-red-300 bg-red-50' : ''; ?>" 
-                           placeholder="e.g. Jane Doe">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-2 ml-1">Work Email <span class="text-red-500">*</span></label>
-                <div class="relative">
-                    <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="email" name="email" value="<?php echo $data['email']; ?>" required
-                           class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition font-medium text-slate-800 <?php echo (!empty($data['email_err'])) ? 'border-red-300 bg-red-50' : ''; ?>" 
-                           placeholder="admin@exotikha.com">
-                </div>
-            </div>
-
-            <div class="p-6 bg-slate-50 rounded-xl border border-slate-100">
-                <h3 class="text-xs font-bold uppercase text-slate-400 mb-4 flex items-center gap-2">
-                    <i class="fas fa-lock"></i> Security Credentials
-                </h3>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        <form action="<?php echo URLROOT; ?>/admin/users_add" method="POST" enctype="multipart/form-data">
+            <div class="space-y-6">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase text-slate-500 mb-2">Password <span class="text-red-500">*</span></label>
-                        <input type="password" name="password" required
-                               class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition <?php echo (!empty($data['password_err'])) ? 'border-red-300' : ''; ?>"
-                               placeholder="Min 6 chars">
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Nom Complet *</label>
+                        <input type="text" name="name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold uppercase text-slate-500 mb-2">Confirm Password <span class="text-red-500">*</span></label>
-                        <input type="password" name="confirm_password" required
-                               class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition <?php echo (!empty($data['confirm_password_err'])) ? 'border-red-300' : ''; ?>"
-                               placeholder="Repeat password">
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Email *</label>
+                        <input type="email" name="email" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary">
                     </div>
                 </div>
-            </div>
 
-            <div class="flex items-center justify-end gap-4 border-t border-slate-50 pt-6">
-                <a href="<?php echo URLROOT; ?>/admin/users" class="text-slate-500 font-bold text-sm hover:text-slate-800 px-4 transition">Cancel</a>
-                <button type="submit" class="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-primary transition shadow-lg shadow-slate-900/20 flex items-center gap-2 transform hover:-translate-y-1">
-                    <i class="fas fa-user-plus"></i> Create Account
-                </button>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Mot de passe *</label>
+                        <input type="password" name="password" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Rôle</label>
+                        <select name="role" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary">
+                            <option value="admin">Administrateur</option>
+                            <option value="editor">Éditeur (Blog/Produits)</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                    </div>
+                </div>
 
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2 uppercase">Avatar</label>
+                    <input type="file" name="image" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex justify-end">
+                    <button type="submit" class="bg-primary text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition">
+                        Créer le compte
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 </div>
-
 <?php require APPROOT . '/Views/admin/inc/footer.php'; ?>

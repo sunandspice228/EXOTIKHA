@@ -6,72 +6,62 @@ class Post {
         $this->db = new Database;
     }
 
-    // =========================================================
-    // LECTURE
-    // =========================================================
-
-    // Récupérer tous les articles (Admin & Blog Index)
+    // LISTE
     public function getPosts(){
-        $this->db->query('SELECT * FROM posts ORDER BY created_at DESC');
+        $this->db->query("SELECT * FROM posts ORDER BY created_at DESC");
         return $this->db->resultSet();
     }
 
-    // Récupérer un article par ID (Pour l'Admin Edit)
+    // UNITAIRE
     public function getPostById($id){
-        $this->db->query('SELECT * FROM posts WHERE id = :id');
+        $this->db->query("SELECT * FROM posts WHERE id = :id");
         $this->db->bind(':id', $id);
         return $this->db->single();
     }
 
-    // Récupérer un article par SLUG (Pour l'affichage Front-End SEO)
-    public function getPostBySlug($slug){
-        $this->db->query('SELECT * FROM posts WHERE slug = :slug');
-        $this->db->bind(':slug', $slug);
-        return $this->db->single();
-    }
-
-    // Récupérer les derniers articles (Pour la Home Page)
-    public function getLatestPosts($limit = 3){
-        $this->db->query('SELECT * FROM posts ORDER BY created_at DESC LIMIT :limit');
-        $this->db->bind(':limit', $limit);
-        return $this->db->resultSet();
-    }
-
-    // =========================================================
-    // ÉCRITURE (ADMIN)
-    // =========================================================
-
-    // Ajouter un article
+    // AJOUT
     public function addPost($data){
-        $this->db->query('INSERT INTO posts (title, slug, category, image, content) VALUES (:title, :slug, :category, :image, :content)');
+        $this->db->query("INSERT INTO posts (title, title_fr, slug, content, content_fr, image, status, created_at) 
+                          VALUES (:title, :title_fr, :slug, :content, :content_fr, :image, :status, NOW())");
         
         $this->db->bind(':title', $data['title']);
+        $this->db->bind(':title_fr', $data['title_fr']);
         $this->db->bind(':slug', $data['slug']);
-        $this->db->bind(':category', $data['category']);
+        $this->db->bind(':content', $data['content']);
+        $this->db->bind(':content_fr', $data['content_fr']);
         $this->db->bind(':image', $data['image']);
-        // Correction : on utilise 'content' partout pour être cohérent avec la BDD
-        $this->db->bind(':content', $data['content']); 
+        $this->db->bind(':status', $data['status']);
 
         return $this->db->execute();
     }
 
-    // Mettre à jour un article
+    // MODIFICATION
     public function updatePost($data){
-        $this->db->query('UPDATE posts SET title = :title, slug = :slug, category = :category, image = :image, content = :content WHERE id = :id');
-        
+        $this->db->query("UPDATE posts SET 
+                          title = :title, 
+                          title_fr = :title_fr,
+                          slug = :slug, 
+                          content = :content, 
+                          content_fr = :content_fr,
+                          image = :image,
+                          status = :status
+                          WHERE id = :id");
+
         $this->db->bind(':id', $data['id']);
         $this->db->bind(':title', $data['title']);
+        $this->db->bind(':title_fr', $data['title_fr']);
         $this->db->bind(':slug', $data['slug']);
-        $this->db->bind(':category', $data['category']);
-        $this->db->bind(':image', $data['image']);
         $this->db->bind(':content', $data['content']);
+        $this->db->bind(':content_fr', $data['content_fr']);
+        $this->db->bind(':image', $data['image']);
+        $this->db->bind(':status', $data['status']);
 
         return $this->db->execute();
     }
 
-    // Supprimer un article
+    // SUPPRESSION
     public function deletePost($id){
-        $this->db->query('DELETE FROM posts WHERE id = :id');
+        $this->db->query("DELETE FROM posts WHERE id = :id");
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }

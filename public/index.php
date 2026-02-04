@@ -1,28 +1,23 @@
 <?php
-// 1. Charger la config
+// 1. Charger la Configuration en premier
 require_once '../app/Config/config.php';
+
+// 2. Gestion Sécurisée des Erreurs
+// Si DEBUG_MODE est activé dans config.php, on affiche les erreurs.
+// Sinon (en Production), on les cache pour ne pas révéler les failles aux pirates.
+if (defined('DEBUG_MODE') && DEBUG_MODE === true) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(0);
+}
+
+// 3. Charger le Bootstrap (Le moteur de l'app)
 require_once '../app/bootstrap.php';
 
-
-
-// 2. Charger les Helpers (INDISPENSABLE pour les fonctions flash() et redirect())
-// Ces fichiers contiennent des fonctions, pas des classes, donc l'autoloader ne les charge pas.
-require_once '../app/Helpers/session_helper.php';
-require_once '../app/Helpers/url_helper.php';
-
-// 3. Autoloader pour charger les Classes automatiquement (Core, Models, Controllers)
-spl_autoload_register(function($className){
-    // Vérifie dans Core
-    if (file_exists('../app/Core/' . $className . '.php')) {
-        require_once '../app/Core/' . $className . '.php';
-    }
-    // Vérifie dans Models (Utile si on instancie un modèle directement)
-    elseif (file_exists('../app/Models/' . $className . '.php')) {
-        require_once '../app/Models/' . $className . '.php';
-    }
-    // Vérifie dans Controllers
-    elseif (file_exists('../app/Controllers/' . $className . '.php')) {
-        require_once '../app/Controllers/' . $className . '.php';
-    }
-});
+// 4. Initialiser le Routeur (Lancement du site)
+// Assurez-vous que votre classe principale s'appelle bien 'Router' ou 'Core'
 $init = new Router;

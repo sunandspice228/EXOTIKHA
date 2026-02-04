@@ -1,6 +1,9 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
 <?php 
+    // Helper Langue
+    $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
+
     // --- 1. RÉCUPÉRATION DES DONNÉES UTILISATEUR ---
     $user = $data['user'];
     
@@ -10,7 +13,6 @@
     $email = $user->email ?? '';
     
     // --- 2. RÉCUPÉRATION INTELLIGENTE DE L'ADRESSE ---
-    // On vérifie si le modèle renvoie 'shipping_phone' (mapping) ou 'phone' (nom colonne BDD)
     $shippingPhone = $user->shipping_phone ?? $user->phone ?? '';
     $shippingAddress = $user->shipping_address ?? $user->address ?? '';
     
@@ -34,8 +36,8 @@
 
 <div class="bg-slate-50 py-10 border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-6 text-center md:text-left">
-        <h1 class="text-3xl font-serif font-bold text-slate-900">My Account</h1>
-        <p class="text-slate-500 text-sm">Manage your orders and shipping addresses.</p>
+        <h1 class="text-3xl font-serif font-bold text-slate-900"><?php echo lang('account_title'); ?></h1>
+        <p class="text-slate-500 text-sm"><?php echo lang('account_subtitle'); ?></p>
     </div>
 </div>
 
@@ -50,7 +52,7 @@
                         <?php echo $initial; ?>
                     </div>
                     <div class="truncate overflow-hidden">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Welcome,</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"><?php echo lang('account_welcome'); ?></p>
                         <p class="font-bold text-slate-900 truncate text-sm" title="<?php echo $fullName; ?>">
                             <?php echo $firstName; ?>
                         </p>
@@ -60,7 +62,7 @@
                 <?php if(function_exists('isAdmin') && isAdmin()): ?>
                     <div class="p-4 bg-slate-900">
                         <a href="<?php echo URLROOT; ?>/admin" class="block w-full bg-red-600 text-white text-center py-3 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg hover:bg-red-700 transition transform hover:scale-105">
-                            <i class="fas fa-user-shield mr-2"></i> Admin Panel
+                            <i class="fas fa-user-shield mr-2"></i> <?php echo lang('link_admin_panel'); ?>
                         </a>
                     </div>
                 <?php endif; ?>
@@ -68,32 +70,36 @@
                 <?php $currentTab = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard'; ?>
                 <nav class="p-2 space-y-1">
                     <a href="?tab=dashboard" class="nav-link <?php echo ($currentTab == 'dashboard') ? 'active' : ''; ?>">
-                        <i class="fas fa-tachometer-alt w-5 text-center"></i> Dashboard
+                        <i class="fas fa-tachometer-alt w-5 text-center"></i> <?php echo lang('tab_dashboard'); ?>
                     </a>
                     <a href="?tab=orders" class="nav-link <?php echo ($currentTab == 'orders') ? 'active' : ''; ?>">
-                        <i class="fas fa-shopping-bag w-5 text-center"></i> Orders
+                        <i class="fas fa-shopping-bag w-5 text-center"></i> <?php echo lang('tab_orders'); ?>
                     </a>
                     <a href="?tab=addresses" class="nav-link <?php echo ($currentTab == 'addresses') ? 'active' : ''; ?>">
-                        <i class="fas fa-map-marker-alt w-5 text-center"></i> Addresses
+                        <i class="fas fa-map-marker-alt w-5 text-center"></i> <?php echo lang('tab_addresses'); ?>
                     </a>
                     <a href="?tab=details" class="nav-link <?php echo ($currentTab == 'details') ? 'active' : ''; ?>">
-                        <i class="fas fa-user-cog w-5 text-center"></i> Profile
+                        <i class="fas fa-user-cog w-5 text-center"></i> <?php echo lang('tab_details'); ?>
                     </a>
                     
                     <a href="<?php echo URLROOT; ?>/users/logout" class="nav-link text-red-500 mt-4 border-t border-slate-50 hover:bg-red-50 hover:text-red-600">
-                        <i class="fas fa-sign-out-alt w-5 text-center"></i> Logout
+                        <i class="fas fa-sign-out-alt w-5 text-center"></i> <?php echo lang('logout'); ?>
                     </a>
                 </nav>
             </div>
         </aside>
 
         <div class="flex-1">
-            <?php flash('product_message'); ?>
+            <?php if(function_exists('flash')) flash('product_message'); ?>
 
             <?php if($currentTab == 'dashboard'): ?>
                 <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm mb-8">
-                    <h2 class="text-2xl font-serif font-bold text-slate-900 mb-4 italic">Hello, <?php echo $firstName; ?> 👋</h2>
-                    <p class="text-slate-600 leading-relaxed text-sm">This is your dashboard. You can view your <a href="?tab=orders" class="text-primary font-bold hover:underline">recent orders</a>, manage your <a href="?tab=addresses" class="text-primary font-bold hover:underline">shipping addresses</a> for Accra, and edit your <a href="?tab=details" class="text-primary font-bold hover:underline">personal details</a>.</p>
+                    <h2 class="text-2xl font-serif font-bold text-slate-900 mb-4 italic"><?php echo lang('dash_hello'); ?> <?php echo $firstName; ?> 👋</h2>
+                    <p class="text-slate-600 leading-relaxed text-sm">
+                        <?php echo lang('dash_intro_1'); ?> <a href="?tab=orders" class="text-primary font-bold hover:underline"><?php echo lang('dash_link_orders'); ?></a>, 
+                        <?php echo lang('dash_intro_2'); ?> <a href="?tab=addresses" class="text-primary font-bold hover:underline"><?php echo lang('dash_link_address'); ?></a>, 
+                        <?php echo lang('dash_intro_3'); ?> <a href="?tab=details" class="text-primary font-bold hover:underline"><?php echo lang('dash_link_details'); ?></a>.
+                    </p>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -103,7 +109,7 @@
                         </div>
                         <div>
                             <span class="block text-2xl font-bold text-slate-800"><?php echo isset($data['orders']) ? count($data['orders']) : 0; ?></span>
-                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Total Orders</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-widest"><?php echo lang('dash_stat_orders'); ?></span>
                         </div>
                     </a>
 
@@ -113,20 +119,20 @@
                         </div>
                         <div>
                             <span class="block text-sm font-bold text-slate-800 mt-1">Accra Only</span>
-                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Delivery Zone</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-widest"><?php echo lang('dash_stat_zone'); ?></span>
                         </div>
                     </a>
                 </div>
 
             <?php elseif($currentTab == 'orders'): ?>
-                <h2 class="text-xl font-bold mb-6 italic font-serif text-slate-900">Order History</h2>
+                <h2 class="text-xl font-bold mb-6 italic font-serif text-slate-900"><?php echo lang('orders_title'); ?></h2>
                 <?php if(empty($data['orders'])): ?>
                     <div class="bg-white p-12 rounded-2xl border border-slate-100 text-center shadow-sm">
                         <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
                             <i class="fas fa-box-open text-3xl"></i>
                         </div>
-                        <p class="text-slate-500 italic mb-6">You haven't placed any orders yet.</p>
-                        <a href="<?php echo URLROOT; ?>/shop" class="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-primary transition text-sm uppercase tracking-wide">Start Shopping</a>
+                        <p class="text-slate-500 italic mb-6"><?php echo lang('orders_empty'); ?></p>
+                        <a href="<?php echo URLROOT; ?>/shop" class="inline-block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-primary transition text-sm uppercase tracking-wide"><?php echo lang('btn_start_shopping'); ?></a>
                     </div>
                 <?php else: ?>
                     <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
@@ -135,10 +141,10 @@
                                 <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b border-slate-100">
                                     <tr>
                                         <th class="px-6 py-4">ID</th>
-                                        <th class="px-6 py-4">Date</th>
-                                        <th class="px-6 py-4">Status</th>
-                                        <th class="px-6 py-4">Total</th>
-                                        <th class="px-6 py-4 text-right">Details</th>
+                                        <th class="px-6 py-4"><?php echo lang('col_date'); ?></th>
+                                        <th class="px-6 py-4"><?php echo lang('col_status'); ?></th>
+                                        <th class="px-6 py-4"><?php echo lang('col_total'); ?></th>
+                                        <th class="px-6 py-4 text-right"><?php echo lang('col_action'); ?></th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-sm font-medium">
@@ -148,7 +154,7 @@
                                             <td class="px-6 py-4 text-slate-500"><?php echo date('M d, Y', strtotime($order->created_at)); ?></td>
                                             <td class="px-6 py-4">
                                                 <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-500">
-                                                    <?php echo ucfirst($order->status); ?>
+                                                    <?php echo lang('status_' . strtolower($order->status)); ?>
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 font-bold text-slate-900"><?php echo CURRENCY_SYMBOL . number_format($order->total_amount, 2); ?></td>
@@ -164,28 +170,28 @@
                 <?php endif; ?>
 
             <?php elseif($currentTab == 'addresses'): ?>
-                <h2 class="text-xl font-bold mb-6 italic font-serif">My Addresses</h2>
+                <h2 class="text-xl font-bold mb-6 italic font-serif"><?php echo lang('addr_title'); ?></h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm opacity-60">
-                        <h3 class="font-bold border-b pb-2 mb-4 text-slate-500 uppercase text-xs tracking-wider">Billing Address</h3>
-                        <p class="text-sm text-slate-500 italic">The billing address is automatically linked to your shipping address to simplify the process.</p>
+                        <h3 class="font-bold border-b pb-2 mb-4 text-slate-500 uppercase text-xs tracking-wider"><?php echo lang('addr_billing_title'); ?></h3>
+                        <p class="text-sm text-slate-500 italic"><?php echo lang('addr_billing_text'); ?></p>
                         <div class="mt-4 text-xs text-slate-400">
-                            <i class="fas fa-lock mr-1"></i> Managed automatically
+                            <i class="fas fa-lock mr-1"></i> <?php echo lang('addr_managed_auto'); ?>
                         </div>
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-visible">
                         <div class="absolute top-0 right-0 w-16 h-16 bg-primary opacity-5 rounded-bl-full pointer-events-none"></div>
                         
-                        <h3 class="font-bold border-b pb-2 mb-4 text-primary uppercase text-xs tracking-wider">Shipping Address (Accra)</h3>
+                        <h3 class="font-bold border-b pb-2 mb-4 text-primary uppercase text-xs tracking-wider"><?php echo lang('addr_shipping_title'); ?></h3>
                         
                         <form action="<?php echo URLROOT; ?>/users/update_address" method="POST" class="space-y-4">
-                        <?php echo csrfField(); ?>   
+                        <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>   
                         <input type="hidden" name="address_type" value="shipping">
                             
                             <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Phone Number</label>
+                                <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block"><?php echo lang('form_phone'); ?></label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fas fa-mobile-alt"></i></span>
                                     <input type="text" name="shipping_phone" 
@@ -196,11 +202,11 @@
                             </div>
 
                             <div class="relative">
-                                <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Neighborhood / Area</label>
+                                <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block"><?php echo lang('form_neighborhood'); ?></label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fas fa-map-signs"></i></span>
                                     <select name="shipping_address" class="w-full pl-9 rounded-lg border-slate-200 focus:ring-primary text-sm bg-white cursor-pointer appearance-none font-semibold text-slate-700">
-                                        <option value="" disabled <?php echo empty($shippingAddress) ? 'selected' : ''; ?>>-- Select Location --</option>
+                                        <option value="" disabled <?php echo empty($shippingAddress) ? 'selected' : ''; ?>>-- <?php echo lang('select_option'); ?> --</option>
                                         <?php foreach($accraLocations as $loc): ?>
                                             <option value="<?php echo $loc; ?>" <?php echo ($shippingAddress == $loc) ? 'selected' : ''; ?>>
                                                 <?php echo $loc; ?>
@@ -213,58 +219,58 @@
 
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block">City</label>
+                                    <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block"><?php echo lang('form_city'); ?></label>
                                     <input type="text" name="shipping_city" value="Accra" class="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500 font-bold text-sm cursor-not-allowed" readonly>
                                 </div>
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Region</label>
+                                    <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block"><?php echo lang('form_region'); ?></label>
                                     <input type="text" name="shipping_region" value="Greater Accra" class="w-full rounded-lg border-slate-200 bg-slate-50 text-slate-500 font-bold text-sm cursor-not-allowed" readonly>
                                 </div>
                             </div>
                             
                             <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-slate-800 transition text-xs uppercase tracking-wide mt-2 shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                                <i class="fas fa-save"></i> Save Address
+                                <i class="fas fa-save"></i> <?php echo lang('btn_save_address'); ?>
                             </button>
                         </form>
                     </div>
                 </div>
 
             <?php elseif($currentTab == 'details'): ?>
-                <h2 class="text-xl font-bold mb-6 italic font-serif">Account Details</h2>
+                <h2 class="text-xl font-bold mb-6 italic font-serif"><?php echo lang('details_title'); ?></h2>
                 <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-2xl">
                     <form action="<?php echo URLROOT; ?>/users/update_details" method="POST" class="space-y-6">
-                    <?php echo csrfField(); ?>    
+                    <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Full Name</label>
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_fullname'); ?></label>
                                 <input type="text" name="name" value="<?php echo $fullName; ?>" class="w-full rounded-xl border-slate-200 focus:ring-primary transition">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Email</label>
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_email'); ?></label>
                                 <input type="email" name="email" value="<?php echo $email; ?>" class="w-full rounded-xl border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" readonly>
                             </div>
                         </div>
                         
                         <div class="border-t pt-6 mt-2">
-                            <p class="font-bold text-slate-900 mb-4 text-sm uppercase flex items-center gap-2"><i class="fas fa-lock"></i> Change Password</p>
+                            <p class="font-bold text-slate-900 mb-4 text-sm uppercase flex items-center gap-2"><i class="fas fa-lock"></i> <?php echo lang('details_change_pass'); ?></p>
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Current Password</label>
+                                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_current_pass'); ?></label>
                                     <input type="password" name="current_password" class="w-full rounded-xl border-slate-200 focus:ring-primary transition">
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">New Password</label>
+                                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_new_pass'); ?></label>
                                         <input type="password" name="new_password" class="w-full rounded-xl border-slate-200 focus:ring-primary transition">
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Confirm</label>
+                                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_confirm_pass'); ?></label>
                                         <input type="password" name="confirm_password" class="w-full rounded-xl border-slate-200 focus:ring-primary transition">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg uppercase tracking-widest text-sm mt-4">Update Details</button>
+                        <button type="submit" class="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg uppercase tracking-widest text-sm mt-4"><?php echo lang('btn_update_details'); ?></button>
                     </form>
                 </div>
             <?php endif; ?>

@@ -1,58 +1,67 @@
 <?php
+// ⛔ SÉCURITÉ OPTIMALE : Empêche l'accès direct au fichier via l'URL
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
+
 /*
  * Classe Router (Cœur de l'application)
  * Crée les URL et charge le contrôleur principal
- * URL FORMAT - /controller/method/params
+ * SÉCURISÉ CONTRE LES INJECTIONS ET L'ACCÈS DIRECT
  */
 class Router {
-    protected $currentController = 'Pages'; // MODIFIÉ : On pointe vers notre nouveau contrôleur d'accueil
-    protected $currentMethod = 'index';
+    protected $currentController = 'Pages'; // Contrôleur par défaut
+    protected $currentMethod = 'index';     // Méthode par défaut
     protected $params = [];
 
     public function __construct(){
-        // $url[0] = Contrôleur, $url[1] = Méthode, $url[2] = Paramètre
         $url = $this->getUrl();
 
-        // 1. Chercher le contrôleur dans app/Controllers/
-        // On vérifie si le premier segment de l'URL correspond à un fichier existant
-        if(isset($url[0]) && file_exists('../app/Controllers/' . ucwords($url[0]) . '.php')){
-            // Si le fichier existe, on le définit comme contrôleur actuel
-            $this->currentController = ucwords($url[0]);
-            // On retire la valeur du tableau url pour ne garder que méthode et params
-            unset($url[0]);
+        // 1. RECHERCHE SÉCURISÉE DU CONTRÔLEUR
+        if(isset($url[0])){
+            // SÉCURITÉ : On nettoie le nom du fichier pour éviter les ".." (Directory Traversal)
+            // On ne garde que les lettres, chiffres et underscores
+            $cleanControllerName = preg_replace('/[^a-zA-Z0-9_]/', '', $url[0]);
+            $controllerName = ucwords($cleanControllerName);
+
+            if(file_exists('../app/Controllers/' . $controllerName . '.php')){
+                $this->currentController = $controllerName;
+                unset($url[0]);
+            }
         }
 
         // 2. REQUÉRIR LE CONTRÔLEUR
         require_once '../app/Controllers/' . $this->currentController . '.php';
 
-        // 3. Instancier la classe contrôleur (ex: $this->currentController = new Cart())
+        // 3. INSTANCIER LA CLASSE
         $this->currentController = new $this->currentController;
 
-        // 4. Vérifier la deuxième partie de l'URL (la méthode)
+        // 4. VÉRIFIER LA MÉTHODE
         if(isset($url[1])){
-            // Vérifier si la méthode existe dans le contrôleur (ex: index, add, delete...)
             if(method_exists($this->currentController, $url[1])){
                 $this->currentMethod = $url[1];
                 unset($url[1]);
             }
         }
 
-        // 5. Récupérer les paramètres
-        // S'il reste des éléments dans $url, ce sont des paramètres, sinon tableau vide
+        // 5. RÉCUPÉRER LES PARAMÈTRES
         $this->params = $url ? array_values($url) : [];
 
-        // 6. Appeler la méthode du contrôleur avec les paramètres
+        // 6. LANCER LE CONTRÔLEUR
         call_user_func_array([$this->currentController, $this->currentMethod], $this->params);
     }
 
     public function getUrl(){
         if(isset($_GET['url'])){
-            // On retire le slash final
+            // 1. Supprimer le slash final
             $url = rtrim($_GET['url'], '/');
-            // On nettoie l'URL (caractères illégaux)
+            
+            // 2. SÉCURITÉ : Nettoyer l'URL (Retire les caractères illégaux comme <, >, etc.)
             $url = filter_var($url, FILTER_SANITIZE_URL);
-            // On explose en tableau
+            
+            // 3. Découper en tableau
             $url = explode('/', $url);
+            
             return $url;
         }
         return [];

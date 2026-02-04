@@ -6,69 +6,64 @@ class Category {
         $this->db = new Database;
     }
 
-    // =========================================================
-    // LECTURE
-    // =========================================================
-
-    // Récupérer toutes les catégories (Avec le nombre de produits liés)
-    public function getAllCategories(){
-        // Cette requête compte aussi combien de produits sont dans chaque catégorie
-        $this->db->query('SELECT c.*, 
-                                 (SELECT COUNT(*) FROM products WHERE category_id = c.id) as product_count 
-                          FROM categories c 
-                          ORDER BY c.name ASC');
+    // LISTE
+    public function getCategories(){
+        $this->db->query("SELECT *, 
+                         (SELECT COUNT(*) FROM products WHERE category_id = categories.id) as product_count 
+                         FROM categories ORDER BY created_at DESC");
         return $this->db->resultSet();
     }
 
-    // Récupérer une catégorie par ID
+    // UNITAIRE
     public function getCategoryById($id){
-        $this->db->query('SELECT * FROM categories WHERE id = :id');
+        $this->db->query("SELECT * FROM categories WHERE id = :id");
         $this->db->bind(':id', $id);
         return $this->db->single();
     }
 
-    // =========================================================
-    // ÉCRITURE
-    // =========================================================
-
-    // Ajouter une catégorie
+    // AJOUT (Sans image)
     public function addCategory($data){
-        $this->db->query('INSERT INTO categories (name, description, created_at) VALUES (:name, :description, NOW())');
-        $this->db->bind(':name', $data['name']);
-        $this->db->bind(':description', $data['description']);
+        $this->db->query("INSERT INTO categories (name, name_fr, description, description_fr, created_at) 
+                          VALUES (:name, :name_fr, :description, :description_fr, NOW())");
         
-        if($this->db->execute()){
-            return true;
-        } else {
-            return false;
-        }
+        $this->db->bind(':name', $data['name']);
+        $this->db->bind(':name_fr', $data['name_fr']);
+        // $this->db->bind(':slug', $data['slug']);
+        $this->db->bind(':description', $data['description']);
+        $this->db->bind(':description_fr', $data['description_fr']);
+
+        return $this->db->execute();
     }
 
-    // Mettre à jour une catégorie (Celle-ci manquait !)
+    // MODIFICATION (Sans image)
     public function updateCategory($data){
-        $this->db->query('UPDATE categories SET name = :name, description = :description WHERE id = :id');
+        $this->db->query("UPDATE categories SET 
+                          name = :name, 
+                          name_fr = :name_fr,
+                        --   slug = :slug, 
+                          description = :description, 
+                          description_fr = :description_fr
+                          WHERE id = :id");
+
         $this->db->bind(':id', $data['id']);
         $this->db->bind(':name', $data['name']);
+        $this->db->bind(':name_fr', $data['name_fr']);
+        // $this->db->bind(':slug', $data['slug']);
         $this->db->bind(':description', $data['description']);
-        
-        if($this->db->execute()){
-            return true;
-        } else {
-            return false;
-        }
+        $this->db->bind(':description_fr', $data['description_fr']);
+
+        return $this->db->execute();
     }
 
-    // Supprimer une catégorie
+    // SUPPRESSION
     public function deleteCategory($id){
-        // Optionnel : Vous pourriez vouloir vérifier s'il y a des produits avant de supprimer
-        // Mais pour l'instant, on supprime direct.
-        $this->db->query('DELETE FROM categories WHERE id = :id');
+        $this->db->query("DELETE FROM categories WHERE id = :id");
         $this->db->bind(':id', $id);
-        
-        if($this->db->execute()){
-            return true;
-        } else {
-            return false;
-        }
+        return $this->db->execute();
+    }
+    
+    // UTILS
+    public function getAllCategories(){
+        return $this->getCategories();
     }
 }

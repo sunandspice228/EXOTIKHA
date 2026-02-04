@@ -1,47 +1,66 @@
 <?php
-// --- LOGIQUE MENU DYNAMIQUE (DIRECTEMENT DANS LE HEADER) ---
-// On vérifie si le fichier existe pour éviter les erreurs fatales si le chemin change
-if(file_exists('../app/Models/Category.php')){
-    require_once '../app/Models/Category.php';
+// ⛔ SÉCURITÉ
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
+
+// =========================================================================
+// 1. LOGIQUE PHP : RÉCUPÉRATION CATÉGORIES (MODEL)
+// =========================================================================
+// On charge le modèle ici car le header est sur toutes les pages
+if(defined('APPROOT') && file_exists(APPROOT . '/Models/Category.php')){
+    require_once APPROOT . '/Models/Category.php';
     $menuCatModel = new Category();
     $allCategories = $menuCatModel->getAllCategories();
 } else {
     $allCategories = [];
 }
 
-$idCouple = null;
-$idGifts = null;
-$otherCategories = [];  
+// Variables de tri
+$giftCat = null;
+$coupleCat = null;
+$otherCategories = []; 
 
+// Langue actuelle
+$curLang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
+
+// Tri des catégories pour le menu
 if(!empty($allCategories)){
     foreach($allCategories as $cat){
-        $name = strtolower($cat->name);
-        if(strpos($name, 'couple') !== false || strpos($name, 'intimacy') !== false) {
-            $idCouple = $cat->id;
-        } elseif(strpos($name, 'gift') !== false || strpos($name, 'box') !== false || strpos($name, 'cadeau') !== false) {
-            $idGifts = $cat->id;
+        // On trie basé sur le nom technique (anglais)
+        $techName = strtolower($cat->name);
+        
+        if(strpos($techName, 'gift') !== false || strpos($techName, 'box') !== false || strpos($techName, 'cadeau') !== false) {
+            $giftCat = $cat; 
+        } elseif(strpos($techName, 'couple') !== false || strpos($techName, 'intimacy') !== false) {
+            $coupleCat = $cat; 
         } else {
             $otherCategories[] = $cat;
         }
     }
 }
-?>
 
+// Fonction locale pour afficher le bon nom (FR ou EN)
+function getMenuCatName($cat, $lang) {
+    if ($lang == 'fr' && !empty($cat->name_fr)) {
+        return $cat->name_fr;
+    }
+    return $cat->name;
+}
+?>
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="<?php echo $curLang; ?>" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo defined('SITENAME') ? SITENAME : 'Exotikha'; ?> | Premium Store</title>
     
+    <link rel="shortcut icon" href="<?php echo URLROOT; ?>/uploads/favicon.ico" type="image/x-icon">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -53,211 +72,214 @@ if(!empty($allCategories)){
                         serif: ['"Playfair Display"', 'serif'],
                     },
                     colors: {
-                        primary: '#1a1a1a',
-                        accent: '#4f46e5',
-                        gold: '#d4af37',
+                        primary: '#C8AD7F', // Gold
+                        secondary: '#FDF8F3', 
+                        dark: '#1A1A1A',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.2s ease-out',
                     },
                     keyframes: {
-                        'fade-in-down': {
+                        fadeIn: {
                             '0%': { opacity: '0', transform: 'translateY(-10px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
-                    },
-                    animation: {
-                        'fade-in-down': 'fade-in-down 0.2s ease-out',
                     }
                 }
             }
         }
     </script>
-    
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 
-<body class="bg-white text-slate-800 antialiased flex flex-col min-h-screen" x-data="{ mobileMenuOpen: false, searchOpen: false }">
+<body class="font-sans antialiased text-slate-800 bg-white flex flex-col min-h-screen" x-data="{ mobileMenuOpen: false, searchOpen: false }">
 
-    <div class="bg-primary text-white text-[10px] md:text-xs text-center py-2 tracking-widest uppercase font-bold px-4">
-        Free shipping on all orders over 1,000 GHS in Accra!
+    <div class="bg-dark text-white py-2.5 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-50 animate-pulse pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto px-4 flex justify-center items-center text-center">
+            <p><?php echo lang('topbar_promo'); ?></p>
+        </div>
     </div>
 
-    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 transition-all duration-300 relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center h-20">
                 
-                <div class="flex-shrink-0 flex items-center">
-                    <a href="<?php echo URLROOT; ?>" class="text-2xl font-serif font-bold tracking-tighter text-primary group">
-                        EXOTIKHA<span class="text-accent group-hover:text-gold transition">.</span>
-                    </a>
-                </div>
+                <a href="<?php echo URLROOT; ?>" class="flex items-center group">
+                    <img src="<?php echo URLROOT; ?>/uploads/logo.png" alt="Exotikha" class="h-10 md:h-12 w-auto object-contain">
+                </a>
 
-                <div class="hidden lg:flex items-center space-x-6 xl:space-x-8">
-                    <a href="<?php echo URLROOT; ?>" class="text-sm font-bold text-slate-900 hover:text-accent transition uppercase tracking-wide">Home</a>
-                    <a href="<?php echo URLROOT; ?>/shop?gender=women" class="text-sm font-medium text-slate-600 hover:text-accent transition uppercase tracking-wide">For Women</a>
-                    <a href="<?php echo URLROOT; ?>/shop?gender=men" class="text-sm font-medium text-slate-600 hover:text-accent transition uppercase tracking-wide">For Men</a>
-
-                    <?php if($idCouple): ?>
-                        <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $idCouple; ?>" class="text-sm font-medium text-slate-600 hover:text-red-500 transition uppercase tracking-wide">Couple & Intimacy</a>
+                <div class="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-slate-600">
+                    <a href="<?php echo URLROOT; ?>" class="hover:text-primary transition"><?php echo lang('nav_home'); ?></a>
+                    <a href="<?php echo URLROOT; ?>/shop" class="hover:text-primary transition"><?php echo lang('nav_shop'); ?></a>
+                    
+                    <?php if($giftCat): ?>
+                        <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $giftCat->id; ?>" class="text-primary hover:text-red-700 transition flex items-center gap-1">
+                            <i class="fas fa-gift text-sm animate-bounce"></i> 
+                            <?php echo getMenuCatName($giftCat, $curLang); ?>
+                        </a>
                     <?php endif; ?>
 
-                    <?php if($idGifts): ?>
-                        <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $idGifts; ?>" class="text-sm font-medium text-slate-600 hover:text-accent transition uppercase tracking-wide">Gift Boxes</a>
-                    <?php endif; ?>
-
-                    <?php if(!empty($otherCategories)): ?>
-                        <div class="relative group" x-data="{ open: false }">
-                            <button @mouseenter="open = true" @mouseleave="open = false" class="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-accent transition uppercase tracking-wide py-6">
-                                Collections <i class="fas fa-chevron-down text-[10px] ml-1 transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                    <?php if(!empty($otherCategories) || $coupleCat): ?>
+                        <div class="relative group h-20 flex items-center" x-data="{ open: false }">
+                            <button @mouseenter="open = true" @mouseleave="open = false" class="flex items-center gap-1 hover:text-primary transition h-full">
+                                <?php echo lang('nav_collections'); ?> <i class="fas fa-chevron-down text-[8px] ml-1 transition-transform" :class="open ? 'rotate-180' : ''"></i>
                             </button>
-                            <div x-show="open" @mouseenter="open = true" @mouseleave="open = false" x-cloak class="absolute top-full left-0 w-56 bg-white shadow-xl border border-slate-100 rounded-b-xl overflow-hidden py-2 animate-fade-in-down z-50">
+                            
+                            <div x-show="open" @mouseenter="open = true" @mouseleave="open = false" x-cloak class="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-white shadow-xl border border-slate-100 rounded-b-xl overflow-hidden py-2 animate-fade-in">
+                                <?php if($coupleCat): ?>
+                                    <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $coupleCat->id; ?>" class="block px-6 py-3 text-xs text-slate-600 hover:bg-secondary hover:text-primary transition border-b border-slate-50">
+                                        <?php echo getMenuCatName($coupleCat, $curLang); ?>
+                                    </a>
+                                <?php endif; ?>
+
                                 <?php foreach($otherCategories as $cat): ?>
-                                    <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $cat->id; ?>" class="block px-6 py-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-accent transition border-b border-slate-50 last:border-0">
-                                        <?php echo $cat->name; ?>
+                                    <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $cat->id; ?>" class="block px-6 py-3 text-xs text-slate-600 hover:bg-secondary hover:text-primary transition border-b border-slate-50 last:border-0">
+                                        <?php echo getMenuCatName($cat, $curLang); ?>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
                         </div>
                     <?php endif; ?>
-                    
-                    <a href="<?php echo URLROOT; ?>/shop/promotions" class="text-sm font-bold text-red-600 hover:text-red-700 transition uppercase tracking-wide flex items-center gap-1 animate-pulse">
-                        <i class="fas fa-bolt text-xs"></i> Sales
-                    </a>
+
+                    <a href="<?php echo URLROOT; ?>/blog" class="hover:text-primary transition"><?php echo lang('nav_blog'); ?></a>
+                    <a href="<?php echo URLROOT; ?>/pages/contact" class="hover:text-primary transition"><?php echo lang('nav_contact'); ?></a>
                 </div>
 
-                <div class="flex items-center space-x-5">
+                <div class="flex items-center gap-4 md:gap-6">
                     
-                    <button @click="searchOpen = !searchOpen" class="text-slate-600 hover:text-accent transition">
-                        <i class="fas fa-search text-lg"></i>
-                    </button>
-
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="text-slate-600 hover:text-primary transition flex items-center gap-2 relative">
-                            <i class="far fa-user text-lg"></i>
-                            <?php if(isset($_SESSION['user_id'])): ?>
-                                <span class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white"></span>
-                            <?php endif; ?>
-                        </button>
-                        <div x-show="open" @click.outside="open = false" x-cloak class="absolute right-0 mt-4 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-fade-in-down">
-                            <?php if(isset($_SESSION['user_id'])): ?>
-                                <div class="px-4 py-3 border-b border-slate-50 mb-1">
-                                    <p class="text-xs text-slate-400 font-bold uppercase">Signed in as</p>
-                                    <p class="text-sm font-bold text-slate-900 truncate"><?php echo isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Client'; ?></p>
-                                </div>
-                                <a href="<?php echo URLROOT; ?>/users/account" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"><i class="fas fa-tachometer-alt w-5 text-slate-400"></i> Dashboard</a>
-                                <a href="<?php echo URLROOT; ?>/users/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-5 text-red-400"></i> Logout</a>
+                    <div class="relative group hidden md:block" x-data="{ langOpen: false }">
+                        <button @click="langOpen = !langOpen" class="flex items-center gap-1 hover:text-primary transition font-bold text-xs uppercase tracking-widest border px-2 py-1 rounded-md border-slate-200">
+                            <?php if($curLang == 'en'): ?>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Ghana.svg" class="w-4 h-3 object-cover shadow-sm rounded-[1px]"> <span class="hidden xl:inline">EN</span>
                             <?php else: ?>
-                                <a href="<?php echo URLROOT; ?>/users/login" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Login</a>
-                                <a href="<?php echo URLROOT; ?>/users/register" class="block px-4 py-2 text-sm font-bold text-accent">Register</a>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/Flag_of_Togo.svg" class="w-4 h-3 object-cover shadow-sm rounded-[1px]"> <span class="hidden xl:inline">FR</span>
                             <?php endif; ?>
+                            <i class="fas fa-chevron-down text-[8px] ml-1 text-slate-400"></i>
+                        </button>
+
+                        <div x-show="langOpen" @click.outside="langOpen = false" x-cloak class="absolute top-full right-0 w-32 bg-white shadow-xl border border-slate-100 rounded-lg overflow-hidden py-1 mt-2 z-50">
+                            <a href="<?php echo URLROOT; ?>/users/setLang/en" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition text-xs font-bold text-slate-700">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Ghana.svg" class="w-4 shadow-sm rounded-[1px]"> English
+                            </a>
+                            <a href="<?php echo URLROOT; ?>/users/setLang/fr" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition text-xs font-bold text-slate-700">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/Flag_of_Togo.svg" class="w-4 shadow-sm rounded-[1px]"> Français
+                            </a>
                         </div>
                     </div>
 
-                    <a href="<?php echo URLROOT; ?>/cart" class="text-slate-600 hover:text-primary transition relative group">
-                        <i class="fas fa-shopping-bag text-lg group-hover:scale-110 transition-transform"></i>
+                    <?php if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="<?php echo URLROOT; ?>/admin" class="text-red-600 hover:text-red-800 transition" title="Admin Panel">
+                            <i class="fas fa-user-shield text-lg"></i>
+                        </a>
+                    <?php endif; ?>
+
+                    <button @click="searchOpen = !searchOpen" class="hover:text-primary transition">
+                        <i class="fas fa-search text-lg"></i>
+                    </button>
+                    
+                    <a href="<?php echo URLROOT; ?>/cart" class="relative hover:text-primary transition group">
+                        <i class="fas fa-shopping-bag text-lg"></i>
                         <?php if(isset($_SESSION['cart']) && count($_SESSION['cart']) > 0): ?>
-                            <span class="absolute -top-1.5 -right-2 bg-accent text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full shadow-sm animate-bounce">
+                            <span class="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center group-hover:scale-110 transition shadow-sm">
                                 <?php echo count($_SESSION['cart']); ?>
                             </span>
                         <?php endif; ?>
                     </a>
-
-                    <button @click="mobileMenuOpen = true" class="lg:hidden text-slate-900 ml-2">
-                        <i class="fas fa-bars text-xl"></i>
+                    
+                    <a href="<?php echo isset($_SESSION['user_id']) ? URLROOT.'/users/account' : URLROOT.'/users/login'; ?>" class="hover:text-primary transition">
+                        <i class="far fa-user text-lg"></i>
+                    </a>
+                    
+                    <button @click="mobileMenuOpen = true" class="lg:hidden text-slate-800 text-xl pl-2">
+                        <i class="fas fa-bars"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div x-show="searchOpen" 
-             @click.outside="searchOpen = false"
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 -translate-y-2"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             x-cloak
-             class="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-xl p-6 z-40">
+        <div x-show="searchOpen" @click.outside="searchOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-xl p-6 z-40">
             <form action="<?php echo URLROOT; ?>/shop" method="GET" class="max-w-3xl mx-auto relative">
-            <?php if(function_exists('csrfField')) echo csrfField(); ?>    
-            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" name="search" placeholder="Search for products, brands and more..." class="w-full bg-slate-50 border-none rounded-xl py-4 pl-12 pr-32 text-slate-900 font-medium focus:ring-2 focus:ring-accent focus:bg-white transition shadow-inner" autofocus>
-                <button type="submit" class="absolute right-2 top-2 bottom-2 bg-primary text-white px-6 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-accent transition">Search</button>
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" name="search" placeholder="<?php echo lang('search_placeholder'); ?>" class="w-full bg-slate-50 border-none rounded-full py-4 pl-12 pr-32 text-slate-900 font-medium focus:ring-2 focus:ring-primary focus:bg-white transition shadow-inner placeholder-slate-400">
+                <button type="submit" class="absolute right-2 top-2 bottom-2 bg-primary text-white px-8 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-dark transition">GO</button>
             </form>
         </div>
     </nav>
     
     <div class="max-w-7xl mx-auto px-4 mt-4 w-full empty:hidden">
-        <?php if(function_exists('flash')) { flash('cart_msg'); flash('product_message'); } ?>
+        <?php if(function_exists('flash')) { flash('cart_msg'); flash('product_message'); flash('newsletter_msg'); } ?>
     </div>
 
     <div x-show="mobileMenuOpen" class="relative z-[60] lg:hidden" role="dialog" aria-modal="true" x-cloak>
-        
-        <div x-show="mobileMenuOpen" 
-             x-transition:enter="transition-opacity ease-linear duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-linear duration-300"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0"
-             @click="mobileMenuOpen = false"
-             class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div x-show="mobileMenuOpen" x-transition.opacity @click="mobileMenuOpen = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
 
-        <div x-show="mobileMenuOpen" 
-             x-transition:enter="transition ease-in-out duration-300 transform"
-             x-transition:enter-start="translate-x-full"
-             x-transition:enter-end="translate-x-0"
-             x-transition:leave="transition ease-in-out duration-300 transform"
-             x-transition:leave-start="translate-x-0"
-             x-transition:leave-end="translate-x-full"
-             class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm shadow-2xl">
+        <div x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-300 transform" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="fixed inset-y-0 right-0 z-50 w-[85%] max-w-sm overflow-y-auto bg-white px-6 py-6 shadow-2xl">
             
-            <div class="flex items-center justify-between mb-8">
-                <a href="#" class="-m-1.5 p-1.5">
-                    <span class="text-2xl font-serif font-bold text-primary">EXOTIKHA.</span>
-                </a>
+            <div class="flex items-center justify-between mb-8 border-b border-slate-100 pb-6">
+                <span class="text-2xl font-serif font-bold text-primary">EXOTIKHA.</span>
                 <button @click="mobileMenuOpen = false" type="button" class="-m-2.5 rounded-md p-2.5 text-slate-400 hover:text-slate-900 transition">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
             </div>
             
-            <div class="mt-6 flow-root">
-                <div class="-my-6 divide-y divide-slate-100">
-                    <div class="space-y-2 py-6">
-                        <a href="<?php echo URLROOT; ?>" class="-mx-3 block rounded-lg px-3 py-2 text-base font-bold leading-7 text-slate-900 hover:bg-slate-50 hover:text-accent">Home</a>
-                        <a href="<?php echo URLROOT; ?>/shop?gender=women" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50 hover:text-accent">For Women</a>
-                        <a href="<?php echo URLROOT; ?>/shop?gender=men" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50 hover:text-accent">For Men</a>
-                        
-                        <a href="<?php echo URLROOT; ?>/shop/promotions" class="-mx-3 block rounded-lg px-3 py-2 text-base font-bold leading-7 text-red-600 bg-red-50 border border-red-100 mt-4 mb-4 flex items-center gap-2">
-                            <i class="fas fa-bolt"></i> Flash Sales
-                        </a>
+            <div class="mt-2 flow-root">
+                <div class="flex items-center justify-center gap-4 mb-8">
+                     <a href="<?php echo URLROOT; ?>/users/setLang/en" class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold transition <?php echo $curLang == 'en' ? 'border border-primary text-primary bg-secondary' : 'text-slate-500'; ?>">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Ghana.svg" class="w-5 shadow-sm rounded-[1px]"> EN
+                    </a>
+                    <a href="<?php echo URLROOT; ?>/users/setLang/fr" class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold transition <?php echo $curLang == 'fr' ? 'border border-primary text-primary bg-secondary' : 'text-slate-500'; ?>">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/Flag_of_Togo.svg" class="w-5 shadow-sm rounded-[1px]"> FR
+                    </a>
+                </div>
 
-                        <?php if($idCouple): ?>
-                            <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $idCouple; ?>" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50">Couple & Intimacy</a>
-                        <?php endif; ?>
-
-                        <?php if($idGifts): ?>
-                            <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $idGifts; ?>" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50">Gift Boxes</a>
-                        <?php endif; ?>
-
-                        <?php if(!empty($otherCategories)): ?>
-                            <div class="py-4">
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-3">More Collections</p>
-                                <?php foreach($otherCategories as $cat): ?>
-                                    <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $cat->id; ?>" class="-mx-3 block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900 pl-6 border-l-2 border-transparent hover:border-accent ml-3">
-                                        <?php echo $cat->name; ?>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <a href="<?php echo URLROOT; ?>/pages/blog" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50">Journal</a>
-                        <a href="<?php echo URLROOT; ?>/pages/contact" class="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-slate-600 hover:bg-slate-50">Contact Us</a>
-                    </div>
+                <div class="space-y-1">
+                    <a href="<?php echo URLROOT; ?>" class="-mx-3 block rounded-lg px-3 py-3 text-base font-bold text-slate-900 hover:bg-secondary hover:text-primary transition"><?php echo lang('nav_home'); ?></a>
+                    <a href="<?php echo URLROOT; ?>/shop" class="-mx-3 block rounded-lg px-3 py-3 text-base font-medium text-slate-600 hover:bg-secondary hover:text-primary transition"><?php echo lang('nav_shop'); ?></a>
                     
+                    <?php if($giftCat): ?>
+                        <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $giftCat->id; ?>" class="-mx-3 block rounded-lg px-3 py-3 text-base font-bold text-primary bg-secondary/50">
+                            <?php echo getMenuCatName($giftCat, $curLang); ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if(!empty($otherCategories) || $coupleCat): ?>
+                        <div class="py-4 border-t border-b border-slate-50 my-4">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-3"><?php echo lang('nav_collections'); ?></p>
+                            
+                            <?php if($coupleCat): ?>
+                                <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $coupleCat->id; ?>" class="-mx-3 block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-secondary hover:text-primary pl-6 border-l-2 border-transparent hover:border-primary ml-3">
+                                    <?php echo getMenuCatName($coupleCat, $curLang); ?>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php foreach($otherCategories as $cat): ?>
+                                <a href="<?php echo URLROOT; ?>/shop?category=<?php echo $cat->id; ?>" class="-mx-3 block rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-secondary hover:text-primary pl-6 border-l-2 border-transparent hover:border-primary ml-3">
+                                    <?php echo getMenuCatName($cat, $curLang); ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <a href="<?php echo URLROOT; ?>/blog" class="-mx-3 block rounded-lg px-3 py-3 text-base font-medium text-slate-600 hover:bg-secondary hover:text-primary transition"><?php echo lang('nav_blog'); ?></a>
+                    <a href="<?php echo URLROOT; ?>/pages/contact" class="-mx-3 block rounded-lg px-3 py-3 text-base font-medium text-slate-600 hover:bg-secondary hover:text-primary transition"><?php echo lang('nav_contact'); ?></a>
+                </div>
+                
+                <div class="mt-8 pt-8 border-t border-slate-100">
                     <?php if(!isset($_SESSION['user_id'])): ?>
-                    <div class="py-6 space-y-3">
-                        <a href="<?php echo URLROOT; ?>/users/login" class="flex w-full items-center justify-center rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold leading-6 text-slate-900 hover:bg-slate-50">Log in</a>
-                        <a href="<?php echo URLROOT; ?>/users/register" class="flex w-full items-center justify-center rounded-xl bg-primary px-3 py-3 text-sm font-bold leading-6 text-white hover:bg-accent transition shadow-lg">Register</a>
-                    </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <a href="<?php echo URLROOT; ?>/users/login" class="flex items-center justify-center rounded-xl border border-slate-200 px-3 py-3 text-sm font-bold text-slate-900 hover:bg-slate-50"><?php echo lang('login'); ?></a>
+                            <a href="<?php echo URLROOT; ?>/users/register" class="flex items-center justify-center rounded-xl bg-primary px-3 py-3 text-sm font-bold text-white hover:bg-dark transition shadow-lg"><?php echo lang('register'); ?></a>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3">
+                            <a href="<?php echo URLROOT; ?>/users/account" class="flex w-full items-center justify-center rounded-xl bg-dark px-3 py-3 text-sm font-bold text-white hover:bg-slate-800"><?php echo lang('my_account'); ?></a>
+                            <a href="<?php echo URLROOT; ?>/users/logout" class="block text-center text-sm font-medium text-red-500 hover:text-red-700"><?php echo lang('logout'); ?></a>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
+</body>
+</html>

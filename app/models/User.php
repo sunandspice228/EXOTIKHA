@@ -1,4 +1,8 @@
 <?php
+if (!defined('APPROOT')) {
+    die('Accès interdit');
+}
+
 class User {
     private $db;
 
@@ -7,71 +11,66 @@ class User {
     }
 
     // =========================================================
-    // 1. SECTION ADMINISTRATEURS (Table 'users')
+    // 1. ADMIN : GESTION DES CLIENTS (Table 'customers')
     // =========================================================
 
-    // Login Admin
-    public function login($email, $password){
-        $this->db->query('SELECT * FROM users WHERE email = :email');
-        $this->db->bind(':email', $email);
-        $row = $this->db->single();
-
-        if($row){
-            if(password_verify($password, $row->password)){
-                return $row;
-            }
-        }
-        return false;
-    }
-
-    // Enregistrer un nouvel Admin
-    public function register($data){
-        $this->db->query('INSERT INTO users (name, email, password, role, created_at) VALUES (:name, :email, :password, :role, NOW())');
-        $this->db->bind(':name', $data['name']);
-        $this->db->bind(':email', $data['email']);
-        $this->db->bind(':password', $data['password']); // Assurez-vous que le password est haché dans le Controller
-        $this->db->bind(':role', 'admin');
-
-        return $this->db->execute();
-    }
-
-    // Trouver Admin par Email
-    public function findUserByEmail($email){
-        $this->db->query('SELECT id FROM users WHERE email = :email');
-        $this->db->bind(':email', $email);
-        $this->db->single();
-        return ($this->db->rowCount() > 0);
-    }
-
-    // Récupérer Admin par ID
-    public function getUserById($id){
-        $this->db->query('SELECT * FROM users WHERE id = :id');
-        $this->db->bind(':id', $id);
-        return $this->db->single();
-    }
-    
-    // Liste des Admins
-    public function getAdmins(){
-        $this->db->query('SELECT * FROM users ORDER BY created_at DESC');
+    // Récupérer tous les clients
+    public function getCustomers(){
+        // On récupère les infos de la table 'customers'
+        // On concatène Prénom + Nom pour créer un champ 'name' virtuel
+        // On joint avec les commandes pour avoir les stats
+        $this->db->query("SELECT c.*, 
+                                 CONCAT(c.first_name, ' ', c.last_name) as name,
+                                 COUNT(o.id) as order_count, 
+                                 COALESCE(SUM(o.total_amount), 0) as total_spent 
+                          FROM customers c 
+                          LEFT JOIN orders o ON c.id = o.user_id 
+                          GROUP BY c.id 
+                          ORDER BY c.created_at DESC");
         return $this->db->resultSet();
     }
 
-    // Supprimer un Admin
+    // Récupérer un client par ID
+    public function getUserById($id){
+        $this->db->query("SELECT *, CONCAT(first_name, ' ', last_name) as name FROM customers WHERE id = :id");
+        $this->db->bind(':id', $id);
+        return $this->db->single();
+    }
+
+    // Récupérer l'historique des commandes d'un client
+    public function getCustomerOrders($user_id){
+        // Attention : Vérifiez si dans votre table 'orders', la colonne est 'user_id' ou 'customer_id'
+        $this->db->query("SELECT * FROM orders WHERE user_id = :uid ORDER BY created_at DESC");
+        $this->db->bind(':uid', $user_id);
+        return $this->db->resultSet();
+    }
+
+    // Supprimer un client
     public function deleteUser($id){
-        $this->db->query('DELETE FROM users WHERE id = :id');
+        $this->db->query("DELETE FROM customers WHERE id = :id");
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
 
+    // Compter les clients (Pour le Dashboard)
+    public function countUsers() {
+        $this->db->query("SELECT COUNT(*) as count FROM customers");
+        $row = $this->db->single();
+        return $row ? $row->count : 0;
+    }
+
+    // Alias pour éviter les erreurs si le contrôleur appelle countCustomers
+    public function countCustomers() {
+        return $this->countUsers();
+    }
+
     // =========================================================
-    // 2. SECTION CLIENTS (Table 'customers')
+    // 2. AUTHENTIFICATION CLIENT (LOGIN / REGISTER)
     // =========================================================
 
-    // Login Client
     public function loginCustomer($email, $password){
-        $this->db->query('SELECT * FROM customers WHERE email = :email');
+        $this->db->query('SELECT *, CONCAT(first_name, " ", last_name) as name FROM customers WHERE email = :email');
         $this->db->bind(':email', $email);
-
         $row = $this->db->single();
 
         if($row){
@@ -82,9 +81,8 @@ class User {
         return false;
     }
 
-    // Enregistrer un Client
     public function registerCustomer($data){
-        // Séparation Prénom/Nom si un seul champ 'name' est envoyé
+        // Séparation Prénom/Nom si le formulaire envoie juste "name"
         $parts = explode(' ', $data['name'], 2);
         $firstName = $parts[0];
         $lastName = isset($parts[1]) ? $parts[1] : '';
@@ -93,162 +91,15 @@ class User {
         $this->db->bind(':fname', $firstName);
         $this->db->bind(':lname', $lastName);
         $this->db->bind(':email', $data['email']);
-        $this->db->bind(':password', $data['password']); // Haché dans le controller
+        $this->db->bind(':password', $data['password']); 
 
         return $this->db->execute();
     }
 
-    // Trouver Client par Email
     public function findCustomerByEmail($email){
         $this->db->query('SELECT id FROM customers WHERE email = :email');
         $this->db->bind(':email', $email);
         $this->db->single();
         return ($this->db->rowCount() > 0);
-    }
-
-    // Récupérer Client par ID
-    public function getCustomerById($id){
-        $this->db->query('SELECT * FROM customers WHERE id = :id');
-        $this->db->bind(':id', $id);
-        return $this->db->single();
-    }
-
-    // --- MISE À JOUR PROFIL (NOM, EMAIL, PASSWORD) ---
-    public function updateCustomerProfile($id, $data){
-        // Gestion du nom complet
-        $parts = explode(' ', $data['name'], 2);
-        $firstName = $parts[0];
-        $lastName = isset($parts[1]) ? $parts[1] : '';
-
-        // Si un nouveau mot de passe est fourni
-        if(!empty($data['password'])){
-            $this->db->query('UPDATE customers SET first_name = :fname, last_name = :lname, email = :email, password = :pass WHERE id = :id');
-            $this->db->bind(':pass', $data['password']);
-        } else {
-            $this->db->query('UPDATE customers SET first_name = :fname, last_name = :lname, email = :email WHERE id = :id');
-        }
-
-        $this->db->bind(':fname', $firstName);
-        $this->db->bind(':lname', $lastName);
-        $this->db->bind(':email', $data['email']);
-        $this->db->bind(':id', $id);
-
-        return $this->db->execute();
-    }
-
-    // --- MISE À JOUR ADRESSE (LIVRAISON OU FACTURATION) ---
-    // Dans app/Models/User.php
-
-// Dans app/Models/User.php
-
-// AJOUTEZ AUSSI CETTE MÉTHODE pour récupérer les infos complètes (User + Customer)
-// Cette méthode fusionne les infos de 'users' et 'customers'
-// Dans app/Models/User.php
-
-// 1. Récupérer les infos du client connecté
-public function getUserInfo($id){
-    // Plus de JOIN, on prend tout directement dans customers
-    $this->db->query("SELECT * FROM customers WHERE id = :id");
-    $this->db->bind(':id', $id);
-    
-    $row = $this->db->single();
-    
-    // Petite astuce : on map les champs pour que la vue (account.php) s'y retrouve
-    // La vue attend souvent 'shipping_phone' mais la table a 'phone'
-    if($row){
-        $row->shipping_phone = $row->phone;
-        $row->shipping_address = $row->address;
-        $row->shipping_city = $row->city;
-        $row->shipping_region = $row->region;
-    }
-    
-    return $row;
-}
-
-// 2. Mettre à jour l'adresse (Update direct)
-// Dans app/Models/User.php
-
-public function updateCustomerAddress($customerId, $data){
-    // Requête SQL sur la table customers
-    $this->db->query("UPDATE customers 
-                      SET phone = :phone, 
-                          address = :address, 
-                          city = :city, 
-                          region = :region 
-                      WHERE id = :id");
-
-    $this->db->bind(':id', $customerId);
-
-    // MAPPING SÉCURISÉ : On lie les champs du formulaire aux colonnes de la BDD
-    // Le formulaire envoie 'shipping_phone', la BDD veut ':phone'
-    // L'opérateur '??' évite l'erreur si la clé n'existe pas
-    $this->db->bind(':phone', $data['shipping_phone'] ?? null);
-    $this->db->bind(':address', $data['shipping_address'] ?? null);
-    
-    // Pour la ville et la région, on met des valeurs par défaut si vide
-    $this->db->bind(':city', !empty($data['shipping_city']) ? $data['shipping_city'] : 'Accra');
-    $this->db->bind(':region', !empty($data['shipping_region']) ? $data['shipping_region'] : 'Greater Accra');
-
-    try {
-        return $this->db->execute();
-    } catch(PDOException $e) {
-        // En cas d'erreur, on l'affiche pour déboguer
-        die('Erreur Update : ' . $e->getMessage());
-    }
-}
-
-// 3. Mettre à jour les infos perso (Nom, Email, etc.)
-public function updateProfile($customerId, $data){
-    // Mise à jour de base
-    $query = "UPDATE customers SET first_name = :name, email = :email";
-    
-    // Si un nouveau mot de passe est fourni
-    if(!empty($data['password'])){
-        $query .= ", password = :password";
-    }
-    
-    $query .= " WHERE id = :id";
-    
-    $this->db->query($query);
-    
-    $this->db->bind(':id', $customerId);
-    // On sépare le nom complet en Prénom/Nom si besoin, ou on met tout dans first_name pour simplifier
-    $this->db->bind(':name', $data['name']); 
-    $this->db->bind(':email', $data['email']);
-    
-    if(!empty($data['password'])){
-        $this->db->bind(':password', $data['password']);
-    }
-
-    return $this->db->execute();
-}
-
-    // Liste des clients (Admin)
-    public function getCustomers(){
-        $this->db->query('SELECT *, CONCAT(first_name, " ", last_name) as full_name FROM customers ORDER BY created_at DESC');
-        return $this->db->resultSet();
-    }
-
-    // Supprimer un client
-    public function deleteCustomer($id){
-        $this->db->query('DELETE FROM customers WHERE id = :id');
-        $this->db->bind(':id', $id);
-        return $this->db->execute();
-    }
-
-    // =========================================================
-    // 3. STATISTIQUES (DASHBOARD)
-    // =========================================================
-
-    public function countCustomers(){
-        $this->db->query('SELECT COUNT(*) as count FROM customers');
-        $row = $this->db->single();
-        return $row->count;
-    }
-
-    public function countAdmins(){
-        $this->db->query('SELECT COUNT(*) as count FROM users');
-        $row = $this->db->single();
-        return $row->count;
     }
 }

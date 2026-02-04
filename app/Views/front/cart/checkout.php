@@ -1,6 +1,9 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
 <?php
+    // Helper langue
+    $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
+
     // --- 1. DATA RETRIEVAL ---
     $user = isset($data['user']) ? $data['user'] : null;
     $cartItems = isset($data['cart_items']) ? $data['cart_items'] : [];
@@ -12,10 +15,8 @@
     $fullName = trim($firstName . ' ' . $lastName);
     $email = $user->email ?? '';
 
-    // ADDRESS & PHONE (Retrieved from customer profile)
-    // Looking for 'shipping_phone' (mapped) or 'phone' (raw column)
+    // ADDRESS & PHONE
     $shippingPhone = $user->shipping_phone ?? $user->phone ?? '';
-    // Looking for saved neighborhood
     $savedAddress = $user->shipping_address ?? $user->address ?? '';
 
     // ============================================================
@@ -43,8 +44,6 @@
         'West Legon' => 35,
         'Other location (Accra)' => 45 
     ];
-    
-    // Alphabetical sort for better UX
     ksort($accraLocations);
 ?>
 
@@ -56,12 +55,12 @@
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-3xl font-serif font-bold text-slate-900">Checkout</h1>
-                <p class="text-slate-500 text-sm">Delivery available in Accra only.</p>
+                <h1 class="text-3xl font-serif font-bold text-slate-900"><?php echo lang('checkout_title'); ?></h1>
+                <p class="text-slate-500 text-sm"><?php echo lang('checkout_subtitle'); ?></p>
             </div>
         </div>
 
-        <?php flash('cart_msg'); ?>
+        <?php if(function_exists('flash')) flash('cart_msg'); ?>
 
         <form action="<?php echo URLROOT; ?>/cart/place_order" method="POST" id="checkoutForm" class="flex flex-col lg:flex-row gap-12">
             <?php echo csrfField(); ?>
@@ -75,43 +74,43 @@
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <span class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">1</span>
-                        Shipping Information
+                        <?php echo lang('step_shipping_info'); ?>
                     </h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Full Name</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_fullname'); ?></label>
                             <input type="text" name="full_name" value="<?php echo $fullName; ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary transition" required>
                         </div>
                         
                         <div class="md:col-span-1">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Phone Number</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_phone'); ?></label>
                             <input type="tel" name="phone" value="<?php echo htmlspecialchars($shippingPhone); ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary transition" placeholder="024 XXXXXXX" required>
                         </div>
 
                         <div class="md:col-span-1">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Email</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_email'); ?></label>
                             <input type="email" name="email" value="<?php echo $email; ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500" readonly>
                         </div>
 
                         <div class="md:col-span-1">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">City</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_city'); ?></label>
                             <input type="text" name="city" value="Accra" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 font-bold cursor-not-allowed" readonly>
                         </div>
                         <div class="md:col-span-1">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Region</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_region'); ?></label>
                             <input type="text" name="region" value="Greater Accra" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 font-bold cursor-not-allowed" readonly>
                         </div>
 
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Select your neighborhood</label>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_neighborhood'); ?></label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                                     <i class="fas fa-map-signs"></i>
                                 </span>
                                 <select name="address" id="neighborhood_select" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary focus:border-primary transition appearance-none bg-white cursor-pointer" required>
-                                    <option value="" disabled <?php echo empty($savedAddress) ? 'selected' : ''; ?>>-- Select from list --</option>
+                                    <option value="" disabled <?php echo empty($savedAddress) ? 'selected' : ''; ?>>-- <?php echo lang('select_option'); ?> --</option>
                                     
                                     <?php foreach($accraLocations as $loc => $price): ?>
                                         <?php $isSelected = ($loc == $savedAddress) ? 'selected' : ''; ?>
@@ -128,8 +127,8 @@
                         </div>
 
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Additional Details (House number, landmark...)</label>
-                            <textarea name="address_details" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary transition" placeholder="Ex: Behind Total station, blue gate..."></textarea>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_additional_info'); ?></label>
+                            <textarea name="address_details" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary transition" placeholder="<?php echo lang('ph_additional_info'); ?>"></textarea>
                         </div>
 
                     </div>
@@ -138,14 +137,14 @@
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
                     <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
                         <span class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">2</span>
-                        Payment Method
+                        <?php echo lang('step_payment_method'); ?>
                     </h2>
                     <div class="space-y-4">
                         <label class="relative flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-primary transition group has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 has-[:checked]:ring-1 has-[:checked]:ring-primary">
                             <input type="radio" name="payment_method" value="paystack" class="h-5 w-5 text-primary focus:ring-primary border-gray-300" checked>
                             <div class="ml-4 flex-1">
-                                <span class="block font-bold text-slate-900">Pay Now</span>
-                                <span class="block text-xs text-slate-500">Mobile Money / Card (Secured).</span>
+                                <span class="block font-bold text-slate-900"><?php echo lang('pay_now_title'); ?></span>
+                                <span class="block text-xs text-slate-500"><?php echo lang('pay_now_desc'); ?></span>
                             </div>
                             <i class="fas fa-mobile-alt text-2xl text-slate-400"></i>
                         </label>
@@ -153,8 +152,8 @@
                         <label class="relative flex items-center p-4 border border-slate-200 rounded-xl cursor-pointer hover:border-primary transition group has-[:checked]:border-primary has-[:checked]:bg-blue-50/50 has-[:checked]:ring-1 has-[:checked]:ring-primary">
                             <input type="radio" name="payment_method" value="cod" class="h-5 w-5 text-primary focus:ring-primary border-gray-300">
                             <div class="ml-4 flex-1">
-                                <span class="block font-bold text-slate-900">Cash on Delivery</span>
-                                <span class="block text-xs text-slate-500">Pay cash upon receipt.</span>
+                                <span class="block font-bold text-slate-900"><?php echo lang('pay_cod_title'); ?></span>
+                                <span class="block text-xs text-slate-500"><?php echo lang('pay_cod_desc'); ?></span>
                             </div>
                             <i class="fas fa-money-bill-wave text-2xl text-slate-400"></i>
                         </label>
@@ -164,19 +163,22 @@
 
             <div class="w-full lg:w-96 flex-shrink-0">
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 sticky top-24">
-                    <h3 class="font-bold text-slate-900 text-lg mb-6">Order Summary</h3>
+                    <h3 class="font-bold text-slate-900 text-lg mb-6"><?php echo lang('summary_title'); ?></h3>
 
                     <div class="space-y-4 mb-6 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                         <?php if(!empty($cartItems)): ?>
                             <?php foreach($cartItems as $item): ?>
+                                <?php 
+                                    // Bilinguisme Produit
+                                    $pName = ($lang == 'fr' && !empty($item->name_fr)) ? $item->name_fr : $item->name;
+                                    $imgUrl = !empty($item->image) ? URLROOT . '/uploads/' . $item->image : URLROOT . '/img/no-image.jpg';
+                                ?>
                                 <div class="flex gap-4 items-center">
                                     <div class="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
-                                        <?php if(!empty($item->image)): ?>
-                                            <img src="<?php echo URLROOT . '/img/' . $item->image; ?>" class="w-full h-full object-cover">
-                                        <?php endif; ?>
+                                        <img src="<?php echo $imgUrl; ?>" class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-bold text-slate-900 truncate"><?php echo $item->name; ?></p>
+                                        <p class="text-sm font-bold text-slate-900 truncate"><?php echo $pName; ?></p>
                                         <p class="text-[10px] text-slate-500">x<?php echo $item->qty; ?></p>
                                     </div>
                                     <div class="text-right">
@@ -191,17 +193,17 @@
 
                     <div class="border-t border-slate-100 pt-4 space-y-3 mb-6">
                         <div class="flex justify-between text-slate-500 text-sm">
-                            <span>Subtotal</span>
+                            <span><?php echo lang('order_subtotal'); ?></span>
                             <span class="font-medium text-slate-900"><?php echo number_format($productSubtotal, 2); ?> <?php echo CURRENCY_SYMBOL; ?></span>
                         </div>
                         <div class="flex justify-between text-slate-500 text-sm">
-                            <span>Shipping</span>
+                            <span><?php echo lang('order_shipping'); ?></span>
                             <span class="text-slate-900 font-bold text-xs uppercase" id="shipping_display">--</span>
                         </div>
                     </div>
 
                     <div class="flex justify-between items-end mb-8 pt-4 border-t border-dashed border-slate-200">
-                        <span class="font-bold text-lg text-slate-900">Total</span>
+                        <span class="font-bold text-lg text-slate-900"><?php echo lang('order_total'); ?></span>
                         <div class="text-right">
                             <span class="font-black text-2xl text-primary" id="total_display">
                                 <?php echo number_format($productSubtotal, 2); ?> <?php echo CURRENCY_SYMBOL; ?>
@@ -210,7 +212,7 @@
                     </div>
 
                     <button type="submit" id="submitBtn" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-primary transition shadow-xl shadow-slate-900/20 flex justify-center items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <span>Select an address</span>
+                        <span><?php echo lang('btn_select_address'); ?></span>
                         <i class="fas fa-check-circle group-hover:translate-x-1 transition"></i>
                     </button>
                     
@@ -227,6 +229,7 @@
     // === DYNAMIC CALCULATION SCRIPT ===
     const CURRENCY_SYMBOL = "<?php echo CURRENCY_SYMBOL; ?>";
     const subtotal = <?php echo $productSubtotal; ?>;
+    const btnTextPlace = "<?php echo lang('btn_place_order'); ?>"; // Translated text for JS
     
     const select = document.getElementById('neighborhood_select');
     const shippingDisplay = document.getElementById('shipping_display');
@@ -235,11 +238,10 @@
     const totalInput = document.getElementById('total_amount_input');
     const submitBtn = document.getElementById('submitBtn');
 
-    // Update function (factored to be called on load)
+    // Update function
     function updateTotals() {
         const selectedOption = select.options[select.selectedIndex];
         
-        // If the default option (disabled) is selected, do nothing
         if(selectedOption.disabled) return;
 
         const shippingCost = parseFloat(selectedOption.getAttribute('data-price'));
@@ -250,26 +252,23 @@
             shippingDisplay.classList.add('text-green-600');
             
             const total = subtotal + shippingCost;
-            // Format with space for thousands
+            // Format
             totalDisplay.innerHTML = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + ' ' + CURRENCY_SYMBOL;
 
-            // 2. Update hidden fields for backend
+            // 2. Update hidden fields
             shippingInput.value = shippingCost;
             totalInput.value = total;
 
             // 3. Enable button
             submitBtn.disabled = false;
-            submitBtn.querySelector('span').textContent = "Place Order";
+            submitBtn.querySelector('span').textContent = btnTextPlace;
             submitBtn.classList.remove('bg-slate-400');
             submitBtn.classList.add('bg-slate-900');
         }
     }
 
-    // Event listener on change
     select.addEventListener('change', updateTotals);
 
-    // ON PAGE LOAD:
-    // If an address is already selected (pre-filled by PHP), calculate the total immediately
     document.addEventListener('DOMContentLoaded', function() {
         if(select.value !== "") {
             updateTotals();
