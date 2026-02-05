@@ -5,13 +5,24 @@
 $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 ?>
 
-<div class="fixed top-24 right-5 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm">
-    <?php if(function_exists('flash')) { flash('wishlist_msg'); flash('newsletter_msg'); flash('cart_msg'); } ?>
+<div class="fixed top-24 right-5 z-[60] flex flex-col gap-2 pointer-events-none w-full max-w-sm">
+    <div class="pointer-events-auto">
+        <?php if(function_exists('flash')) { flash('wishlist_msg'); flash('newsletter_msg'); flash('cart_msg'); } ?>
+    </div>
 </div>
 
 <section class="relative h-[90vh] min-h-[650px] flex items-center justify-center overflow-hidden">
     <div class="absolute inset-0 z-0">
-        <img src="<?php echo file_exists(PUBROOT . '/uploads/acceuil.jpg') ? URLROOT . '/uploads/acceuil.jpg' : 'https://images.unsplash.com/photo-1509319117193-518da72778cb?q=80&w=1889&auto=format&fit=crop'; ?>" 
+        <?php 
+            // Fallback intelligent pour l'image
+            $heroImg = 'https://images.unsplash.com/photo-1509319117193-518da72778cb?q=80&w=1889&auto=format&fit=crop';
+            if(defined('PUBROOT') && file_exists(PUBROOT . '/uploads/accueil.jpg')) {
+                $heroImg = URLROOT . '/uploads/accueil.jpg';
+            } elseif(defined('PUBROOT') && file_exists(PUBROOT . '/uploads/acceuil.jpg')) {
+                $heroImg = URLROOT . '/uploads/acceuil.jpg'; // Gestion typo courante
+            }
+        ?>
+        <img src="<?php echo $heroImg; ?>" 
              alt="Exotikha Collection" 
              class="w-full h-full object-cover opacity-50 animate-slow-zoom" style="object-position: center;">
         <div class="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-transparent to-slate-900/90"></div>
@@ -46,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
             <div class="flex flex-col items-center text-center gap-3 group px-4">
                 <div class="text-primary text-2xl group-hover:scale-110 transition duration-300"><i class="fas fa-shipping-fast"></i></div>
                 <div><h4 class="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1"><?php echo lang('feat_delivery_title'); ?></h4> <p class="text-xs text-slate-500 font-medium"><?php echo lang('feat_delivery_text'); ?></p> </div>
-            </div>
+            </div>Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain bStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broadcas
             <div class="flex flex-col items-center text-center gap-3 group px-4">
                 <div class="text-primary text-2xl group-hover:scale-110 transition duration-300"><i class="fas fa-lock"></i></div>
                 <div><h4 class="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1"><?php echo lang('feat_payment_title'); ?></h4><p class="text-xs text-slate-500 font-medium"><?php echo lang('feat_payment_text'); ?></p></div>
@@ -73,7 +84,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <a href="<?php echo URLROOT; ?>/shop?gender=women" class="group relative h-[550px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-500">
-                <img src="<?php echo file_exists(PUBROOT . '/uploads/cat-lingerie.jpg') ? URLROOT . '/uploads/cat-lingerie.jpg' : 'https://images.unsplash.com/photo-1596483756247-49f99d52b96e?q=80&w=1887&auto=format&fit=crop'; ?>" 
+                <img src="<?php echo (defined('PUBROOT') && file_exists(PUBROOT . '/uploads/cat-lingerie.jpg')) ? URLROOT . '/uploads/cat-lingerie.jpg' : 'https://images.unsplash.com/photo-1596483756247-49f99d52b96e?q=80&w=1887&auto=format&fit=crop'; ?>" 
                      class="w-full h-full object-cover transition duration-1000 group-hover:scale-110 filter brightness-90 group-hover:brightness-100">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90"></div>
                 <div class="absolute bottom-0 left-0 w-full p-10 transform translate-y-4 group-hover:translate-y-0 transition duration-500">
@@ -86,7 +97,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
             </a>
 
             <a href="<?php echo URLROOT; ?>/shop?gender=men" class="group relative h-[550px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-500">
-                <img src="<?php echo file_exists(PUBROOT . '/uploads/cat-men.jpg') ? URLROOT . '/uploads/cat-men.jpg' : 'https://images.unsplash.com/photo-1504194921103-f8b80cadd5e4?q=80&w=1887&auto=format&fit=crop'; ?>" 
+                <img src="<?php echo (defined('PUBROOT') && file_exists(PUBROOT . '/uploads/cat-men.jpg')) ? URLROOT . '/uploads/cat-men.jpg' : 'https://images.unsplash.com/photo-1504194921103-f8b80cadd5e4?q=80&w=1887&auto=format&fit=crop'; ?>" 
                      class="w-full h-full object-cover transition duration-1000 group-hover:scale-110 filter brightness-90 group-hover:brightness-100">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90"></div>
                 <div class="absolute bottom-0 left-0 w-full p-10 transform translate-y-4 group-hover:translate-y-0 transition duration-500">
@@ -98,8 +109,8 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 </div>
             </a>
 
-            <a href="<?php echo URLROOT; ?>/shop?category=Gift" class="group relative h-[550px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-500">
-                <img src="<?php echo file_exists(PUBROOT . '/uploads/cat-gift.jpg') ? URLROOT . '/uploads/cat-gift.jpg' : 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1974&auto=format&fit=crop'; ?>" 
+            <a href="<?php echo URLROOT; ?>/shop?search=cadeau" class="group relative h-[550px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-500">
+                <img src="<?php echo (defined('PUBROOT') && file_exists(PUBROOT . '/uploads/cat-gift.jpg')) ? URLROOT . '/uploads/cat-gift.jpg' : 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=1974&auto=format&fit=crop'; ?>" 
                      class="w-full h-full object-cover transition duration-1000 group-hover:scale-110 filter brightness-90 group-hover:brightness-100">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90"></div>
                 <div class="absolute bottom-0 left-0 w-full p-10 transform translate-y-4 group-hover:translate-y-0 transition duration-500">
@@ -149,7 +160,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                                 <?php endif; ?>
                             </div>
 
-                            <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $product->id; ?>" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center text-slate-400 hover:text-primary hover:scale-110 transition shadow-sm" title="Add to wishlist">
+                            <a href="<?php echo URLROOT; ?>/wishlist/toggle/<?php echo $product->id; ?>" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center text-slate-400 hover:text-primary hover:scale-110 transition shadow-sm">
                                 <i class="far fa-heart"></i>
                             </a>
 
@@ -160,7 +171,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                             <?php if($product->stock > 0): ?>
                             <div class="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition duration-300 z-20">
                                 <form action="<?php echo URLROOT; ?>/cart/add" method="POST">
-                                    <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+                                    <?php if(function_exists('csrfField')) echo csrfField(); ?>
                                     <input type="hidden" name="product_id" value="<?php echo $product->id; ?>">
                                     <input type="hidden" name="quantity" value="1">
                                     <button class="w-full bg-white text-slate-900 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition shadow-lg flex items-center justify-center gap-2">
@@ -180,10 +191,10 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                         </h3>
                         <div class="flex items-center gap-3 mt-2">
                             <?php if($product->promo_price > 0): ?>
-                                <span class="text-primary font-bold text-lg"><?php echo CURRENCY_SYMBOL . number_format($product->promo_price, 2); ?></span>
-                                <span class="text-sm text-slate-400 line-through decoration-slate-400/50"><?php echo number_format($product->price, 2); ?></span>
+                                <span class="text-primary font-bold text-lg"><?php echo number_format($product->promo_price, 0, ',', ' ') . ' ' . CURRENCY_SYMBOL; ?></span>
+                                <span class="text-sm text-slate-400 line-through decoration-slate-400/50"><?php echo number_format($product->price, 0, ',', ' '); ?></span>
                             <?php else: ?>
-                                <span class="text-slate-900 font-bold text-lg"><?php echo CURRENCY_SYMBOL . number_format($product->price, 2); ?></span>
+                                <span class="text-slate-900 font-bold text-lg"><?php echo number_format($product->price, 0, ',', ' ') . ' ' . CURRENCY_SYMBOL; ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -201,7 +212,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
             <?php echo lang('club_text'); ?>
         </p>
         <form action="<?php echo URLROOT; ?>/pages/subscribe" method="POST" class="flex flex-col md:flex-row gap-4">
-            <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+            <?php if(function_exists('csrfField')) echo csrfField(); ?>    
             <input type="email" name="email" placeholder="<?php echo lang('club_placeholder'); ?>" required 
                    class="flex-1 bg-white border border-slate-200 rounded-full px-6 py-4 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
             <button type="submit" class="bg-slate-900 text-white px-8 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-primary transition shadow-xl shadow-slate-200">
@@ -229,10 +240,10 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                         <p class="text-slate-600 italic mb-8 leading-relaxed text-lg">"<?php echo $review->comment; ?>"</p>
                         <div class="flex items-center gap-4 pt-6 border-t border-slate-50">
                             <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 uppercase">
-                                <?php echo !empty($review->full_name) ? substr($review->full_name, 0, 1) : 'C'; ?>
+                                <?php echo !empty($review->user_name) ? substr($review->user_name, 0, 1) : 'C'; ?>
                             </div>
                             <div>
-                                <span class="block font-bold text-sm text-slate-900"><?php echo !empty($review->full_name) ? $review->full_name : lang('reviews_customer'); ?></span>
+                                <span class="block font-bold text-sm text-slate-900"><?php echo !empty($review->user_name) ? $review->user_name : lang('reviews_customer'); ?></span>
                                 <span class="block text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1"><i class="fas fa-check-circle text-primary"></i> <?php echo lang('reviews_verified'); ?></span>
                             </div>
                         </div>
@@ -280,7 +291,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                         <div class="p-8 flex-1 flex flex-col">
                             <div class="mb-4 flex items-center justify-between">
                                 <span class="text-[10px] font-black uppercase text-primary tracking-widest bg-rose-50 px-3 py-1 rounded-full">
-                                    <?php echo isset($post->category) ? $post->category : 'Lifestyle'; ?>
+                                    Exotikha
                                 </span>
                                 <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
                                     <?php echo date('d M Y', strtotime($post->created_at)); ?>

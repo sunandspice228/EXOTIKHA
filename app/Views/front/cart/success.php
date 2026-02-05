@@ -21,19 +21,27 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
         </div>
         
         <h1 class="text-4xl md:text-5xl font-serif font-bold text-slate-900 mb-4"><?php echo lang('success_title'); ?></h1>
+        
         <p class="text-lg text-slate-500 mb-8 leading-relaxed">
-            <?php echo lang('success_text_1'); ?> <span class="font-bold text-slate-900">#<?php echo $data['order']->order_number; ?></span> <?php echo lang('success_text_2'); ?>
+            <?php echo lang('success_text_1'); ?> <span class="font-bold text-slate-900">#<?php echo htmlspecialchars($data['order']->order_number); ?></span> <?php echo lang('success_text_2'); ?>
         </p>
         
         <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-100/50 mb-10">
             <p class="text-slate-500 text-sm mb-4">
                 <i class="far fa-envelope mr-2 text-slate-400"></i> <?php echo lang('success_email_msg'); ?>
             </p>
-            <div class="flex justify-center items-center gap-3 pt-4 border-t border-slate-50">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest"><?php echo lang('success_order_status'); ?></span>
-                <span class="text-xs font-bold text-green-700 bg-green-50 border border-green-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                    <?php echo lang('status_processing'); // Réutilisation de la clé existante ?>
-                </span>
+            
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4 border-t border-slate-50">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest"><?php echo lang('success_order_status'); ?></span>
+                    <span class="text-xs font-bold text-green-700 bg-green-50 border border-green-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                        <?php echo lang('status_processing'); ?>
+                    </span>
+                </div>
+
+                <a href="<?php echo URLROOT; ?>/users/invoice/<?php echo $data['order']->id; ?>" target="_blank" class="text-xs font-bold text-primary hover:underline flex items-center gap-1">
+                    <i class="fas fa-file-pdf"></i> <?php echo lang('btn_download_invoice'); ?>
+                </a>
             </div>
         </div>
 

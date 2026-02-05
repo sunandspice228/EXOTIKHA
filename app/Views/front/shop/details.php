@@ -1,13 +1,23 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
 <?php
+// SÉCURITÉ : Vérification si produit existe
+if(empty($data['product'])){
+    echo '<div class="max-w-7xl mx-auto px-6 py-24 text-center text-red-500 font-bold">Produit introuvable.</div>';
+    require APPROOT . '/Views/front/layout/footer.php';
+    exit;
+}
+
 // Helper langue
 $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
 // --- DONNÉES PRODUIT ---
 $pName = ($lang == 'fr' && !empty($data['product']->name_fr)) ? $data['product']->name_fr : $data['product']->name;
 $pDesc = ($lang == 'fr' && !empty($data['product']->description_fr)) ? $data['product']->description_fr : $data['product']->description;
-$imgUrl = !empty($data['product']->image) ? URLROOT . '/uploads/' . $data['product']->image : URLROOT . '/img/no-image.jpg';
+$mainImg = !empty($data['product']->image) ? URLROOT . '/uploads/' . $data['product']->image : URLROOT . '/img/no-image.jpg';
+
+// Galerie (Si dispo dans $data['gallery'])
+$gallery = isset($data['gallery']) ? $data['gallery'] : [];
 ?>
 
 <div class="bg-white border-b border-slate-100 py-4">
@@ -16,14 +26,14 @@ $imgUrl = !empty($data['product']->image) ? URLROOT . '/uploads/' . $data['produ
         <span class="mx-2">/</span>
         <a href="<?php echo URLROOT; ?>/shop" class="hover:text-primary"><?php echo lang('nav_shop'); ?></a>
         <span class="mx-2">/</span>
-        <span class="text-slate-900"><?php echo $pName; ?></span>
+        <span class="text-slate-900 truncate max-w-[200px] inline-block align-top"><?php echo $pName; ?></span>
     </div>
 </div>
 
 <div class="max-w-7xl mx-auto px-6 py-12">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
         
-        <div class="space-y-4">
+        <div class="space-y-4" x-data="{ mainImage: '<?php echo $mainImg; ?>' }">
             <div class="relative aspect-[3/4] bg-slate-50 rounded-2xl overflow-hidden shadow-sm group">
                 
                 <?php if($data['product']->promo_price > 0): ?>
@@ -32,16 +42,22 @@ $imgUrl = !empty($data['product']->image) ? URLROOT . '/uploads/' . $data['produ
                     </span>
                 <?php endif; ?>
                 
-                <img src="<?php echo $imgUrl; ?>" alt="<?php echo $pName; ?>" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 cursor-zoom-in">
+                <img :src="mainImage" alt="<?php echo $pName; ?>" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 cursor-zoom-in">
             </div>
             
             <div class="grid grid-cols-4 gap-4">
-                <div class="aspect-square rounded-xl bg-slate-100 overflow-hidden border-2 border-slate-900 cursor-pointer">
-                    <img src="<?php echo $imgUrl; ?>" class="w-full h-full object-cover">
+                <div @click="mainImage = '<?php echo $mainImg; ?>'" class="aspect-square rounded-xl bg-slate-100 overflow-hidden border-2 cursor-pointer transition" :class="mainImage === '<?php echo $mainImg; ?>' ? 'border-slate-900' : 'border-transparent hover:border-slate-300'">
+                    <img src="<?php echo $mainImg; ?>" class="w-full h-full object-cover">
                 </div>
-                <div class="aspect-square rounded-xl bg-slate-50 border border-transparent hover:border-slate-300 transition"></div>
-                <div class="aspect-square rounded-xl bg-slate-50 border border-transparent hover:border-slate-300 transition"></div>
-                <div class="aspect-square rounded-xl bg-slate-50 border border-transparent hover:border-slate-300 transition"></div>
+
+                <?php if(!empty($gallery)): ?>
+                    <?php foreach($gallery as $img): ?>
+                        <?php $gUrl = URLROOT . '/uploads/' . $img->image; ?>
+                        <div @click="mainImage = '<?php echo $gUrl; ?>'" class="aspect-square rounded-xl bg-slate-100 overflow-hidden border-2 cursor-pointer transition" :class="mainImage === '<?php echo $gUrl; ?>' ? 'border-slate-900' : 'border-transparent hover:border-slate-300'">
+                            <img src="<?php echo $gUrl; ?>" class="w-full h-full object-cover">
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch inStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch intoStreaming comme your Head, microscope avec Nan NighStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in y
             </div>
         </div>
 
@@ -74,9 +90,26 @@ $imgUrl = !empty($data['product']->image) ? URLROOT . '/uploads/' . $data['produ
 
             <?php if($data['product']->stock > 0): ?>
             <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="space-y-8">
-                <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+                <?php if(function_exists('csrfField')) echo csrfField(); ?>    
                 <input type="hidden" name="product_id" value="<?php echo $data['product']->id; ?>">
                 
+                <?php if(!empty($data['variants'])): ?>
+                    <div class="space-y-4">
+                        <label class="text-sm font-bold uppercase tracking-wide text-slate-900"><?php echo lang('product_select_option'); ?></label>
+                        <div class="flex flex-wrap gap-3">
+                            <?php foreach($data['variants'] as $variant): ?>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="variant_id" value="<?php echo $variant->id; ?>" class="peer sr-only" <?php echo ($variant->stock <= 0) ? 'disabled' : ''; ?>>
+                                    <div class="px-4 py-2 border-2 border-slate-200 rounded-lg peer-checked:border-slate-900 peer-checked:bg-slate-900 peer-checked:text-white hover:border-slate-400 transition font-bold text-sm <?php echo ($variant->stock <= 0) ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''; ?>">
+                                        <?php echo $variant->size; ?> 
+                                        <?php if(!empty($variant->color)) echo ' - ' . $variant->color; ?>
+                                    </div>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <div class="flex items-center gap-6">
                     <span class="text-sm font-bold uppercase tracking-wide text-slate-900"><?php echo lang('product_qty'); ?></span>
                     <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden h-12 w-36">

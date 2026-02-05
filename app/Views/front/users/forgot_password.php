@@ -1,5 +1,10 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
+<?php
+// Helper langue
+$lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
+?>
+
 <div class="min-h-[75vh] flex items-center justify-center bg-slate-50 relative overflow-hidden py-12 px-6">
     
     <div class="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -21,7 +26,7 @@
         <?php if(function_exists('flash')) flash('register_success'); ?>
 
         <form action="<?php echo URLROOT; ?>/users/forgot_password" method="POST" class="space-y-6">
-            <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>
+            <?php if(function_exists('csrfField')) echo csrfField(); ?>
             
             <?php if(!empty($data['error'])): ?>
                 <div class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 animate-fade-in">
@@ -33,7 +38,10 @@
                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 ml-1"><?php echo lang('form_email'); ?></label>
                 <div class="relative">
                     <i class="far fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="email" name="email" value="<?php echo $data['email']; ?>" class="w-full pl-10 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition placeholder-slate-400 text-sm font-medium" required placeholder="name@example.com">
+                    <input type="email" name="email" 
+                           value="<?php echo isset($data['email']) ? htmlspecialchars($data['email']) : ''; ?>" 
+                           class="w-full pl-10 pr-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition placeholder-slate-400 text-sm font-medium" 
+                           required placeholder="name@example.com">
                 </div>
             </div>
 

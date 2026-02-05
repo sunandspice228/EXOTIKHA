@@ -57,7 +57,7 @@ class Product {
             :description, :description_fr, :price, :promo_price, :stock, :image, :status, NOW()
         )');
 
-        // Liaison des paramètres (Binding)
+        // Liaison des paramètres (Binding)Here you are on a monté wechat everyone House in a building youHere you are on a monté wechat everyone HousHere you are on a monté wechat everyone House in a building you're the only what with At to my by seed. Microsoft
         $this->db->bind(':sku', $sku);
         $this->db->bind(':name', $data['name']);
         $this->db->bind(':name_fr', !empty($data['name_fr']) ? $data['name_fr'] : null);
@@ -138,7 +138,110 @@ class Product {
     // 3. GESTION DE LA GALERIE (IMAGES MULTIPLES)
     // =========================================================
 
+// =========================================================
+    // MÉTHODES FRONTEND (PARTIE PUBLIQUE)
+    // =========================================================
 
+    // Récupérer les Nouveautés (Pour l'Accueil)
+    public function getNewArrivals($limit = 8){
+        $this->db->query("SELECT * FROM products WHERE status = 'active' ORDER BY created_at DESC LIMIT :limit");
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
+
+    // Récupérer les Ventes Flash (Produits avec promo_price > 0)
+    public function getFlashSales($limit = 4){
+        $this->db->query("SELECT * FROM products WHERE status = 'active' AND promo_price > 0 ORDER BY RAND() LIMIT :limit");
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
+
+    // Récupérer les produits par catégorie (Page Shop)
+    public function getProductsByCategory($categoryId){
+        $this->db->query("SELECT * FROM products WHERE status = 'active' AND category_id = :cid ORDER BY created_at DESC");
+        $this->db->bind(':cid', $categoryId);
+        return $this->db->resultSet();
+    }
+    
+    // Rechercher des produits
+    public function searchProducts($keyword){
+        $this->db->query("SELECT * FROM products WHERE status = 'active' AND (name LIKE :key OR description LIKE :key)");
+        $this->db->bind(':key', '%'.$keyword.'%');
+        return $this->db->resultSet();
+    }
+    // Récupérer les produits en promotion (Promo Price > 0)
+    public function getPromoProducts($limit = 8){
+        // On sélectionne les produits actifs qui ont un prix promo défini et supérieur à 0
+        $this->db->query("SELECT * FROM products 
+                          WHERE status = 'active' 
+                          AND promo_price > 0 
+                          ORDER BY created_at DESC 
+                          LIMIT :limit");
+        
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
+    // =========================================================
+    // MÉTHODES BOUTIQUE (FILTRES & TRI)
+    // =========================================================
+
+    public function getShopProducts($filters = []){
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM products p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                WHERE p.status = 'active'"; // ⚠️ Assurez-vous que vos produits sont 'active'
+
+        // 1. Filtre par Recherche
+        if(!empty($filters['search'])){
+            $sql .= " AND (p.name LIKE :search OR p.description LIKE :search)";
+        }
+
+        // 2. Filtre par Catégorie
+        if(!empty($filters['category_id'])){
+            $sql .= " AND p.category_id = :cat_id";
+        }
+
+        // 3. Filtre par Genre (Femme/Homme)
+        if(!empty($filters['gender'])){
+            $sql .= " AND p.gender = :gender";
+        }
+
+        // 4. Filtre par Type (Robe, Chemise...)
+        if(!empty($filters['type_id'])){
+            $sql .= " AND p.type_id = :type_id";
+        }
+
+        // 5. Filtre Promo Uniquement
+        if(!empty($filters['promo_only'])){
+            $sql .= " AND p.promo_price > 0";
+        }
+
+        // 6. Gestion du Tri (ORDER BY)
+        $sort = isset($filters['sort']) ? $filters['sort'] : 'newest';
+        switch($sort){
+            case 'price_asc':  $sql .= " ORDER BY p.price ASC"; break;
+            case 'price_desc': $sql .= " ORDER BY p.price DESC"; break;
+            case 'popularity': $sql .= " ORDER BY p.views DESC"; break; // Si vous avez une colonne views, sinon use created_at
+            default:           $sql .= " ORDER BY p.created_at DESC"; // Newest par défaut
+        }
+
+        $this->db->query($sql);
+
+        // Bind des valeurs
+        if(!empty($filters['search'])) $this->db->bind(':search', '%'.$filters['search'].'%');
+        if(!empty($filters['category_id'])) $this->db->bind(':cat_id', $filters['category_id']);
+        if(!empty($filters['gender'])) $this->db->bind(':gender', $filters['gender']);
+        if(!empty($filters['type_id'])) $this->db->bind(':type_id', $filters['type_id']);
+
+        return $this->db->resultSet();
+    }
+
+    // Récupérer une variante spécifique par son ID
+    public function getVariantById($id){
+        $this->db->query("SELECT * FROM product_variants WHERE id = :id");
+        $this->db->bind(':id', $id);
+        return $this->db->single();
+    }
    
 
     // =========================================================

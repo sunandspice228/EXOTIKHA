@@ -5,29 +5,37 @@ if (!defined('APPROOT')) {
 }
 
 // =========================================================================
-// 1. LOGIQUE PHP : RÉCUPÉRATION CATÉGORIES (MODEL)
+// 1. LOGIQUE PHP : RÉCUPÉRATION CATÉGORIES
 // =========================================================================
-// On charge le modèle ici car le header est sur toutes les pages
-if(defined('APPROOT') && file_exists(APPROOT . '/Models/Category.php')){
-    require_once APPROOT . '/Models/Category.php';
-    $menuCatModel = new Category();
-    $allCategories = $menuCatModel->getAllCategories();
-} else {
-    $allCategories = [];
-}
 
-// Variables de tri
+// On initialise les variables par défaut pour éviter les erreurs "Undefined variable"
 $giftCat = null;
 $coupleCat = null;
 $otherCategories = []; 
+$allCategories = [];
 
-// Langue actuelle
+// On charge le modèle Category s'il existe
+if(file_exists(APPROOT . '/Models/Category.php')){
+    require_once APPROOT . '/Models/Category.php';
+    // On instancie la classe uniquement si elle n'existe pas déjà
+    if(class_exists('Category')){
+        $menuCatModel = new Category();
+        // S'assure que getAllCategories existe
+        if(method_exists($menuCatModel, 'getAllCategories')){
+            $allCategories = $menuCatModel->getAllCategories();
+        }
+    }
+}
+
+// Langue actuelle (avec sécurité)
 $curLang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
 // Tri des catégories pour le menu
-if(!empty($allCategories)){
+if(!empty($allCategories) && is_array($allCategories)){
     foreach($allCategories as $cat){
-        // On trie basé sur le nom technique (anglais)
+        // Sécurité : On s'assure que c'est un objet
+        if(is_array($cat)) $cat = (object) $cat;
+
         $techName = strtolower($cat->name);
         
         if(strpos($techName, 'gift') !== false || strpos($techName, 'box') !== false || strpos($techName, 'cadeau') !== false) {
@@ -40,12 +48,16 @@ if(!empty($allCategories)){
     }
 }
 
-// Fonction locale pour afficher le bon nom (FR ou EN)
-function getMenuCatName($cat, $lang) {
-    if ($lang == 'fr' && !empty($cat->name_fr)) {
-        return $cat->name_fr;
+// Helper local pour le nom de catégorie
+if (!function_exists('getMenuCatName')) {
+    function getMenuCatName($cat, $lang) {
+        if(is_array($cat)) $cat = (object) $cat;
+        
+        if ($lang == 'fr' && !empty($cat->name_fr)) {
+            return $cat->name_fr;
+        }
+        return $cat->name;
     }
-    return $cat->name;
 }
 ?>
 <!DOCTYPE html>
@@ -53,12 +65,12 @@ function getMenuCatName($cat, $lang) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo defined('SITENAME') ? SITENAME : 'Exotikha'; ?> | Premium Store</title>
+    <title><?php echo defined('SITENAME') ? SITENAME : 'Exotikha'; ?> | Premium African Fashion</title>
     
     <link rel="shortcut icon" href="<?php echo URLROOT; ?>/uploads/favicon.ico" type="image/x-icon">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -72,8 +84,8 @@ function getMenuCatName($cat, $lang) {
                         serif: ['"Playfair Display"', 'serif'],
                     },
                     colors: {
-                        primary: '#C8AD7F', // Gold
-                        secondary: '#FDF8F3', 
+                        primary: '#C8AD7F', // Gold Premium
+                        secondary: '#FDF8F3', // Cream light
                         dark: '#1A1A1A',
                     },
                     animation: {
@@ -106,11 +118,15 @@ function getMenuCatName($cat, $lang) {
             <div class="flex justify-between items-center h-20">
                 
                 <a href="<?php echo URLROOT; ?>" class="flex items-center group">
-                    <img src="<?php echo URLROOT; ?>/uploads/logo.png" alt="Exotikha" class="h-10 md:h-12 w-auto object-contain">
+                    <img src="<?php echo URLROOT; ?>/img/logo.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="Exotikha" class="h-10 md:h-12 w-auto object-contain">
+                    <span class="text-2xl font-serif font-bold text-dark hidden tracking-tighter">EXOTIKHA<span class="text-primary">.</span></span>
                 </a>
 
                 <div class="hidden lg:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-slate-600">
-                    <a href="<?php echo URLROOT; ?>" class="hover:text-primary transition"><?php echo lang('nav_home'); ?></a>
+                    <a href="<?php echo URLROOT; ?>" class="hover:text-primary transition relative group">
+                        <?php echo lang('nav_home'); ?>
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
                     <a href="<?php echo URLROOT; ?>/shop" class="hover:text-primary transition"><?php echo lang('nav_shop'); ?></a>
                     
                     <?php if($giftCat): ?>
@@ -122,8 +138,8 @@ function getMenuCatName($cat, $lang) {
 
                     <?php if(!empty($otherCategories) || $coupleCat): ?>
                         <div class="relative group h-20 flex items-center" x-data="{ open: false }">
-                            <button @mouseenter="open = true" @mouseleave="open = false" class="flex items-center gap-1 hover:text-primary transition h-full">
-                                <?php echo lang('nav_collections'); ?> <i class="fas fa-chevron-down text-[8px] ml-1 transition-transform" :class="open ? 'rotate-180' : ''"></i>
+                            <button @mouseenter="open = true" @mouseleave="open = false" class="flex items-center gap-1 hover:text-primary transition h-full focus:outline-none">
+                                <?php echo lang('nav_collections'); ?> <i class="fas fa-chevron-down text-[8px] ml-1 transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                             </button>
                             
                             <div x-show="open" @mouseenter="open = true" @mouseleave="open = false" x-cloak class="absolute top-full left-1/2 -translate-x-1/2 w-64 bg-white shadow-xl border border-slate-100 rounded-b-xl overflow-hidden py-2 animate-fade-in">
@@ -151,24 +167,24 @@ function getMenuCatName($cat, $lang) {
                     <div class="relative group hidden md:block" x-data="{ langOpen: false }">
                         <button @click="langOpen = !langOpen" class="flex items-center gap-1 hover:text-primary transition font-bold text-xs uppercase tracking-widest border px-2 py-1 rounded-md border-slate-200">
                             <?php if($curLang == 'en'): ?>
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Ghana.svg" class="w-4 h-3 object-cover shadow-sm rounded-[1px]"> <span class="hidden xl:inline">EN</span>
+                                <span class="text-lg leading-none">🇺🇸</span> <span class="hidden xl:inline">EN</span>
                             <?php else: ?>
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/Flag_of_Togo.svg" class="w-4 h-3 object-cover shadow-sm rounded-[1px]"> <span class="hidden xl:inline">FR</span>
+                                <span class="text-lg leading-none">🇫🇷</span> <span class="hidden xl:inline">FR</span>
                             <?php endif; ?>
                             <i class="fas fa-chevron-down text-[8px] ml-1 text-slate-400"></i>
                         </button>
 
                         <div x-show="langOpen" @click.outside="langOpen = false" x-cloak class="absolute top-full right-0 w-32 bg-white shadow-xl border border-slate-100 rounded-lg overflow-hidden py-1 mt-2 z-50">
                             <a href="<?php echo URLROOT; ?>/users/setLang/en" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition text-xs font-bold text-slate-700">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Ghana.svg" class="w-4 shadow-sm rounded-[1px]"> English
+                                <span class="text-lg">🇺🇸</span> English
                             </a>
                             <a href="<?php echo URLROOT; ?>/users/setLang/fr" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition text-xs font-bold text-slate-700">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/Flag_of_Togo.svg" class="w-4 shadow-sm rounded-[1px]"> Français
+                                <span class="text-lg">🇫🇷</span> Français
                             </a>
                         </div>
                     </div>
 
-                    <?php if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                    <?php if(isset($_SESSION['user_role']) && in_array($_SESSION['user_role'], ['admin', 'super_admin', 'editor'])): ?>
                         <a href="<?php echo URLROOT; ?>/admin" class="text-red-600 hover:text-red-800 transition" title="Admin Panel">
                             <i class="fas fa-user-shield text-lg"></i>
                         </a>
@@ -201,7 +217,7 @@ function getMenuCatName($cat, $lang) {
         <div x-show="searchOpen" @click.outside="searchOpen = false" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-xl p-6 z-40">
             <form action="<?php echo URLROOT; ?>/shop" method="GET" class="max-w-3xl mx-auto relative">
                 <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" name="search" placeholder="<?php echo lang('search_placeholder'); ?>" class="w-full bg-slate-50 border-none rounded-full py-4 pl-12 pr-32 text-slate-900 font-medium focus:ring-2 focus:ring-primary focus:bg-white transition shadow-inner placeholder-slate-400">
+                <input type="text" name="search" placeholder="<?php echo lang('search_placeholder'); ?>" class="w-full bg-slate-50 border-none rounded-full py-4 pl-12 pr-32 text-slate-900 font-medium focus:ring-2 focus:ring-primary focus:bg-white transition shadow-inner placeholder-slate-400 outline-none">
                 <button type="submit" class="absolute right-2 top-2 bottom-2 bg-primary text-white px-8 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-dark transition">GO</button>
             </form>
         </div>
@@ -226,10 +242,10 @@ function getMenuCatName($cat, $lang) {
             <div class="mt-2 flow-root">
                 <div class="flex items-center justify-center gap-4 mb-8">
                      <a href="<?php echo URLROOT; ?>/users/setLang/en" class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold transition <?php echo $curLang == 'en' ? 'border border-primary text-primary bg-secondary' : 'text-slate-500'; ?>">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Flag_of_Ghana.svg" class="w-5 shadow-sm rounded-[1px]"> EN
+                        <span class="text-lg">🇺🇸</span> EN
                     </a>
                     <a href="<?php echo URLROOT; ?>/users/setLang/fr" class="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg text-xs font-bold transition <?php echo $curLang == 'fr' ? 'border border-primary text-primary bg-secondary' : 'text-slate-500'; ?>">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/Flag_of_Togo.svg" class="w-5 shadow-sm rounded-[1px]"> FR
+                        <span class="text-lg">🇫🇷</span> FR
                     </a>
                 </div>
 
@@ -281,5 +297,3 @@ function getMenuCatName($cat, $lang) {
             </div>
         </div>
     </div>
-</body>
-</html>

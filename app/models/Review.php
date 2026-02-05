@@ -42,4 +42,21 @@ class Review {
         $row = $this->db->single();
         return $row->count;
     }
+    // =========================================================
+    // MÉTHODES FRONTEND (POUR L'ACCUEIL)
+    // =========================================================
+
+    // Récupérer les avis approuvés pour le slider
+    public function getApprovedReviews($limit = 6){
+        // On récupère l'avis et le nom du client depuis la table 'customers'
+        $this->db->query("SELECT r.*, CONCAT(c.first_name, ' ', c.last_name) as user_name
+                          FROM reviews r
+                          JOIN customers c ON r.user_id = c.id
+                          WHERE r.status = 'approved'
+                          ORDER BY r.created_at DESC
+                          LIMIT :limit");
+        
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+         }
 }

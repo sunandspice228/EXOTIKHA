@@ -7,20 +7,27 @@ if (!defined('APPROOT')) {
 // =========================================================================
 // 1. LOGIQUE PHP : RÉCUPÉRATION CATÉGORIES (POUR LIENS FOOTER)
 // =========================================================================
-if(defined('APPROOT') && file_exists(APPROOT . '/Models/Category.php')){
-    require_once APPROOT . '/Models/Category.php';
-    $footerCatModel = new Category();
-    $f_allCategories = $footerCatModel->getAllCategories();
-} else {
-    $f_allCategories = [];
-}
 
-// IDs Spécifiques pour les liens rapides
+// On initialise les variables par défaut
+$f_allCategories = [];
 $f_idGifts = null;
 $f_idAccessories = null;
 
-if(!empty($f_allCategories)){
+// Chargement sécurisé du modèle Category
+if(file_exists(APPROOT . '/Models/Category.php')){
+    require_once APPROOT . '/Models/Category.php';
+    if(class_exists('Category')){
+        $footerCatModel = new Category();
+        if(method_exists($footerCatModel, 'getAllCategories')){
+            $f_allCategories = $footerCatModel->getAllCategories();
+        }
+    }
+}
+
+if(!empty($f_allCategories) && is_array($f_allCategories)){
     foreach($f_allCategories as $cat){
+        if(is_array($cat)) $cat = (object) $cat; // Conversion tableau -> objet si nécessaire
+        
         $name = strtolower($cat->name);
         
         // On cherche l'ID "Cadeaux"
@@ -48,8 +55,9 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
             
             <div class="space-y-6">
                 <a href="<?php echo URLROOT; ?>" class="block">
-                    <img src="<?php echo URLROOT; ?>/uploads/logo.png" alt="<?php echo SITENAME; ?>" class="h-12 w-auto object-contain brightness-0 invert opacity-80 hover:opacity-100 transition">
-                </a>
+                    <img src="<?php echo URLROOT; ?>/img/logo.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="<?php echo SITENAME; ?>" class="h-12 w-auto object-contain brightness-0 invert opacity-80 hover:opacity-100 transition">
+                    <span class="text-2xl font-serif font-bold text-white hidden tracking-tighter">EXOTIKHA.</span>
+                </a>Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broadcastingStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in yStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broadcasting Everything
 
                 <p class="text-sm leading-relaxed text-slate-400">
                     <?php echo lang('footer_about'); ?>
@@ -116,10 +124,10 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-6 border-b border-slate-800 pb-2 inline-block"><?php echo lang('footer_support_title'); ?></h4>
                 <ul class="space-y-4 text-sm">
                     <li><a href="<?php echo URLROOT; ?>/users/account?tab=orders" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_track_order'); ?></a></li>
-                    <li><a href="#" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_shipping'); ?></a></li>
-                    <li><a href="#" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_returns'); ?></a></li>
+                    <li><a href="<?php echo URLROOT; ?>/pages/about" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('nav_about'); ?></a></li>
+                    <li><a href="<?php echo URLROOT; ?>/pages/shipping" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_shipping'); ?></a></li>
                     <li><a href="<?php echo URLROOT; ?>/pages/contact" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_contact'); ?></a></li>
-                    <li><a href="#" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_terms'); ?></a></li>
+                    <li><a href="<?php echo URLROOT; ?>/pages/terms" class="hover:text-white hover:translate-x-1 transition inline-block text-slate-400"><?php echo lang('link_terms'); ?></a></li>
                 </ul>
             </div>
 
@@ -128,7 +136,8 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <p class="text-sm text-slate-400 mb-4"><?php echo lang('footer_sub_text'); ?></p>
                 
                 <form action="<?php echo URLROOT; ?>/pages/subscribe" method="POST" class="flex flex-col gap-3 mb-8">
-                    <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+                    <?php if(function_exists('csrfField')) echo csrfField(); ?>    
+                    
                     <input type="email" name="email" placeholder="<?php echo lang('club_placeholder'); ?>" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" required>
                     <button type="submit" class="bg-white text-slate-900 hover:bg-primary hover:text-white px-4 py-3 rounded-lg text-sm font-bold transition uppercase tracking-wide"><?php echo lang('footer_subscribe'); ?></button>
                 </form>

@@ -1,30 +1,52 @@
 <?php 
-// Extraction des données
-$order = $data['order'];
-$items = $data['items'];
-
-// Helper langue (si nécessaire pour des formats spécifiques)
+// SÉCURITÉ & DONNÉES
+// On s'assure que les données existent
+$order = isset($data['order']) ? $data['order'] : null;
+$items = isset($data['items']) ? $data['items'] : [];
 $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
+
+if(!$order) die("Order data missing.");
+
+// --- GESTION DU LOGO POUR DOMPDF ---
+// DomPDF préfère les chemins absolus système ou le Base64
+$logoPath = APPROOT . '/../public/uploads/logo.png'; 
+$logoData = '';
+
+if(file_exists($logoPath)){
+    $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+    $dataImg = file_get_contents($logoPath);
+    $logoData = 'data:image/' . $type . ';base64,' . base64_encode($dataImg);
+}
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
 <head>
     <meta charset="UTF-8">
-    <title><?php echo lang('invoice_title'); ?> #<?php echo $order->order_number; ?></title>
+    <title>Invoice #<?php echo $order->order_number; ?></title>
     <style>
-        /* BASE STYLES - Optimisé pour MPDF/DomPDF et Impression Navigateur */
-        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 12px; color: #333; line-height: 1.4; margin: 0; padding: 20px; background: #fff; }
+        /* BASE STYLES - Optimisé pour A4 (DomPDF) */
+        @page { margin: 0px; }
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 12px; 
+            color: #333; 
+            line-height: 1.4; 
+            margin: 0; 
+            padding: 40px; 
+            background: #fff; 
+        }
         
-        .container { width: 100%; max-width: 800px; margin: 0 auto; }
+        .container { width: 100%; }
         
         /* HEADER */
         .header { width: 100%; border-bottom: 2px solid #ca8a04; padding-bottom: 20px; margin-bottom: 30px; }
         .header-table { width: 100%; }
-        .header-left { text-align: left; vertical-align: top; }
-        .header-right { text-align: right; vertical-align: top; }
+        .header-left { text-align: left; vertical-align: top; width: 50%; }
+        .header-right { text-align: right; vertical-align: top; width: 50%; }
 
-        .logo h1 { margin: 0; font-size: 24px; font-family: serif; color: #0f172a; text-transform: uppercase; }
-        .logo p { margin: 0; color: #ca8a04; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        .logo-img { height: 40px; width: auto; display: block; margin-bottom: 5px; }
+        .logo h1 { margin: 0; font-size: 20px; font-family: serif; color: #0f172a; text-transform: uppercase; }
+        .logo p { margin: 0; color: #ca8a04; font-size: 8px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
         
         .company-info { font-size: 10px; color: #64748b; line-height: 1.4; }
         .company-info strong { color: #0f172a; font-size: 11px; }
@@ -35,50 +57,35 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
         .info-col.right { text-align: right; }
 
         .label { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; display: block; }
-        .info-value { font-size: 12px; color: #0f172a; }
+        .info-value { font-size: 12px; color: #0f172a; }Here you are on a manHere you are on a montéHere you are on a monté weHere you are on a monté Here you are on a monté wechat everyone House
         
         /* BADGES */
-        .badge { padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; display: inline-block; }
-        .badge.paid { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .badge.pending { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-        .badge.cancelled { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; color: #fff; display: inline-block; }
+        .paid { background-color: #22c55e; color: white; }
+        .pending { background-color: #f97316; color: white; }
+        .cancelled { background-color: #ef4444; color: white; }
 
         /* ITEMS TABLE */
         .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .items-table th { text-align: left; padding: 10px 5px; border-bottom: 2px solid #e2e8f0; font-size: 9px; text-transform: uppercase; color: #64748b; font-weight: bold; background-color: #f8fafc; }
-        .items-table td { padding: 10px 5px; border-bottom: 1px solid #f1f5f9; vertical-align: top; font-size: 11px; }
+        .items-table th { text-align: left; padding: 10px 5px; border-bottom: 2px solid #cbd5e1; font-size: 9px; text-transform: uppercase; color: #475569; font-weight: bold; background-color: #f1f5f9; }
+        .items-table td { padding: 12px 5px; border-bottom: 1px solid #e2e8f0; vertical-align: top; font-size: 11px; }
         
         .text-right { text-align: right; }
-        .item-name { font-weight: bold; color: #0f172a; }
-        .item-meta { font-size: 10px; color: #64748b; display: block; margin-top: 2px; }
+        .item-name { font-weight: bold; color: #0f172a; display: block; }
+        .item-meta { font-size: 9px; color: #64748b; display: block; margin-top: 2px; }
 
         /* TOTALS */
-        .totals-table { width: 40%; margin-left: auto; border-collapse: collapse; }
+        .totals-table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
         .totals-table td { padding: 5px 0; font-size: 11px; }
-        .totals-table .total-row td { border-top: 2px solid #ca8a04; padding-top: 10px; font-size: 14px; font-weight: bold; color: #0f172a; }
-        .totals-table .total-row .amount { color: #ca8a04; }
+        .total-row td { border-top: 2px solid #ca8a04; padding-top: 10px; font-size: 14px; font-weight: bold; color: #0f172a; }
+        .amount-col { text-align: right; width: 25%; }
+        .label-col { text-align: right; width: 75%; padding-right: 10px; }
 
         /* FOOTER */
-        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px dashed #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; }
-        
-        /* PRINT UTILS */
-        .no-print { margin-bottom: 20px; text-align: center; }
-        .btn-print { background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; }
-        
-        @media print {
-            .no-print { display: none; }
-            body { background: white; padding: 0; }
-            .container { width: 100%; max-width: 100%; margin: 0; }
-        }
+        .footer { position: fixed; bottom: 40px; left: 40px; right: 40px; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-size: 9px; color: #94a3b8; text-align: center; }
     </style>
 </head>
 <body>
-
-    <div class="no-print">
-        <button onclick="window.print()" class="btn-print">
-            🖨️ <?php echo lang('btn_print'); ?>
-        </button>
-    </div>
 
     <div class="container">
         
@@ -87,7 +94,11 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <tr>
                     <td class="header-left">
                         <div class="logo">
-                            <h1>Exotikha.</h1>
+                            <?php if($logoData): ?>
+                                <img src="<?php echo $logoData; ?>" class="logo-img" alt="Exotikha Logo">
+                            <?php else: ?>
+                                <h1>Exotikha.</h1>
+                            <?php endif; ?>
                             <p>Sensual • Elegant • Confident</p>
                         </div>
                     </td>
@@ -108,11 +119,11 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <td class="info-col">
                     <span class="label"><?php echo lang('inv_billed_to'); ?></span>
                     <div class="info-value">
-                        <strong><?php echo strtoupper($order->full_name); ?></strong><br>
-                        <?php echo $order->shipping_address; ?><br>
-                        <?php echo $order->shipping_city . ', ' . $order->shipping_region; ?><br>
-                        <?php echo $order->shipping_phone; ?><br>
-                        <?php echo $order->email; ?>
+                        <strong><?php echo strtoupper(htmlspecialchars($order->full_name)); ?></strong><br>
+                        <?php echo htmlspecialchars($order->shipping_address); ?><br>
+                        <?php echo htmlspecialchars($order->shipping_city) . ', ' . htmlspecialchars($order->shipping_region); ?><br>
+                        <?php echo htmlspecialchars($order->shipping_phone); ?><br>
+                        <?php echo isset($order->email) ? htmlspecialchars($order->email) : ''; ?>
                     </div>
                 </td>
                 <td class="info-col right">
@@ -120,9 +131,18 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                     <div class="info-value">
                         <strong><?php echo lang('invoice_title'); ?> #<?php echo $order->order_number; ?></strong><br>
                         <?php echo date('d M Y', strtotime($order->created_at)); ?><br>
-                        <span class="badge <?php echo strtolower($order->payment_status); ?>">
-                            <?php echo lang('status_' . strtolower($order->payment_status)); ?>
-                        </span>
+                        
+                        <?php 
+                            // Couleur du badge via classe CSS
+                            $badgeClass = 'pending';
+                            if($order->payment_status == 'paid') $badgeClass = 'paid';
+                            if($order->status == 'cancelled') $badgeClass = 'cancelled';
+                        ?>
+                        <div style="margin-top: 5px;">
+                            <span class="badge <?php echo $badgeClass; ?>">
+                                <?php echo strtoupper($order->payment_status); ?>
+                            </span>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -139,13 +159,16 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
             </thead>
             <tbody>
                 <?php foreach($items as $item): ?>
+                <?php 
+                    $pName = ($lang == 'fr' && !empty($item->name_fr)) ? $item->name_fr : $item->product_name;
+                ?>
                 <tr>
                     <td>
-                        <span class="item-name"><?php echo $item->product_name; ?></span>
+                        <span class="item-name"><?php echo htmlspecialchars($pName); ?></span>
                         <?php if(!empty($item->variant_info) || !empty($item->sku)): ?>
                             <span class="item-meta">
-                                <?php echo !empty($item->sku) ? 'SKU: ' . $item->sku . ' • ' : ''; ?>
-                                <?php echo $item->variant_info; ?>
+                                <?php echo !empty($item->sku) ? 'SKU: ' . htmlspecialchars($item->sku) . ' • ' : ''; ?>
+                                <?php echo htmlspecialchars($item->variant_info); ?>
                             </span>
                         <?php endif; ?>
                     </td>
@@ -159,16 +182,16 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
         <table class="totals-table">
             <tr>
-                <td class="text-right label"><?php echo lang('order_subtotal'); ?></td>
-                <td class="text-right"><?php echo number_format($order->total_amount - $order->shipping_cost, 2); ?></td>
+                <td class="label-col"><?php echo lang('order_subtotal'); ?></td>
+                <td class="amount-col"><?php echo number_format($order->total_amount - $order->shipping_cost, 2); ?></td>
             </tr>
             <tr>
-                <td class="text-right label"><?php echo lang('order_shipping'); ?></td>
-                <td class="text-right"><?php echo number_format($order->shipping_cost, 2); ?></td>
+                <td class="label-col"><?php echo lang('order_shipping'); ?></td>
+                <td class="amount-col"><?php echo number_format($order->shipping_cost, 2); ?></td>
             </tr>
             <tr class="total-row">
-                <td class="text-right"><?php echo lang('inv_total_due'); ?> (<?php echo CURRENCY_SYMBOL; ?>)</td>
-                <td class="text-right amount"><?php echo number_format($order->total_amount, 2); ?></td>
+                <td class="label-col"><?php echo lang('inv_total_due'); ?> (<?php echo CURRENCY_SYMBOL; ?>)</td>
+                <td class="amount-col"><?php echo number_format($order->total_amount, 2); ?></td>
             </tr>
         </table>
 
@@ -178,9 +201,9 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <?php echo ($order->payment_method == 'paystack') ? 'Paystack (Online)' : 'Cash on Delivery'; ?>
             </p>
             <p><?php echo lang('inv_thank_you'); ?></p>
+            <p>Exotikha Ghana Ltd • RC: 12345678 • TIN: C00012345678</p>
         </div>
 
     </div>
-
 </body>
 </html>

@@ -5,6 +5,12 @@
 $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 ?>
 
+<div class="fixed top-24 right-5 z-[60] flex flex-col gap-2 pointer-events-none w-full max-w-sm">
+    <div class="pointer-events-auto">
+        <?php if(function_exists('flash')) flash('cart_msg'); ?>
+    </div>
+</div>
+
 <div class="bg-slate-50 py-12">
     <div class="max-w-7xl mx-auto px-6">
         <h1 class="text-3xl font-serif font-bold text-slate-900 mb-8"><?php echo lang('cart_title'); ?></h1>
@@ -51,17 +57,13 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                                             </div>
                                             <div>
                                                 <h3 class="font-bold text-slate-900 text-sm">
-                                                    <?php $link = !empty($item->slug) ? $item->slug : $item->id; ?>
+                                                    <?php $link = !empty($item->slug) ? $item->slug : $item->id; ?>Here you are on a m
                                                     <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $link; ?>" class="hover:text-primary transition"><?php echo $pName; ?></a>
                                                 </h3>
-                                                <?php if(!empty($item->sku)): ?>
-                                                    <p class="text-xs text-slate-400 font-mono mt-1">SKU: <?php echo $item->sku; ?></p>
-                                                <?php endif; ?>
                                                 
-                                                <?php if(!empty($item->size) || !empty($item->color)): ?>
-                                                    <p class="text-xs text-slate-500 mt-1">
-                                                        <?php echo !empty($item->size) ? lang('size') . ': ' . $item->size . ' ' : ''; ?>
-                                                        <?php echo !empty($item->color) ? lang('color') . ': ' . $item->color : ''; ?>
+                                                <?php if(!empty($item->variant)): ?>
+                                                    <p class="text-xs text-slate-500 mt-1 uppercase font-bold tracking-wider">
+                                                        <?php echo $item->variant; ?>
                                                     </p>
                                                 <?php endif; ?>
                                             </div>
@@ -72,12 +74,13 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                                     </td>
                                     <td class="p-6">
                                         <form action="<?php echo URLROOT; ?>/cart/update" method="POST" class="flex items-center justify-center">
-                                            <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
-                                            <input type="hidden" name="product_id" value="<?php echo $item->id; ?>">
+                                            <?php if(function_exists('csrfField')) echo csrfField(); ?>
+                                            
+                                            <input type="hidden" name="cart_key" value="<?php echo $item->key; ?>">
                                             
                                             <div class="flex items-center border border-slate-200 rounded-lg overflow-hidden">
-                                                <input type="number" name="quantity" value="<?php echo $item->qty; ?>" min="1" max="<?php echo $item->stock; ?>" 
-                                                       class="w-12 text-center text-sm font-bold border-none p-2 focus:ring-0 appearance-none"
+                                                <input type="number" name="quantity" value="<?php echo $item->qty; ?>" min="1" max="<?php echo $item->max_stock ?? 100; ?>" 
+                                                       class="w-16 text-center text-sm font-bold border-none p-2 focus:ring-0 appearance-none bg-white"
                                                        onchange="this.form.submit()">
                                             </div>
                                         </form>
@@ -86,7 +89,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                                         <?php echo CURRENCY_SYMBOL . number_format($item->line_total, 2); ?>
                                     </td>
                                     <td class="p-6 text-right">
-                                        <a href="<?php echo URLROOT; ?>/cart/remove/<?php echo $item->id; ?>" class="text-slate-300 hover:text-red-500 transition p-2" title="<?php echo lang('btn_remove'); ?>">
+                                        <a href="<?php echo URLROOT; ?>/cart/remove/<?php echo $item->key; ?>" class="text-slate-300 hover:text-red-500 transition p-2" title="<?php echo lang('btn_remove'); ?>">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
                                     </td>
@@ -113,7 +116,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                         <div class="space-y-4 mb-6 pb-6 border-b border-slate-100 text-sm">
                             <div class="flex justify-between text-slate-500">
                                 <span><?php echo lang('order_subtotal'); ?></span>
-                                <span class="font-bold text-slate-800"><?php echo CURRENCY_SYMBOL . number_format($data['total'], 2); ?></span>
+                                <span class="font-bold text-slate-800"><?php echo CURRENCY_SYMBOL . number_format($data['subtotal'], 2); ?></span>
                             </div>
                             <div class="flex justify-between text-slate-500">
                                 <span><?php echo lang('order_shipping'); ?></span>
@@ -123,7 +126,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
                         <div class="flex justify-between items-center mb-8">
                             <span class="font-bold text-slate-900 text-lg"><?php echo lang('order_total'); ?></span>
-                            <span class="font-black text-2xl text-primary"><?php echo CURRENCY_SYMBOL . number_format($data['total'], 2); ?></span>
+                            <span class="font-black text-2xl text-primary"><?php echo CURRENCY_SYMBOL . number_format($data['subtotal'], 2); ?></span>
                         </div>
 
                         <a href="<?php echo URLROOT; ?>/cart/checkout" class="block w-full bg-slate-900 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-center hover:bg-primary transition shadow-xl shadow-slate-900/20 group">

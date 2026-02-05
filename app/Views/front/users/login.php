@@ -1,5 +1,10 @@
 <?php require APPROOT . '/Views/front/layout/header.php'; ?>
 
+<?php
+// Helper langue
+$lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
+?>
+
 <div class="min-h-[80vh] flex items-center justify-center bg-slate-50 relative overflow-hidden py-12 px-6">
     
     <div class="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
@@ -15,16 +20,20 @@
         <?php if(function_exists('flash')): ?>
             <?php flash('register_success'); ?>
             <?php flash('product_message'); ?>
+            <?php flash('login_msg'); ?> 
         <?php endif; ?>
 
         <form class="space-y-6" action="<?php echo URLROOT; ?>/users/login" method="POST">
-            <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>
+            <?php if(function_exists('csrfField')) echo csrfField(); ?>
             
             <div>
                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 ml-1"><?php echo lang('form_email'); ?></label>
                 <div class="relative">
                     <i class="far fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input name="email" type="email" value="<?php echo $data['email']; ?>" class="w-full pl-10 pr-4 py-3.5 rounded-xl border <?php echo (!empty($data['email_err'])) ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-slate-50'; ?> focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition placeholder-slate-400 text-sm font-medium" placeholder="name@example.com" required>
+                    <input name="email" type="email" 
+                           value="<?php echo isset($data['email']) ? htmlspecialchars($data['email']) : ''; ?>" 
+                           class="w-full pl-10 pr-4 py-3.5 rounded-xl border <?php echo (!empty($data['email_err'])) ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-slate-50'; ?> focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition placeholder-slate-400 text-sm font-medium" 
+                           placeholder="name@example.com" required>
                 </div>
                 <span class="text-xs text-red-500 font-bold mt-1 block pl-1"><?php echo $data['email_err']; ?></span>
             </div>
@@ -33,7 +42,10 @@
                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-2 ml-1"><?php echo lang('form_password'); ?></label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input name="password" type="password" value="<?php echo $data['password']; ?>" class="w-full pl-10 pr-4 py-3.5 rounded-xl border <?php echo (!empty($data['password_err'])) ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-slate-50'; ?> focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition placeholder-slate-400 text-sm font-medium" placeholder="••••••••" required>
+                    <input name="password" type="password" 
+                           value="<?php echo isset($data['password']) ? htmlspecialchars($data['password']) : ''; ?>" 
+                           class="w-full pl-10 pr-4 py-3.5 rounded-xl border <?php echo (!empty($data['password_err'])) ? 'border-red-500 bg-red-50' : 'border-slate-200 bg-slate-50'; ?> focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition placeholder-slate-400 text-sm font-medium" 
+                           placeholder="••••••••" required>
                 </div>
                 <span class="text-xs text-red-500 font-bold mt-1 block pl-1"><?php echo $data['password_err']; ?></span>
             </div>

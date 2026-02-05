@@ -57,8 +57,9 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
             
-            <div class="h-96 lg:h-auto bg-slate-200 relative min-h-[400px]">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3970.435774880577!2d-0.205833!3d5.649167!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdf9c6e5b5b5b5b%3A0x5b5b5b5b5b5b5b5b!2sHaatso%2C%20Accra%2C%20Ghana!5e0!3m2!1sen!2sgh!4v1620000000000!5m2!1sen!2sgh" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 grayscale hover:grayscale-0 transition duration-700"></iframe>
+            <div class="h-96 lg:h-auto bg-slate-200 relative min-h-[400px]">Streaming comme your Head, microscope avec Nan Night andStreaming comme your Head, microscope avec Nan Night and yStreaming comme your Head, microscope avec Nan Night and yourStrStreaming comme your Head, microscope avec Nan Night and your Blacks
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3970.436322699896!2d-0.196306!3d5.649557!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdf9c7ebae1537d%3A0x63345f7c323067d2!2sAccra%2C%20Ghana!5e0!3m2!1sen!2sgh!4v1684000000000!5m2!1sen!2sgh" 
+                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 grayscale hover:grayscale-0 transition duration-700"></iframe>
             </div>
 
             <div class="p-8 lg:p-12">
@@ -73,16 +74,18 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <?php endif; ?>
 
                 <form action="<?php echo URLROOT; ?>/pages/contact" method="POST" class="space-y-6">
-                    <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+                    <?php if(function_exists('csrfField')) echo csrfField(); ?>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase mb-2"><?php echo lang('form_name'); ?></label>
-                            <input type="text" name="name" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary bg-slate-50 h-12 px-4 transition outline-none text-sm" placeholder="John Doe" required value="<?php echo isset($data['name']) ? $data['name'] : ''; ?>">
+                            <input type="text" name="name" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary bg-slate-50 h-12 px-4 transition outline-none text-sm" placeholder="John Doe" required 
+                                   value="<?php echo isset($data['name']) ? htmlspecialchars($data['name']) : ''; ?>">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase mb-2"><?php echo lang('form_email'); ?></label>
-                            <input type="email" name="email" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary bg-slate-50 h-12 px-4 transition outline-none text-sm" placeholder="john@example.com" required value="<?php echo isset($data['email']) ? $data['email'] : ''; ?>">
+                            <input type="email" name="email" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary bg-slate-50 h-12 px-4 transition outline-none text-sm" placeholder="john@example.com" required 
+                                   value="<?php echo isset($data['email']) ? htmlspecialchars($data['email']) : ''; ?>">
                         </div>
                     </div>
                     
@@ -99,7 +102,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-2"><?php echo lang('form_message'); ?></label>
-                        <textarea name="message" rows="5" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary bg-slate-50 p-4 transition outline-none text-sm" placeholder="<?php echo lang('form_message_ph'); ?>" required><?php echo isset($data['message']) ? $data['message'] : ''; ?></textarea>
+                        <textarea name="message" rows="5" class="w-full rounded-xl border-slate-200 focus:ring-primary focus:border-primary bg-slate-50 p-4 transition outline-none text-sm" placeholder="<?php echo lang('form_message_ph'); ?>" required><?php echo isset($data['message']) ? htmlspecialchars($data['message']) : ''; ?></textarea>
                     </div>
 
                     <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-primary transition shadow-lg uppercase tracking-widest text-sm flex justify-center items-center gap-2 group">

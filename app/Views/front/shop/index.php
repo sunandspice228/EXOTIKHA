@@ -29,7 +29,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 </a>
             <?php endif; ?>
 
-            <?php if(!empty($data['filters']['category_id'])): ?>
+            <?php if(!empty($data['filters']['category_id']) && !empty($data['categories'])): ?>
                 <?php 
                     $catName = 'Category';
                     foreach($data['categories'] as $c) { if($c->id == $data['filters']['category_id']) $catName = $c->name; }
@@ -39,12 +39,10 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 </a>
             <?php endif; ?>
 
-            <?php if(!empty($data['filters']['type_id'])): ?>
+            <?php if(!empty($data['filters']['type_id']) && !empty($data['types'])): ?>
                 <?php 
                     $typeName = 'Type';
-                    if(isset($data['types'])) {
-                        foreach($data['types'] as $t) { if($t->id == $data['filters']['type_id']) $typeName = $t->name; }
-                    }
+                    foreach($data['types'] as $t) { if($t->id == $data['filters']['type_id']) $typeName = $t->name; }
                 ?>
                 <a href="<?php echo URLROOT; ?>/shop" class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:border-red-300 hover:text-red-500 transition group">
                     <?php echo $typeName; ?> <i class="fas fa-times group-hover:rotate-90 transition"></i>
@@ -59,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-6 py-12"> 
+<div class="max-w-7xl mx-auto px-6 py-12"> Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in yourStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain
     
     <div class="lg:hidden mb-6 flex justify-between items-center">
         <button id="mobileFilterBtn" class="flex items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-xl font-bold text-sm shadow-lg">
@@ -89,7 +87,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                             <?php endif; ?>
                         <?php endforeach; ?>
 
-                        <input type="text" name="search" value="<?php echo htmlspecialchars($data['filters']['search'] ?? ''); ?>" placeholder="<?php echo lang('search_placeholder'); ?>" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm group-hover:shadow-md">
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($data['filters']['search'] ?? ''); ?>" placeholder="<?php echo lang('search_placeholder'); ?>" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-primary focus:border-transparent transition shadow-sm group-hover:shadow-md outline-none">
                         <i class="fas fa-search absolute left-4 top-3.5 text-slate-400 group-focus-within:text-primary transition"></i>
                     </form>
                 </div>
@@ -138,6 +136,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 </div>
                 <?php endif; ?>
 
+                <?php if(isset($data['categories']) && !empty($data['categories'])): ?>
                 <div class="border-t border-slate-200 pt-6">
                     <h3 class="font-bold text-slate-900 mb-4 text-sm uppercase tracking-widest"><?php echo lang('sidebar_categories'); ?></h3>
                     <div class="flex flex-wrap gap-2">
@@ -154,6 +153,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                         <?php endforeach; ?>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <div class="border-t border-slate-200 pt-6">
                     <a href="<?php echo URLROOT; ?>/shop?promo_only=1" class="relative block overflow-hidden rounded-xl bg-gradient-to-r from-red-500 to-pink-600 p-5 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] transition duration-300">
@@ -236,7 +236,8 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                                 <?php if($product->stock > 0): ?>
                                     <div class="absolute bottom-4 left-4 right-4 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-20">
                                         <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="flex gap-2">
-                                            <?php echo csrfField(); ?>
+                                            <?php if(function_exists('csrfField')) echo csrfField(); ?>
+                                            
                                             <input type="hidden" name="product_id" value="<?php echo $product->id; ?>">
                                             <input type="hidden" name="quantity" value="1">
                                             
@@ -267,10 +268,10 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                                 
                                 <div class="flex items-center gap-3">
                                     <?php if($product->promo_price > 0): ?>
-                                        <span class="text-red-600 font-black text-base"><?php echo CURRENCY_SYMBOL . number_format($product->promo_price, 2); ?></span>
-                                        <span class="text-xs text-slate-400 line-through font-medium"><?php echo number_format($product->price, 2); ?></span>
+                                        <span class="text-red-600 font-black text-base"><?php echo number_format($product->promo_price, 0, ',', ' ') . ' ' . CURRENCY_SYMBOL; ?></span>
+                                        <span class="text-xs text-slate-400 line-through font-medium"><?php echo number_format($product->price, 0, ',', ' '); ?></span>
                                     <?php else: ?>
-                                        <span class="text-slate-900 font-bold text-base"><?php echo CURRENCY_SYMBOL . number_format($product->price, 2); ?></span>
+                                        <span class="text-slate-900 font-bold text-base"><?php echo number_format($product->price, 0, ',', ' ') . ' ' . CURRENCY_SYMBOL; ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>

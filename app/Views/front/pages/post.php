@@ -7,8 +7,11 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 // --- PRÉPARATION DES DONNÉES DE L'ARTICLE PRINCIPAL ---
 // 1. Titre traduit
 $mainTitle = ($lang == 'fr' && !empty($data['post']->title_fr)) ? $data['post']->title_fr : $data['post']->title;
-// 2. Contenu traduit
-$mainContent = ($lang == 'fr' && !empty($data['post']->content_fr)) ? $data['post']->content_fr : $data['post']->content;
+
+// 2. Contenu traduit (Décodage HTML pour WYSIWYG)
+$rawContent = ($lang == 'fr' && !empty($data['post']->content_fr)) ? $data['post']->content_fr : $data['post']->content;
+$mainContent = htmlspecialchars_decode($rawContent); 
+
 // 3. Image
 $mainImg = !empty($data['post']->image) ? URLROOT . '/uploads/' . $data['post']->image : '';
 ?>
@@ -48,15 +51,15 @@ $mainImg = !empty($data['post']->image) ? URLROOT . '/uploads/' . $data['post']-
                 <?php endif; ?>
 
                 <div class="prose prose-lg prose-slate max-w-none font-serif leading-relaxed text-slate-600 first-letter:text-5xl first-letter:font-bold first-letter:text-primary first-letter:mr-1 first-letter:float-left">
-                    <?php echo nl2br($mainContent); ?>
+                    <?php echo $mainContent; ?>
                 </div>
 
                 <div class="mt-12 pt-8 border-t border-slate-100 flex items-center justify-between">
                     <span class="font-bold text-slate-900 text-sm"><?php echo lang('post_share'); ?></span>
                     <div class="flex gap-2">
-                        <button class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:scale-110 transition"><i class="fab fa-facebook-f text-xs"></i></button>
-                        <button class="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center hover:scale-110 transition"><i class="fab fa-twitter text-xs"></i></button>
-                        <button class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center hover:scale-110 transition"><i class="fab fa-whatsapp text-xs"></i></button>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode(URLROOT . '/pages/post/' . $data['post']->id); ?>" target="_blank" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:scale-110 transition"><i class="fab fa-facebook-f text-xs"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode(URLROOT . '/pages/post/' . $data['post']->id); ?>&text=<?php echo urlencode($mainTitle); ?>" target="_blank" class="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center hover:scale-110 transition"><i class="fab fa-twitter text-xs"></i></a>
+                        <a href="whatsapp://send?text=<?php echo urlencode($mainTitle . ' ' . URLROOT . '/pages/post/' . $data['post']->id); ?>" data-action="share/whatsapp/share" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center hover:scale-110 transition"><i class="fab fa-whatsapp text-xs"></i></a>
                     </div>
                 </div>
             </div>

@@ -81,8 +81,10 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
     <div class="max-w-4xl mx-auto px-6 text-center">
         <h2 class="text-2xl font-serif font-bold mb-4"><?php echo lang('blog_newsletter_title'); ?></h2>
         <p class="text-slate-400 mb-8"><?php echo lang('blog_newsletter_text'); ?></p>
+        
         <form action="<?php echo URLROOT; ?>/pages/subscribe" method="POST" class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+            <?php if(function_exists('csrfField')) echo csrfField(); ?>    
+            
             <input type="email" name="email" placeholder="<?php echo lang('club_placeholder'); ?>" required class="flex-1 rounded-xl bg-white/10 border border-white/20 px-4 py-3 text-white focus:outline-none focus:border-primary placeholder-white/50">
             <button type="submit" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-white hover:text-slate-900 transition shadow-lg uppercase tracking-wide text-xs">
                 <?php echo lang('btn_subscribe'); ?>

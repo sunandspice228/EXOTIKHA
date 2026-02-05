@@ -5,6 +5,7 @@
     $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
     // --- 1. DATA RETRIEVAL ---
+    // Ensure objects/arrays are initialized to prevent warnings
     $user = isset($data['user']) ? $data['user'] : null;
     $cartItems = isset($data['cart_items']) ? $data['cart_items'] : [];
     $productSubtotal = isset($data['total']) ? $data['total'] : 0;
@@ -56,16 +57,16 @@
             </a>
             <div>
                 <h1 class="text-3xl font-serif font-bold text-slate-900"><?php echo lang('checkout_title'); ?></h1>
-                <p class="text-slate-500 text-sm"><?php echo lang('checkout_subtitle'); ?></p>
+                <p class="text-slate-500 text-sm"><?php echo lang('checkout_subtitle'); ?></p>HerHereHere youHere you areHere you are on
             </div>
         </div>
 
         <?php if(function_exists('flash')) flash('cart_msg'); ?>
 
         <form action="<?php echo URLROOT; ?>/cart/place_order" method="POST" id="checkoutForm" class="flex flex-col lg:flex-row gap-12">
-            <?php echo csrfField(); ?>
+            <?php if(function_exists('csrfField')) echo csrfField(); ?>
             
-            <input type="hidden" name="gps_coordinates" value="">
+            <input type="hidden" name="gps_coordinates" id="gps_input" value="">
             <input type="hidden" name="shipping_cost" id="shipping_cost_input" value="0">
             <input type="hidden" name="total_amount" id="total_amount_input" value="<?php echo $productSubtotal; ?>">
 
@@ -81,7 +82,7 @@
                         
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_fullname'); ?></label>
-                            <input type="text" name="full_name" value="<?php echo $fullName; ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary transition" required>
+                            <input type="text" name="full_name" value="<?php echo htmlspecialchars($fullName); ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary transition" required>
                         </div>
                         
                         <div class="md:col-span-1">
@@ -91,7 +92,7 @@
 
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2"><?php echo lang('form_email'); ?></label>
-                            <input type="email" name="email" value="<?php echo $email; ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500" readonly>
+                            <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500" readonly>
                         </div>
 
                         <div class="md:col-span-1">
@@ -124,6 +125,13 @@
                                     <i class="fas fa-chevron-down text-xs"></i>
                                 </span>
                             </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <button type="button" onclick="getLocation()" class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">
+                                <i class="fas fa-crosshairs"></i> Use my current GPS location for better delivery
+                            </button>
+                            <span id="gps_status" class="text-[10px] text-green-600 font-bold ml-2 hidden">Location Saved!</span>
                         </div>
 
                         <div class="md:col-span-2">
@@ -237,6 +245,8 @@
     const shippingInput = document.getElementById('shipping_cost_input');
     const totalInput = document.getElementById('total_amount_input');
     const submitBtn = document.getElementById('submitBtn');
+    const gpsInput = document.getElementById('gps_input');
+    const gpsStatus = document.getElementById('gps_status');
 
     // Update function
     function updateTotals() {
@@ -264,6 +274,38 @@
             submitBtn.querySelector('span').textContent = btnTextPlace;
             submitBtn.classList.remove('bg-slate-400');
             submitBtn.classList.add('bg-slate-900');
+        }
+    }
+
+    // Geolocation function
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else { 
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function showPosition(position) {
+        // Format: "Lat, Lng" for Google Maps
+        gpsInput.value = position.coords.latitude + "," + position.coords.longitude;
+        gpsStatus.classList.remove('hidden');
+    }
+
+    function showError(error) {
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                alert("User denied the request for Geolocation.");
+                break;
+            case error.POSITION_UNAVAILABLE:
+                alert("Location information is unavailable.");
+                break;
+            case error.TIMEOUT:
+                alert("The request to get user location timed out.");
+                break;
+            case error.UNKNOWN_ERROR:
+                alert("An unknown error occurred.");
+                break;
         }
     }
 

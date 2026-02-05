@@ -90,7 +90,10 @@
         </aside>
 
         <div class="flex-1">
-            <?php if(function_exists('flash')) flash('product_message'); ?>
+            
+            <?php if(function_exists('flash')): ?>
+                <?php flash('product_message'); flash('account_msg'); ?>
+            <?php endif; ?>
 
             <?php if($currentTab == 'dashboard'): ?>
                 <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm mb-8">
@@ -153,7 +156,13 @@
                                             <td class="px-6 py-4 font-bold text-slate-900">#<?php echo isset($order->order_number) ? $order->order_number : $order->id; ?></td>
                                             <td class="px-6 py-4 text-slate-500"><?php echo date('M d, Y', strtotime($order->created_at)); ?></td>
                                             <td class="px-6 py-4">
-                                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-500">
+                                                <?php 
+                                                    $statusColor = 'bg-slate-100 text-slate-500';
+                                                    if($order->status == 'completed' || $order->status == 'delivered') $statusColor = 'bg-green-100 text-green-700';
+                                                    if($order->status == 'processing') $statusColor = 'bg-blue-100 text-blue-700';
+                                                    if($order->status == 'cancelled') $statusColor = 'bg-red-100 text-red-700';
+                                                ?>
+                                                <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase <?php echo $statusColor; ?>">
                                                     <?php echo lang('status_' . strtolower($order->status)); ?>
                                                 </span>
                                             </td>
@@ -187,8 +196,8 @@
                         <h3 class="font-bold border-b pb-2 mb-4 text-primary uppercase text-xs tracking-wider"><?php echo lang('addr_shipping_title'); ?></h3>
                         
                         <form action="<?php echo URLROOT; ?>/users/update_address" method="POST" class="space-y-4">
-                        <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>   
-                        <input type="hidden" name="address_type" value="shipping">
+                            <?php if(function_exists('csrfField')) echo csrfField(); ?>   
+                            <input type="hidden" name="address_type" value="shipping">
                             
                             <div>
                                 <label class="text-[10px] uppercase font-bold text-slate-400 mb-1 block"><?php echo lang('form_phone'); ?></label>
@@ -239,15 +248,15 @@
                 <h2 class="text-xl font-bold mb-6 italic font-serif"><?php echo lang('details_title'); ?></h2>
                 <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-2xl">
                     <form action="<?php echo URLROOT; ?>/users/update_details" method="POST" class="space-y-6">
-                    <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <?php if(function_exists('csrfField')) echo csrfField(); ?>    
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_fullname'); ?></label>
-                                <input type="text" name="name" value="<?php echo $fullName; ?>" class="w-full rounded-xl border-slate-200 focus:ring-primary transition">
+                                <input type="text" name="name" value="<?php echo htmlspecialchars($fullName); ?>" class="w-full rounded-xl border-slate-200 focus:ring-primary transition">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-2"><?php echo lang('form_email'); ?></label>
-                                <input type="email" name="email" value="<?php echo $email; ?>" class="w-full rounded-xl border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" readonly>
+                                <input type="email" name="email" value="<?php echo htmlspecialchars($email); ?>" class="w-full rounded-xl border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed" readonly>
                             </div>
                         </div>
                         

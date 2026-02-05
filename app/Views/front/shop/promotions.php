@@ -39,7 +39,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
 <div class="max-w-7xl mx-auto px-6 py-12 -mt-10 relative z-20">
     
-    <?php if($data['star_product']): ?>
+    <?php if(!empty($data['star_product'])): ?>
         <?php 
             $sp = $data['star_product'];
             $spName = ($lang == 'fr' && !empty($sp->name_fr)) ? $sp->name_fr : $sp->name;
@@ -57,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                     <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $sp->slug; ?>">
                         <img src="<?php echo $spImg; ?>" alt="<?php echo $spName; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                     </a>
-                </div>
+                </div>Streaming comme your Head, microscope avecStreaming comme your Head, microscope avec NStreaming comme your Head, microscope avec ****Streaming comme your Head, microscope avec Nan Night
             </div>
 
             <div class="w-full md:w-1/2 text-center md:text-left">
@@ -81,7 +81,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 </div>
 
                 <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="flex gap-4 max-w-md mx-auto md:mx-0">
-                    <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+                    <?php if(function_exists('csrfField')) echo csrfField(); ?>    
                     <input type="hidden" name="product_id" value="<?php echo $sp->id; ?>">
                     <input type="hidden" name="quantity" value="1">
                     <button type="submit" class="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition shadow-lg shadow-red-500/30 flex items-center justify-center gap-2 animate-bounce-subtle">
@@ -94,7 +94,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
     <div class="flex items-end justify-between mb-8">
         <h2 class="text-2xl font-bold text-slate-900"><?php echo lang('promo_all_title'); ?></h2>
-        <span class="text-sm text-slate-500 font-bold"><?php echo count($data['products']); ?> <?php echo lang('promo_items_count'); ?></span>
+        <span class="text-sm text-slate-500 font-bold"><?php echo !empty($data['products']) ? count($data['products']) : 0; ?> <?php echo lang('promo_items_count'); ?></span>
     </div>
 
     <?php if(empty($data['products'])): ?>
@@ -119,7 +119,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 
                         <?php if($product->stock > 0): ?>
                         <form action="<?php echo URLROOT; ?>/cart/add" method="POST" class="absolute bottom-3 right-3 translate-y-12 group-hover:translate-y-0 transition duration-300 z-20">
-                            <?php echo isset($_SESSION['csrf_token']) ? csrfField() : ''; ?>    
+                            <?php if(function_exists('csrfField')) echo csrfField(); ?>    
                             <input type="hidden" name="product_id" value="<?php echo $product->id; ?>">
                             <input type="hidden" name="quantity" value="1">
                             <button class="w-10 h-10 bg-white text-red-600 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 hover:text-white transition" title="<?php echo lang('btn_add_cart'); ?>">
@@ -145,7 +145,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
 </div>
 
 <script>
-    // Sets promo end time to next midnight (Example logic)
+    // Logic: Promo ends next midnight
     const now = new Date();
     const endTime = new Date(now);
     endTime.setHours(24, 0, 0, 0); 
@@ -160,9 +160,13 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
         const m = Math.floor((diff / (1000 * 60)) % 60);
         const s = Math.floor((diff / 1000) % 60);
 
-        document.getElementById('hours').innerText = h < 10 ? '0' + h : h;
-        document.getElementById('minutes').innerText = m < 10 ? '0' + m : m;
-        document.getElementById('seconds').innerText = s < 10 ? '0' + s : s;
+        const elH = document.getElementById('hours');
+        const elM = document.getElementById('minutes');
+        const elS = document.getElementById('seconds');
+
+        if(elH) elH.innerText = h < 10 ? '0' + h : h;
+        if(elM) elM.innerText = m < 10 ? '0' + m : m;
+        if(elS) elS.innerText = s < 10 ? '0' + s : s;
     }
 
     setInterval(updateCountdown, 1000);

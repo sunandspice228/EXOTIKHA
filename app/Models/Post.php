@@ -65,4 +65,15 @@ class Post {
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
+
+    // =========================================================
+    // MÉTHODES FRONTEND (POUR L'ACCUEIL)
+    // =========================================================
+
+    // Récupérer les derniers articles publiés
+    public function getLatestPosts($limit = 3){
+        $this->db->query("SELECT * FROM posts WHERE status = 'published' ORDER BY created_at DESC LIMIT :limit");
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
 }
