@@ -57,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                     <a href="<?php echo URLROOT; ?>/shop/details/<?php echo $sp->slug; ?>">
                         <img src="<?php echo $spImg; ?>" alt="<?php echo $spName; ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                     </a>
-                </div>Streaming comme your Head, microscope avecStreaming comme your Head, microscope avec NStreaming comme your Head, microscope avec ****Streaming comme your Head, microscope avec Nan Night
+                </div>
             </div>
 
             <div class="w-full md:w-1/2 text-center md:text-left">

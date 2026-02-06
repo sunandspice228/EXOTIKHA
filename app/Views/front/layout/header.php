@@ -158,7 +158,7 @@ if (!function_exists('getMenuCatName')) {
                         </div>
                     <?php endif; ?>
 
-                    <a href="<?php echo URLROOT; ?>/blog" class="hover:text-primary transition"><?php echo lang('nav_blog'); ?></a>
+                    <a href="<?php echo URLROOT; ?>/pages/blog" class="hover:text-primary transition"><?php echo lang('nav_blog'); ?></a>
                     <a href="<?php echo URLROOT; ?>/pages/contact" class="hover:text-primary transition"><?php echo lang('nav_contact'); ?></a>
                 </div>
 

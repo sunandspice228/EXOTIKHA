@@ -56,11 +56,6 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
-            
-            <div class="h-96 lg:h-auto bg-slate-200 relative min-h-[400px]">Streaming comme your Head, microscope avec Nan Night andStreaming comme your Head, microscope avec Nan Night and yStreaming comme your Head, microscope avec Nan Night and yourStrStreaming comme your Head, microscope avec Nan Night and your Blacks
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3970.436322699896!2d-0.196306!3d5.649557!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdf9c7ebae1537d%3A0x63345f7c323067d2!2sAccra%2C%20Ghana!5e0!3m2!1sen!2sgh!4v1684000000000!5m2!1sen!2sgh" 
-                        width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 grayscale hover:grayscale-0 transition duration-700"></iframe>
-            </div>
 
             <div class="p-8 lg:p-12">
                 <h2 class="text-2xl font-serif font-bold text-slate-900 mb-6"><?php echo lang('contact_form_title'); ?></h2>

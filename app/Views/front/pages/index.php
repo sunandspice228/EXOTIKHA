@@ -57,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
             <div class="flex flex-col items-center text-center gap-3 group px-4">
                 <div class="text-primary text-2xl group-hover:scale-110 transition duration-300"><i class="fas fa-shipping-fast"></i></div>
                 <div><h4 class="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1"><?php echo lang('feat_delivery_title'); ?></h4> <p class="text-xs text-slate-500 font-medium"><?php echo lang('feat_delivery_text'); ?></p> </div>
-            </div>Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain bStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broadcas
+            </div>
             <div class="flex flex-col items-center text-center gap-3 group px-4">
                 <div class="text-primary text-2xl group-hover:scale-110 transition duration-300"><i class="fas fa-lock"></i></div>
                 <div><h4 class="font-bold text-slate-900 uppercase text-xs tracking-widest mb-1"><?php echo lang('feat_payment_title'); ?></h4><p class="text-xs text-slate-500 font-medium"><?php echo lang('feat_payment_text'); ?></p></div>

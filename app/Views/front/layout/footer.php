@@ -57,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
                 <a href="<?php echo URLROOT; ?>" class="block">
                     <img src="<?php echo URLROOT; ?>/img/logo.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="<?php echo SITENAME; ?>" class="h-12 w-auto object-contain brightness-0 invert opacity-80 hover:opacity-100 transition">
                     <span class="text-2xl font-serif font-bold text-white hidden tracking-tighter">EXOTIKHA.</span>
-                </a>Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broadcastingStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in yStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain broadcasting Everything
+                </a>
 
                 <p class="text-sm leading-relaxed text-slate-400">
                     <?php echo lang('footer_about'); ?>

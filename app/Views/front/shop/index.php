@@ -57,7 +57,7 @@ $lang = isset($_SESSION['lang']) ? $_SESSION['lang'] : 'en';
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-6 py-12"> Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in yourStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in your grain
+<div class="max-w-7xl mx-auto px-6 py-12">
     
     <div class="lg:hidden mb-6 flex justify-between items-center">
         <button id="mobileFilterBtn" class="flex items-center gap-2 bg-slate-900 text-white px-4 py-3 rounded-xl font-bold text-sm shadow-lg">

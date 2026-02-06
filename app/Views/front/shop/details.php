@@ -57,7 +57,7 @@ $gallery = isset($data['gallery']) ? $data['gallery'] : [];
                             <img src="<?php echo $gUrl; ?>" class="w-full h-full object-cover">
                         </div>
                     <?php endforeach; ?>
-                <?php endif; ?>Streaming comme your Head, microscope avec Nan Night and your Blackstream, a touch inStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch intoStreaming comme your Head, microscope avec Nan NighStreaming comme your Head, microscope avec Nan Night and your Blackstream, a touch into the receptors in y
+                <?php endif; ?>
             </div>
         </div>
 
