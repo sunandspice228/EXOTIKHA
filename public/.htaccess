@@ -1,0 +1,13 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /EXOTIKHA/public
+
+  # Ne pas rediriger si c'est un vrai fichier (images, css, js)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-f
+
+  # Tout le reste va vers index.php
+  RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+</IfModule>

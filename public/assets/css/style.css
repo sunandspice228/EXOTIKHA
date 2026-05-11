@@ -1,0 +1,124 @@
+/* IMPORT FONTS */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap');
+
+:root {
+    --primary-color: #d35400; /* Orange brûlé (Terre d'Afrique) */
+    --secondary-color: #2c3e50; /* Bleu Nuit */
+    --light-bg: #f8f9fa;
+    --text-dark: #333;
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    color: var(--text-dark);
+    background-color: #fcfcfc;
+}
+
+h1, h2, h3, h4, h5, .navbar-brand, .btn {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* NAVBAR */
+.navbar {
+    background: white !important;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--secondary-color) !important;
+    letter-spacing: 1px;
+}
+
+.nav-link {
+    color: var(--secondary-color) !important;
+    font-weight: 600;
+    margin: 0 10px;
+    transition: color 0.3s;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--primary-color) !important;
+}
+
+/* HERO SECTION CAROUSEL */
+.carousel-item {
+    height: 80vh;
+    min-height: 400px;
+    background: no-repeat center center scroll;
+    background-size: cover;
+}
+
+.carousel-caption {
+    bottom: 250px;
+    z-index: 2;
+}
+
+.carousel-caption h5 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* PRODUCT CARDS */
+.product-card {
+    border: none;
+    transition: all 0.3s ease;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.product-card img {
+    height: 250px;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover img {
+    transform: scale(1.05);
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.price-tag {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* BUTTONS */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    padding: 10px 25px;
+    border-radius: 30px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #a04000;
+    border-color: #a04000;
+    transform: scale(1.05);
+}
+
+/* FOOTER */
+footer {
+    background-color: var(--secondary-color);
+    color: white;
+    padding-top: 50px;
+}
+footer a { color: #ccc; text-decoration: none; }
+footer a:hover { color: white; }
